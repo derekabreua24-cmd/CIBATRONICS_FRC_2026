@@ -1,0 +1,13 @@
+{
+  "version": "1.0",
+  "name": "StraightExample",
+  "config": {
+    "maxVel": 1.0,
+    "maxAccel": 1.0
+  },
+  "waypoints": [
+    { "x": 0.0, "y": 0.0, "heading": 0.0 },
+    { "x": 2.0, "y": 0.0, "heading": 0.0 }
+  ],
+  "path": []
+}

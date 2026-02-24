@@ -1,0 +1,1685 @@
+Classfile /c:/Frc/Final code 2/com/studica/frc/AHRS.class
+  Last modified Jan 12, 2026; size 11497 bytes
+  SHA-256 checksum b83e9743f220c6cf4b0371169db0f44bdcb9f40692b842dda922aa38cfb7e4e9
+  Compiled from "AHRS.java"
+public class com.studica.frc.AHRS implements edu.wpi.first.networktables.NTSendable,java.lang.AutoCloseable
+  minor version: 0
+  major version: 61
+  flags: (0x0021) ACC_PUBLIC, ACC_SUPER
+  this_class: #8                          // com/studica/frc/AHRS
+  super_class: #2                         // java/lang/Object
+  interfaces: 2, fields: 1, methods: 71, attributes: 4
+Constant pool:
+    #1 = Methodref          #2.#3         // java/lang/Object."<init>":()V
+    #2 = Class              #4            // java/lang/Object
+    #3 = NameAndType        #5:#6         // "<init>":()V
+    #4 = Utf8               java/lang/Object
+    #5 = Utf8               <init>
+    #6 = Utf8               ()V
+    #7 = Fieldref           #8.#9         // com/studica/frc/AHRS.port:I
+    #8 = Class              #10           // com/studica/frc/AHRS
+    #9 = NameAndType        #11:#12       // port:I
+   #10 = Utf8               com/studica/frc/AHRS
+   #11 = Utf8               port
+   #12 = Utf8               I
+   #13 = Methodref          #14.#15       // com/studica/frc/jni/AHRSJNI.c_AHRS_create:(Lcom/studica/frc/AHRS$NavXComType;)V
+   #14 = Class              #16           // com/studica/frc/jni/AHRSJNI
+   #15 = NameAndType        #17:#18       // c_AHRS_create:(Lcom/studica/frc/AHRS$NavXComType;)V
+   #16 = Utf8               com/studica/frc/jni/AHRSJNI
+   #17 = Utf8               c_AHRS_create
+   #18 = Utf8               (Lcom/studica/frc/AHRS$NavXComType;)V
+   #19 = Methodref          #20.#21       // com/studica/frc/AHRS$NavXComType.getValue:()I
+   #20 = Class              #22           // com/studica/frc/AHRS$NavXComType
+   #21 = NameAndType        #23:#24       // getValue:()I
+   #22 = Utf8               com/studica/frc/AHRS$NavXComType
+   #23 = Utf8               getValue
+   #24 = Utf8               ()I
+   #25 = String             #26           // navX-Sensor
+   #26 = Utf8               navX-Sensor
+   #27 = Methodref          #28.#29       // edu/wpi/first/util/sendable/SendableRegistry.addLW:(Ledu/wpi/first/util/sendable/Sendable;Ljava/lang/String;I)V
+   #28 = Class              #30           // edu/wpi/first/util/sendable/SendableRegistry
+   #29 = NameAndType        #31:#32       // addLW:(Ledu/wpi/first/util/sendable/Sendable;Ljava/lang/String;I)V
+   #30 = Utf8               edu/wpi/first/util/sendable/SendableRegistry
+   #31 = Utf8               addLW
+   #32 = Utf8               (Ledu/wpi/first/util/sendable/Sendable;Ljava/lang/String;I)V
+   #33 = Methodref          #14.#34       // com/studica/frc/jni/AHRSJNI.c_AHRS_create_rate:(Lcom/studica/frc/AHRS$NavXComType;Lcom/studica/frc/AHRS$NavXUpdateRate;)V
+   #34 = NameAndType        #35:#36       // c_AHRS_create_rate:(Lcom/studica/frc/AHRS$NavXComType;Lcom/studica/frc/AHRS$NavXUpdateRate;)V
+   #35 = Utf8               c_AHRS_create_rate
+   #36 = Utf8               (Lcom/studica/frc/AHRS$NavXComType;Lcom/studica/frc/AHRS$NavXUpdateRate;)V
+   #37 = Fieldref           #38.#39       // java/lang/System.out:Ljava/io/PrintStream;
+   #38 = Class              #40           // java/lang/System
+   #39 = NameAndType        #41:#42       // out:Ljava/io/PrintStream;
+   #40 = Utf8               java/lang/System
+   #41 = Utf8               out
+   #42 = Utf8               Ljava/io/PrintStream;
+   #43 = String             #44           // Navx: Custom Rate in AHRS constructor set out of bounds.
+   #44 = Utf8               Navx: Custom Rate in AHRS constructor set out of bounds.
+   #45 = Methodref          #46.#47       // java/io/PrintStream.println:(Ljava/lang/String;)V
+   #46 = Class              #48           // java/io/PrintStream
+   #47 = NameAndType        #49:#50       // println:(Ljava/lang/String;)V
+   #48 = Utf8               java/io/PrintStream
+   #49 = Utf8               println
+   #50 = Utf8               (Ljava/lang/String;)V
+   #51 = Methodref          #14.#52       // com/studica/frc/jni/AHRSJNI.c_AHRS_create_custom:(Lcom/studica/frc/AHRS$NavXComType;I)V
+   #52 = NameAndType        #53:#54       // c_AHRS_create_custom:(Lcom/studica/frc/AHRS$NavXComType;I)V
+   #53 = Utf8               c_AHRS_create_custom
+   #54 = Utf8               (Lcom/studica/frc/AHRS$NavXComType;I)V
+   #55 = Methodref          #14.#56       // com/studica/frc/jni/AHRSJNI.c_AHRS_destroy:()V
+   #56 = NameAndType        #57:#6        // c_AHRS_destroy:()V
+   #57 = Utf8               c_AHRS_destroy
+   #58 = Methodref          #14.#59       // com/studica/frc/jni/AHRSJNI.c_AHRS_GetPitch:()F
+   #59 = NameAndType        #60:#61       // c_AHRS_GetPitch:()F
+   #60 = Utf8               c_AHRS_GetPitch
+   #61 = Utf8               ()F
+   #62 = Methodref          #14.#63       // com/studica/frc/jni/AHRSJNI.c_AHRS_GetRoll:()F
+   #63 = NameAndType        #64:#61       // c_AHRS_GetRoll:()F
+   #64 = Utf8               c_AHRS_GetRoll
+   #65 = Methodref          #14.#66       // com/studica/frc/jni/AHRSJNI.c_AHRS_GetYaw:()F
+   #66 = NameAndType        #67:#61       // c_AHRS_GetYaw:()F
+   #67 = Utf8               c_AHRS_GetYaw
+   #68 = Methodref          #14.#69       // com/studica/frc/jni/AHRSJNI.c_AHRS_GetCompassHeading:()F
+   #69 = NameAndType        #70:#61       // c_AHRS_GetCompassHeading:()F
+   #70 = Utf8               c_AHRS_GetCompassHeading
+   #71 = Methodref          #14.#72       // com/studica/frc/jni/AHRSJNI.c_AHRS_ZeroYaw:()V
+   #72 = NameAndType        #73:#6        // c_AHRS_ZeroYaw:()V
+   #73 = Utf8               c_AHRS_ZeroYaw
+   #74 = Methodref          #14.#75       // com/studica/frc/jni/AHRSJNI.c_AHRS_GetAngle:()D
+   #75 = NameAndType        #76:#77       // c_AHRS_GetAngle:()D
+   #76 = Utf8               c_AHRS_GetAngle
+   #77 = Utf8               ()D
+   #78 = Methodref          #79.#80       // edu/wpi/first/math/geometry/Rotation2d.fromDegrees:(D)Ledu/wpi/first/math/geometry/Rotation2d;
+   #79 = Class              #81           // edu/wpi/first/math/geometry/Rotation2d
+   #80 = NameAndType        #82:#83       // fromDegrees:(D)Ledu/wpi/first/math/geometry/Rotation2d;
+   #81 = Utf8               edu/wpi/first/math/geometry/Rotation2d
+   #82 = Utf8               fromDegrees
+   #83 = Utf8               (D)Ledu/wpi/first/math/geometry/Rotation2d;
+   #84 = Class              #85           // edu/wpi/first/math/geometry/Quaternion
+   #85 = Utf8               edu/wpi/first/math/geometry/Quaternion
+   #86 = Methodref          #14.#87       // com/studica/frc/jni/AHRSJNI.c_AHRS_GetQuaternionW:()F
+   #87 = NameAndType        #88:#61       // c_AHRS_GetQuaternionW:()F
+   #88 = Utf8               c_AHRS_GetQuaternionW
+   #89 = Methodref          #14.#90       // com/studica/frc/jni/AHRSJNI.c_AHRS_GetQuaternionX:()F
+   #90 = NameAndType        #91:#61       // c_AHRS_GetQuaternionX:()F
+   #91 = Utf8               c_AHRS_GetQuaternionX
+   #92 = Methodref          #14.#93       // com/studica/frc/jni/AHRSJNI.c_AHRS_GetQuaternionY:()F
+   #93 = NameAndType        #94:#61       // c_AHRS_GetQuaternionY:()F
+   #94 = Utf8               c_AHRS_GetQuaternionY
+   #95 = Methodref          #14.#96       // com/studica/frc/jni/AHRSJNI.c_AHRS_GetQuaternionZ:()F
+   #96 = NameAndType        #97:#61       // c_AHRS_GetQuaternionZ:()F
+   #97 = Utf8               c_AHRS_GetQuaternionZ
+   #98 = Methodref          #84.#99       // edu/wpi/first/math/geometry/Quaternion."<init>":(DDDD)V
+   #99 = NameAndType        #5:#100       // "<init>":(DDDD)V
+  #100 = Utf8               (DDDD)V
+  #101 = Class              #102          // edu/wpi/first/math/geometry/Rotation3d
+  #102 = Utf8               edu/wpi/first/math/geometry/Rotation3d
+  #103 = Methodref          #101.#104     // edu/wpi/first/math/geometry/Rotation3d."<init>":(Ledu/wpi/first/math/geometry/Quaternion;)V
+  #104 = NameAndType        #5:#105       // "<init>":(Ledu/wpi/first/math/geometry/Quaternion;)V
+  #105 = Utf8               (Ledu/wpi/first/math/geometry/Quaternion;)V
+  #106 = Methodref          #14.#107      // com/studica/frc/jni/AHRSJNI.c_AHRS_IsCalibrating:()Z
+  #107 = NameAndType        #108:#109     // c_AHRS_IsCalibrating:()Z
+  #108 = Utf8               c_AHRS_IsCalibrating
+  #109 = Utf8               ()Z
+  #110 = Methodref          #14.#111      // com/studica/frc/jni/AHRSJNI.c_AHRS_IsConnected:()Z
+  #111 = NameAndType        #112:#109     // c_AHRS_IsConnected:()Z
+  #112 = Utf8               c_AHRS_IsConnected
+  #113 = Methodref          #14.#114      // com/studica/frc/jni/AHRSJNI.c_AHRS_GetByteCount:()D
+  #114 = NameAndType        #115:#77      // c_AHRS_GetByteCount:()D
+  #115 = Utf8               c_AHRS_GetByteCount
+  #116 = Methodref          #14.#117      // com/studica/frc/jni/AHRSJNI.c_AHRS_GetUpdateCount:()D
+  #117 = NameAndType        #118:#77      // c_AHRS_GetUpdateCount:()D
+  #118 = Utf8               c_AHRS_GetUpdateCount
+  #119 = Methodref          #14.#120      // com/studica/frc/jni/AHRSJNI.c_AHRS_GetLastSensorTimestamp:()J
+  #120 = NameAndType        #121:#122     // c_AHRS_GetLastSensorTimestamp:()J
+  #121 = Utf8               c_AHRS_GetLastSensorTimestamp
+  #122 = Utf8               ()J
+  #123 = Methodref          #14.#124      // com/studica/frc/jni/AHRSJNI.c_AHRS_GetWorldLinearAccelX:()F
+  #124 = NameAndType        #125:#61      // c_AHRS_GetWorldLinearAccelX:()F
+  #125 = Utf8               c_AHRS_GetWorldLinearAccelX
+  #126 = Methodref          #14.#127      // com/studica/frc/jni/AHRSJNI.c_AHRS_GetWorldLinearAccelY:()F
+  #127 = NameAndType        #128:#61      // c_AHRS_GetWorldLinearAccelY:()F
+  #128 = Utf8               c_AHRS_GetWorldLinearAccelY
+  #129 = Methodref          #14.#130      // com/studica/frc/jni/AHRSJNI.c_AHRS_GetWorldLinearAccelZ:()F
+  #130 = NameAndType        #131:#61      // c_AHRS_GetWorldLinearAccelZ:()F
+  #131 = Utf8               c_AHRS_GetWorldLinearAccelZ
+  #132 = Methodref          #14.#133      // com/studica/frc/jni/AHRSJNI.c_AHRS_IsMoving:()Z
+  #133 = NameAndType        #134:#109     // c_AHRS_IsMoving:()Z
+  #134 = Utf8               c_AHRS_IsMoving
+  #135 = Methodref          #14.#136      // com/studica/frc/jni/AHRSJNI.c_AHRS_IsRotating:()Z
+  #136 = NameAndType        #137:#109     // c_AHRS_IsRotating:()Z
+  #137 = Utf8               c_AHRS_IsRotating
+  #138 = Methodref          #14.#139      // com/studica/frc/jni/AHRSJNI.c_AHRS_GetBarometricPressure:()F
+  #139 = NameAndType        #140:#61      // c_AHRS_GetBarometricPressure:()F
+  #140 = Utf8               c_AHRS_GetBarometricPressure
+  #141 = Methodref          #14.#142      // com/studica/frc/jni/AHRSJNI.c_AHRS_GetAltitude:()F
+  #142 = NameAndType        #143:#61      // c_AHRS_GetAltitude:()F
+  #143 = Utf8               c_AHRS_GetAltitude
+  #144 = Methodref          #14.#145      // com/studica/frc/jni/AHRSJNI.c_AHRS_IsAltitudeValid:()Z
+  #145 = NameAndType        #146:#109     // c_AHRS_IsAltitudeValid:()Z
+  #146 = Utf8               c_AHRS_IsAltitudeValid
+  #147 = Methodref          #14.#148      // com/studica/frc/jni/AHRSJNI.c_AHRS_GetFusedHeading:()F
+  #148 = NameAndType        #149:#61      // c_AHRS_GetFusedHeading:()F
+  #149 = Utf8               c_AHRS_GetFusedHeading
+  #150 = Methodref          #14.#151      // com/studica/frc/jni/AHRSJNI.c_AHRS_IsMagneticDisturbance:()Z
+  #151 = NameAndType        #152:#109     // c_AHRS_IsMagneticDisturbance:()Z
+  #152 = Utf8               c_AHRS_IsMagneticDisturbance
+  #153 = Methodref          #14.#154      // com/studica/frc/jni/AHRSJNI.c_AHRS_IsMagnetometerCalibrated:()Z
+  #154 = NameAndType        #155:#109     // c_AHRS_IsMagnetometerCalibrated:()Z
+  #155 = Utf8               c_AHRS_IsMagnetometerCalibrated
+  #156 = Methodref          #14.#157      // com/studica/frc/jni/AHRSJNI.c_AHRS_ResetDisplacement:()V
+  #157 = NameAndType        #158:#6       // c_AHRS_ResetDisplacement:()V
+  #158 = Utf8               c_AHRS_ResetDisplacement
+  #159 = Methodref          #14.#160      // com/studica/frc/jni/AHRSJNI.c_AHRS_UpdateDisplacement:(FFIZ)V
+  #160 = NameAndType        #161:#162     // c_AHRS_UpdateDisplacement:(FFIZ)V
+  #161 = Utf8               c_AHRS_UpdateDisplacement
+  #162 = Utf8               (FFIZ)V
+  #163 = Methodref          #14.#164      // com/studica/frc/jni/AHRSJNI.c_AHRS_ConfigureVelocity:(ZZZZ)V
+  #164 = NameAndType        #165:#166     // c_AHRS_ConfigureVelocity:(ZZZZ)V
+  #165 = Utf8               c_AHRS_ConfigureVelocity
+  #166 = Utf8               (ZZZZ)V
+  #167 = Methodref          #14.#168      // com/studica/frc/jni/AHRSJNI.c_AHRS_GetVelocityX:()F
+  #168 = NameAndType        #169:#61      // c_AHRS_GetVelocityX:()F
+  #169 = Utf8               c_AHRS_GetVelocityX
+  #170 = Methodref          #14.#171      // com/studica/frc/jni/AHRSJNI.c_AHRS_GetVelocityY:()F
+  #171 = NameAndType        #172:#61      // c_AHRS_GetVelocityY:()F
+  #172 = Utf8               c_AHRS_GetVelocityY
+  #173 = Methodref          #14.#174      // com/studica/frc/jni/AHRSJNI.c_AHRS_GetVelocityZ:()F
+  #174 = NameAndType        #175:#61      // c_AHRS_GetVelocityZ:()F
+  #175 = Utf8               c_AHRS_GetVelocityZ
+  #176 = Methodref          #14.#177      // com/studica/frc/jni/AHRSJNI.c_AHRS_GetDisplacementX:()F
+  #177 = NameAndType        #178:#61      // c_AHRS_GetDisplacementX:()F
+  #178 = Utf8               c_AHRS_GetDisplacementX
+  #179 = Methodref          #14.#180      // com/studica/frc/jni/AHRSJNI.c_AHRS_GetDisplacementY:()F
+  #180 = NameAndType        #181:#61      // c_AHRS_GetDisplacementY:()F
+  #181 = Utf8               c_AHRS_GetDisplacementY
+  #182 = Methodref          #14.#183      // com/studica/frc/jni/AHRSJNI.c_AHRS_GetDisplacementZ:()F
+  #183 = NameAndType        #184:#61      // c_AHRS_GetDisplacementZ:()F
+  #184 = Utf8               c_AHRS_GetDisplacementZ
+  #185 = Methodref          #14.#186      // com/studica/frc/jni/AHRSJNI.c_AHRS_GetRobotCentricVelocityX:()F
+  #186 = NameAndType        #187:#61      // c_AHRS_GetRobotCentricVelocityX:()F
+  #187 = Utf8               c_AHRS_GetRobotCentricVelocityX
+  #188 = Methodref          #14.#189      // com/studica/frc/jni/AHRSJNI.c_AHRS_GetRate:()D
+  #189 = NameAndType        #190:#77      // c_AHRS_GetRate:()D
+  #190 = Utf8               c_AHRS_GetRate
+  #191 = Methodref          #14.#192      // com/studica/frc/jni/AHRSJNI.c_AHRS_SetAngleAdjustment:(D)V
+  #192 = NameAndType        #193:#194     // c_AHRS_SetAngleAdjustment:(D)V
+  #193 = Utf8               c_AHRS_SetAngleAdjustment
+  #194 = Utf8               (D)V
+  #195 = Methodref          #14.#196      // com/studica/frc/jni/AHRSJNI.c_AHRS_GetAngleAdjustment:()D
+  #196 = NameAndType        #197:#77      // c_AHRS_GetAngleAdjustment:()D
+  #197 = Utf8               c_AHRS_GetAngleAdjustment
+  #198 = Methodref          #14.#199      // com/studica/frc/jni/AHRSJNI.c_AHRS_Reset:()V
+  #199 = NameAndType        #200:#6       // c_AHRS_Reset:()V
+  #200 = Utf8               c_AHRS_Reset
+  #201 = Methodref          #14.#202      // com/studica/frc/jni/AHRSJNI.c_AHRS_GetRawGyroX:()F
+  #202 = NameAndType        #203:#61      // c_AHRS_GetRawGyroX:()F
+  #203 = Utf8               c_AHRS_GetRawGyroX
+  #204 = Methodref          #14.#205      // com/studica/frc/jni/AHRSJNI.c_AHRS_GetRawGyroY:()F
+  #205 = NameAndType        #206:#61      // c_AHRS_GetRawGyroY:()F
+  #206 = Utf8               c_AHRS_GetRawGyroY
+  #207 = Methodref          #14.#208      // com/studica/frc/jni/AHRSJNI.c_AHRS_GetRawGyroZ:()F
+  #208 = NameAndType        #209:#61      // c_AHRS_GetRawGyroZ:()F
+  #209 = Utf8               c_AHRS_GetRawGyroZ
+  #210 = Methodref          #14.#211      // com/studica/frc/jni/AHRSJNI.c_AHRS_GetRawAccelX:()F
+  #211 = NameAndType        #212:#61      // c_AHRS_GetRawAccelX:()F
+  #212 = Utf8               c_AHRS_GetRawAccelX
+  #213 = Methodref          #14.#214      // com/studica/frc/jni/AHRSJNI.c_AHRS_GetRawAccelY:()F
+  #214 = NameAndType        #215:#61      // c_AHRS_GetRawAccelY:()F
+  #215 = Utf8               c_AHRS_GetRawAccelY
+  #216 = Methodref          #14.#217      // com/studica/frc/jni/AHRSJNI.c_AHRS_GetRawAccelZ:()F
+  #217 = NameAndType        #218:#61      // c_AHRS_GetRawAccelZ:()F
+  #218 = Utf8               c_AHRS_GetRawAccelZ
+  #219 = Methodref          #14.#220      // com/studica/frc/jni/AHRSJNI.c_AHRS_GetRawMagX:()F
+  #220 = NameAndType        #221:#61      // c_AHRS_GetRawMagX:()F
+  #221 = Utf8               c_AHRS_GetRawMagX
+  #222 = Methodref          #14.#223      // com/studica/frc/jni/AHRSJNI.c_AHRS_GetRawMagY:()F
+  #223 = NameAndType        #224:#61      // c_AHRS_GetRawMagY:()F
+  #224 = Utf8               c_AHRS_GetRawMagY
+  #225 = Methodref          #14.#226      // com/studica/frc/jni/AHRSJNI.c_AHRS_GetRawMagZ:()F
+  #226 = NameAndType        #227:#61      // c_AHRS_GetRawMagZ:()F
+  #227 = Utf8               c_AHRS_GetRawMagZ
+  #228 = Methodref          #14.#229      // com/studica/frc/jni/AHRSJNI.c_AHRS_GetPressure:()F
+  #229 = NameAndType        #230:#61      // c_AHRS_GetPressure:()F
+  #230 = Utf8               c_AHRS_GetPressure
+  #231 = Methodref          #14.#232      // com/studica/frc/jni/AHRSJNI.c_AHRS_GetTempC:()F
+  #232 = NameAndType        #233:#61      // c_AHRS_GetTempC:()F
+  #233 = Utf8               c_AHRS_GetTempC
+  #234 = Methodref          #14.#235      // com/studica/frc/jni/AHRSJNI.c_AHRS_GetBoardYawAxis:()Lcom/studica/frc/AHRS$BoardYawAxis;
+  #235 = NameAndType        #236:#237     // c_AHRS_GetBoardYawAxis:()Lcom/studica/frc/AHRS$BoardYawAxis;
+  #236 = Utf8               c_AHRS_GetBoardYawAxis
+  #237 = Utf8               ()Lcom/studica/frc/AHRS$BoardYawAxis;
+  #238 = Methodref          #14.#239      // com/studica/frc/jni/AHRSJNI.c_AHRS_GetFirmwareVersion:()Ljava/lang/String;
+  #239 = NameAndType        #240:#241     // c_AHRS_GetFirmwareVersion:()Ljava/lang/String;
+  #240 = Utf8               c_AHRS_GetFirmwareVersion
+  #241 = Utf8               ()Ljava/lang/String;
+  #242 = Methodref          #14.#243      // com/studica/frc/jni/AHRSJNI.c_AHRS_GetActualUpdateRate:()I
+  #243 = NameAndType        #244:#24      // c_AHRS_GetActualUpdateRate:()I
+  #244 = Utf8               c_AHRS_GetActualUpdateRate
+  #245 = Methodref          #14.#246      // com/studica/frc/jni/AHRSJNI.c_AHRS_GetRequestedUpdateRate:()I
+  #246 = NameAndType        #247:#24      // c_AHRS_GetRequestedUpdateRate:()I
+  #247 = Utf8               c_AHRS_GetRequestedUpdateRate
+  #248 = Methodref          #14.#249      // com/studica/frc/jni/AHRSJNI.c_AHRS_EnableLogging:(Z)V
+  #249 = NameAndType        #250:#251     // c_AHRS_EnableLogging:(Z)V
+  #250 = Utf8               c_AHRS_EnableLogging
+  #251 = Utf8               (Z)V
+  #252 = Methodref          #14.#253      // com/studica/frc/jni/AHRSJNI.c_AHRS_EnableBoardlevelYawReset:(Z)V
+  #253 = NameAndType        #254:#251     // c_AHRS_EnableBoardlevelYawReset:(Z)V
+  #254 = Utf8               c_AHRS_EnableBoardlevelYawReset
+  #255 = Methodref          #14.#256      // com/studica/frc/jni/AHRSJNI.c_AHRS_IsBoardlevelYawResetEnabled:()Z
+  #256 = NameAndType        #257:#109     // c_AHRS_IsBoardlevelYawResetEnabled:()Z
+  #257 = Utf8               c_AHRS_IsBoardlevelYawResetEnabled
+  #258 = Methodref          #14.#259      // com/studica/frc/jni/AHRSJNI.c_AHRS_GetGyroFullScaleRangeDPS:()S
+  #259 = NameAndType        #260:#261     // c_AHRS_GetGyroFullScaleRangeDPS:()S
+  #260 = Utf8               c_AHRS_GetGyroFullScaleRangeDPS
+  #261 = Utf8               ()S
+  #262 = Methodref          #14.#263      // com/studica/frc/jni/AHRSJNI.c_AHRS_GetAccelFullScaleRangeG:()S
+  #263 = NameAndType        #264:#261     // c_AHRS_GetAccelFullScaleRangeG:()S
+  #264 = Utf8               c_AHRS_GetAccelFullScaleRangeG
+  #265 = Methodref          #28.#266      // edu/wpi/first/util/sendable/SendableRegistry.remove:(Ledu/wpi/first/util/sendable/Sendable;)Z
+  #266 = NameAndType        #267:#268     // remove:(Ledu/wpi/first/util/sendable/Sendable;)Z
+  #267 = Utf8               remove
+  #268 = Utf8               (Ledu/wpi/first/util/sendable/Sendable;)Z
+  #269 = Methodref          #8.#270       // com/studica/frc/AHRS.destroy:()V
+  #270 = NameAndType        #271:#6       // destroy:()V
+  #271 = Utf8               destroy
+  #272 = String             #273          // Gyro
+  #273 = Utf8               Gyro
+  #274 = InterfaceMethodref #275.#276     // edu/wpi/first/networktables/NTSendableBuilder.setSmartDashboardType:(Ljava/lang/String;)V
+  #275 = Class              #277          // edu/wpi/first/networktables/NTSendableBuilder
+  #276 = NameAndType        #278:#50      // setSmartDashboardType:(Ljava/lang/String;)V
+  #277 = Utf8               edu/wpi/first/networktables/NTSendableBuilder
+  #278 = Utf8               setSmartDashboardType
+  #279 = String             #280          // Value
+  #280 = Utf8               Value
+  #281 = InvokeDynamic      #0:#282       // #0:getAsDouble:(Lcom/studica/frc/AHRS;)Ljava/util/function/DoubleSupplier;
+  #282 = NameAndType        #283:#284     // getAsDouble:(Lcom/studica/frc/AHRS;)Ljava/util/function/DoubleSupplier;
+  #283 = Utf8               getAsDouble
+  #284 = Utf8               (Lcom/studica/frc/AHRS;)Ljava/util/function/DoubleSupplier;
+  #285 = InterfaceMethodref #275.#286     // edu/wpi/first/networktables/NTSendableBuilder.addDoubleProperty:(Ljava/lang/String;Ljava/util/function/DoubleSupplier;Ljava/util/function/DoubleConsumer;)V
+  #286 = NameAndType        #287:#288     // addDoubleProperty:(Ljava/lang/String;Ljava/util/function/DoubleSupplier;Ljava/util/function/DoubleConsumer;)V
+  #287 = Utf8               addDoubleProperty
+  #288 = Utf8               (Ljava/lang/String;Ljava/util/function/DoubleSupplier;Ljava/util/function/DoubleConsumer;)V
+  #289 = Class              #290          // edu/wpi/first/networktables/NTSendable
+  #290 = Utf8               edu/wpi/first/networktables/NTSendable
+  #291 = Class              #292          // java/lang/AutoCloseable
+  #292 = Utf8               java/lang/AutoCloseable
+  #293 = Utf8               Code
+  #294 = Utf8               LineNumberTable
+  #295 = Utf8               LocalVariableTable
+  #296 = Utf8               this
+  #297 = Utf8               Lcom/studica/frc/AHRS;
+  #298 = Utf8               comType
+  #299 = Utf8               Lcom/studica/frc/AHRS$NavXComType;
+  #300 = Utf8               StackMapTable
+  #301 = Utf8               updateRate
+  #302 = Utf8               Lcom/studica/frc/AHRS$NavXUpdateRate;
+  #303 = Class              #304          // com/studica/frc/AHRS$NavXUpdateRate
+  #304 = Utf8               com/studica/frc/AHRS$NavXUpdateRate
+  #305 = Utf8               customRateHz
+  #306 = Utf8               getPort
+  #307 = Utf8               getPitch
+  #308 = Utf8               getRoll
+  #309 = Utf8               getYaw
+  #310 = Utf8               getCompassHeading
+  #311 = Utf8               zeroYaw
+  #312 = Utf8               getRotation2d
+  #313 = Utf8               ()Ledu/wpi/first/math/geometry/Rotation2d;
+  #314 = Utf8               getRotation3d
+  #315 = Utf8               ()Ledu/wpi/first/math/geometry/Rotation3d;
+  #316 = Utf8               q
+  #317 = Utf8               Ledu/wpi/first/math/geometry/Quaternion;
+  #318 = Utf8               isCalibrating
+  #319 = Utf8               isConnected
+  #320 = Utf8               getByteCount
+  #321 = Utf8               getUpdateCount
+  #322 = Utf8               getLastSensorTimestamp
+  #323 = Utf8               getWorldLinearAccelX
+  #324 = Utf8               getWorldLinearAccelY
+  #325 = Utf8               getWorldLinearAccelZ
+  #326 = Utf8               isMoving
+  #327 = Utf8               isRotating
+  #328 = Utf8               getBarometricPressure
+  #329 = Utf8               getAltitude
+  #330 = Utf8               isAltitudeValid
+  #331 = Utf8               getFusedHeading
+  #332 = Utf8               isMagneticDisturbance
+  #333 = Utf8               isMagnetometerCalibrated
+  #334 = Utf8               getQuaternionW
+  #335 = Utf8               getQuaternionX
+  #336 = Utf8               getQuaternionY
+  #337 = Utf8               getQuaternionZ
+  #338 = Utf8               resetDisplacement
+  #339 = Utf8               updateDisplacement
+  #340 = Utf8               accelXG
+  #341 = Utf8               F
+  #342 = Utf8               accelYG
+  #343 = Utf8               updateRateHz
+  #344 = Utf8               Z
+  #345 = Utf8               configureVelocity
+  #346 = Utf8               swapAxes
+  #347 = Utf8               invertX
+  #348 = Utf8               invertY
+  #349 = Utf8               invertZ
+  #350 = Utf8               getVelocityX
+  #351 = Utf8               getVelocityY
+  #352 = Utf8               getVelocityZ
+  #353 = Utf8               getDisplacementX
+  #354 = Utf8               getDisplacementY
+  #355 = Utf8               getDisplacementZ
+  #356 = Utf8               getRobotCentricVelocityX
+  #357 = Utf8               getRobotCentricVelocityY
+  #358 = Utf8               getRobotCentricVelocityZ
+  #359 = Utf8               getAngle
+  #360 = Utf8               getRate
+  #361 = Utf8               setAngleAdjustment
+  #362 = Utf8               angle
+  #363 = Utf8               D
+  #364 = Utf8               getAngleAdjustment
+  #365 = Utf8               reset
+  #366 = Utf8               getRawGyroX
+  #367 = Utf8               getRawGyroY
+  #368 = Utf8               getRawGyroZ
+  #369 = Utf8               getRawAccelX
+  #370 = Utf8               getRawAccelY
+  #371 = Utf8               getRawAccelZ
+  #372 = Utf8               getRawMagX
+  #373 = Utf8               getRawMagY
+  #374 = Utf8               getRawMagZ
+  #375 = Utf8               getPressure
+  #376 = Utf8               getTempC
+  #377 = Utf8               getBoardYawAxis
+  #378 = Utf8               getFirmwareVersion
+  #379 = Utf8               getActualUpdateRate
+  #380 = Utf8               getRequestedUpdateRate
+  #381 = Utf8               enableLogging
+  #382 = Utf8               enable
+  #383 = Utf8               enableBoardlevelYawReset
+  #384 = Utf8               isBoardlevelYawResetEnabled
+  #385 = Utf8               getGyroFullScaleRangeDPS
+  #386 = Utf8               getAccelFullScaleRangeG
+  #387 = Utf8               close
+  #388 = Utf8               initSendable
+  #389 = Utf8               (Ledu/wpi/first/networktables/NTSendableBuilder;)V
+  #390 = Utf8               builder
+  #391 = Utf8               Ledu/wpi/first/networktables/NTSendableBuilder;
+  #392 = Utf8               SourceFile
+  #393 = Utf8               AHRS.java
+  #394 = Utf8               NestMembers
+  #395 = Class              #396          // com/studica/frc/AHRS$BoardYawAxis
+  #396 = Utf8               com/studica/frc/AHRS$BoardYawAxis
+  #397 = Class              #398          // com/studica/frc/AHRS$BoardAxis
+  #398 = Utf8               com/studica/frc/AHRS$BoardAxis
+  #399 = Utf8               BootstrapMethods
+  #400 = MethodHandle       6:#401        // REF_invokeStatic java/lang/invoke/LambdaMetafactory.metafactory:(Ljava/lang/invoke/MethodHandles$Lookup;Ljava/lang/String;Ljava/lang/invoke/MethodType;Ljava/lang/invoke/MethodType;Ljava/lang/invoke/MethodHandle;Ljava/lang/invoke/MethodType;)Ljava/lang/invoke/CallSite;
+  #401 = Methodref          #402.#403     // java/lang/invoke/LambdaMetafactory.metafactory:(Ljava/lang/invoke/MethodHandles$Lookup;Ljava/lang/String;Ljava/lang/invoke/MethodType;Ljava/lang/invoke/MethodType;Ljava/lang/invoke/MethodHandle;Ljava/lang/invoke/MethodType;)Ljava/lang/invoke/CallSite;
+  #402 = Class              #404          // java/lang/invoke/LambdaMetafactory
+  #403 = NameAndType        #405:#406     // metafactory:(Ljava/lang/invoke/MethodHandles$Lookup;Ljava/lang/String;Ljava/lang/invoke/MethodType;Ljava/lang/invoke/MethodType;Ljava/lang/invoke/MethodHandle;Ljava/lang/invoke/MethodType;)Ljava/lang/invoke/CallSite;
+  #404 = Utf8               java/lang/invoke/LambdaMetafactory
+  #405 = Utf8               metafactory
+  #406 = Utf8               (Ljava/lang/invoke/MethodHandles$Lookup;Ljava/lang/String;Ljava/lang/invoke/MethodType;Ljava/lang/invoke/MethodType;Ljava/lang/invoke/MethodHandle;Ljava/lang/invoke/MethodType;)Ljava/lang/invoke/CallSite;
+  #407 = MethodType         #77           //  ()D
+  #408 = MethodHandle       5:#409        // REF_invokeVirtual com/studica/frc/AHRS.getYaw:()F
+  #409 = Methodref          #8.#410       // com/studica/frc/AHRS.getYaw:()F
+  #410 = NameAndType        #309:#61      // getYaw:()F
+  #411 = Utf8               InnerClasses
+  #412 = Utf8               NavXComType
+  #413 = Utf8               NavXUpdateRate
+  #414 = Utf8               BoardYawAxis
+  #415 = Utf8               BoardAxis
+  #416 = Class              #417          // java/lang/invoke/MethodHandles$Lookup
+  #417 = Utf8               java/lang/invoke/MethodHandles$Lookup
+  #418 = Class              #419          // java/lang/invoke/MethodHandles
+  #419 = Utf8               java/lang/invoke/MethodHandles
+  #420 = Utf8               Lookup
+{
+  public com.studica.frc.AHRS(com.studica.frc.AHRS$NavXComType);
+    descriptor: (Lcom/studica/frc/AHRS$NavXComType;)V
+    flags: (0x0001) ACC_PUBLIC
+    Code:
+      stack=3, locals=2, args_size=2
+         0: aload_0
+         1: invokespecial #1                  // Method java/lang/Object."<init>":()V
+         4: aload_0
+         5: iconst_0
+         6: putfield      #7                  // Field port:I
+         9: aload_1
+        10: invokestatic  #13                 // Method com/studica/frc/jni/AHRSJNI.c_AHRS_create:(Lcom/studica/frc/AHRS$NavXComType;)V
+        13: aload_1
+        14: invokevirtual #19                 // Method com/studica/frc/AHRS$NavXComType.getValue:()I
+        17: tableswitch   { // 0 to 4
+                       0: 52
+                       1: 67
+                       2: 82
+                       3: 97
+                       4: 112
+                 default: 127
+            }
+        52: aload_0
+        53: ldc           #25                 // String navX-Sensor
+        55: iconst_4
+        56: invokestatic  #27                 // Method edu/wpi/first/util/sendable/SendableRegistry.addLW:(Ledu/wpi/first/util/sendable/Sendable;Ljava/lang/String;I)V
+        59: aload_0
+        60: iconst_4
+        61: putfield      #7                  // Field port:I
+        64: goto          127
+        67: aload_0
+        68: ldc           #25                 // String navX-Sensor
+        70: iconst_1
+        71: invokestatic  #27                 // Method edu/wpi/first/util/sendable/SendableRegistry.addLW:(Ledu/wpi/first/util/sendable/Sendable;Ljava/lang/String;I)V
+        74: aload_0
+        75: iconst_1
+        76: putfield      #7                  // Field port:I
+        79: goto          127
+        82: aload_0
+        83: ldc           #25                 // String navX-Sensor
+        85: iconst_2
+        86: invokestatic  #27                 // Method edu/wpi/first/util/sendable/SendableRegistry.addLW:(Ledu/wpi/first/util/sendable/Sendable;Ljava/lang/String;I)V
+        89: aload_0
+        90: iconst_2
+        91: putfield      #7                  // Field port:I
+        94: goto          127
+        97: aload_0
+        98: ldc           #25                 // String navX-Sensor
+       100: iconst_3
+       101: invokestatic  #27                 // Method edu/wpi/first/util/sendable/SendableRegistry.addLW:(Ledu/wpi/first/util/sendable/Sendable;Ljava/lang/String;I)V
+       104: aload_0
+       105: iconst_3
+       106: putfield      #7                  // Field port:I
+       109: goto          127
+       112: aload_0
+       113: ldc           #25                 // String navX-Sensor
+       115: iconst_1
+       116: invokestatic  #27                 // Method edu/wpi/first/util/sendable/SendableRegistry.addLW:(Ledu/wpi/first/util/sendable/Sendable;Ljava/lang/String;I)V
+       119: aload_0
+       120: iconst_1
+       121: putfield      #7                  // Field port:I
+       124: goto          127
+       127: return
+      LineNumberTable:
+        line 124: 0
+        line 33: 4
+        line 125: 9
+        line 126: 13
+        line 128: 52
+        line 129: 59
+        line 130: 64
+        line 132: 67
+        line 133: 74
+        line 134: 79
+        line 136: 82
+        line 137: 89
+        line 138: 94
+        line 140: 97
+        line 141: 104
+        line 142: 109
+        line 144: 112
+        line 145: 119
+        line 146: 124
+        line 150: 127
+      LocalVariableTable:
+        Start  Length  Slot  Name   Signature
+            0     128     0  this   Lcom/studica/frc/AHRS;
+            0     128     1 comType   Lcom/studica/frc/AHRS$NavXComType;
+      StackMapTable: number_of_entries = 6
+        frame_type = 255 /* full_frame */
+          offset_delta = 52
+          locals = [ class com/studica/frc/AHRS, class com/studica/frc/AHRS$NavXComType ]
+          stack = []
+        frame_type = 14 /* same */
+        frame_type = 14 /* same */
+        frame_type = 14 /* same */
+        frame_type = 14 /* same */
+        frame_type = 14 /* same */
+
+  public com.studica.frc.AHRS(com.studica.frc.AHRS$NavXComType, com.studica.frc.AHRS$NavXUpdateRate);
+    descriptor: (Lcom/studica/frc/AHRS$NavXComType;Lcom/studica/frc/AHRS$NavXUpdateRate;)V
+    flags: (0x0001) ACC_PUBLIC
+    Code:
+      stack=3, locals=3, args_size=3
+         0: aload_0
+         1: invokespecial #1                  // Method java/lang/Object."<init>":()V
+         4: aload_0
+         5: iconst_0
+         6: putfield      #7                  // Field port:I
+         9: aload_1
+        10: aload_2
+        11: invokestatic  #33                 // Method com/studica/frc/jni/AHRSJNI.c_AHRS_create_rate:(Lcom/studica/frc/AHRS$NavXComType;Lcom/studica/frc/AHRS$NavXUpdateRate;)V
+        14: aload_1
+        15: invokevirtual #19                 // Method com/studica/frc/AHRS$NavXComType.getValue:()I
+        18: tableswitch   { // 0 to 4
+                       0: 52
+                       1: 67
+                       2: 82
+                       3: 97
+                       4: 112
+                 default: 127
+            }
+        52: aload_0
+        53: ldc           #25                 // String navX-Sensor
+        55: iconst_4
+        56: invokestatic  #27                 // Method edu/wpi/first/util/sendable/SendableRegistry.addLW:(Ledu/wpi/first/util/sendable/Sendable;Ljava/lang/String;I)V
+        59: aload_0
+        60: iconst_4
+        61: putfield      #7                  // Field port:I
+        64: goto          127
+        67: aload_0
+        68: ldc           #25                 // String navX-Sensor
+        70: iconst_1
+        71: invokestatic  #27                 // Method edu/wpi/first/util/sendable/SendableRegistry.addLW:(Ledu/wpi/first/util/sendable/Sendable;Ljava/lang/String;I)V
+        74: aload_0
+        75: iconst_1
+        76: putfield      #7                  // Field port:I
+        79: goto          127
+        82: aload_0
+        83: ldc           #25                 // String navX-Sensor
+        85: iconst_2
+        86: invokestatic  #27                 // Method edu/wpi/first/util/sendable/SendableRegistry.addLW:(Ledu/wpi/first/util/sendable/Sendable;Ljava/lang/String;I)V
+        89: aload_0
+        90: iconst_2
+        91: putfield      #7                  // Field port:I
+        94: goto          127
+        97: aload_0
+        98: ldc           #25                 // String navX-Sensor
+       100: iconst_3
+       101: invokestatic  #27                 // Method edu/wpi/first/util/sendable/SendableRegistry.addLW:(Ledu/wpi/first/util/sendable/Sendable;Ljava/lang/String;I)V
+       104: aload_0
+       105: iconst_3
+       106: putfield      #7                  // Field port:I
+       109: goto          127
+       112: aload_0
+       113: ldc           #25                 // String navX-Sensor
+       115: iconst_1
+       116: invokestatic  #27                 // Method edu/wpi/first/util/sendable/SendableRegistry.addLW:(Ledu/wpi/first/util/sendable/Sendable;Ljava/lang/String;I)V
+       119: aload_0
+       120: iconst_1
+       121: putfield      #7                  // Field port:I
+       124: goto          127
+       127: return
+      LineNumberTable:
+        line 164: 0
+        line 33: 4
+        line 165: 9
+        line 166: 14
+        line 168: 52
+        line 169: 59
+        line 170: 64
+        line 172: 67
+        line 173: 74
+        line 174: 79
+        line 176: 82
+        line 177: 89
+        line 178: 94
+        line 180: 97
+        line 181: 104
+        line 182: 109
+        line 184: 112
+        line 185: 119
+        line 186: 124
+        line 190: 127
+      LocalVariableTable:
+        Start  Length  Slot  Name   Signature
+            0     128     0  this   Lcom/studica/frc/AHRS;
+            0     128     1 comType   Lcom/studica/frc/AHRS$NavXComType;
+            0     128     2 updateRate   Lcom/studica/frc/AHRS$NavXUpdateRate;
+      StackMapTable: number_of_entries = 6
+        frame_type = 255 /* full_frame */
+          offset_delta = 52
+          locals = [ class com/studica/frc/AHRS, class com/studica/frc/AHRS$NavXComType, class com/studica/frc/AHRS$NavXUpdateRate ]
+          stack = []
+        frame_type = 14 /* same */
+        frame_type = 14 /* same */
+        frame_type = 14 /* same */
+        frame_type = 14 /* same */
+        frame_type = 14 /* same */
+
+  public com.studica.frc.AHRS(com.studica.frc.AHRS$NavXComType, int);
+    descriptor: (Lcom/studica/frc/AHRS$NavXComType;I)V
+    flags: (0x0001) ACC_PUBLIC
+    Code:
+      stack=3, locals=3, args_size=3
+         0: aload_0
+         1: invokespecial #1                  // Method java/lang/Object."<init>":()V
+         4: aload_0
+         5: iconst_0
+         6: putfield      #7                  // Field port:I
+         9: iload_2
+        10: iconst_4
+        11: if_icmplt     21
+        14: iload_2
+        15: sipush        200
+        18: if_icmple     30
+        21: getstatic     #37                 // Field java/lang/System.out:Ljava/io/PrintStream;
+        24: ldc           #43                 // String Navx: Custom Rate in AHRS constructor set out of bounds.
+        26: invokevirtual #45                 // Method java/io/PrintStream.println:(Ljava/lang/String;)V
+        29: return
+        30: aload_1
+        31: iload_2
+        32: invokestatic  #51                 // Method com/studica/frc/jni/AHRSJNI.c_AHRS_create_custom:(Lcom/studica/frc/AHRS$NavXComType;I)V
+        35: aload_1
+        36: invokevirtual #19                 // Method com/studica/frc/AHRS$NavXComType.getValue:()I
+        39: tableswitch   { // 0 to 4
+                       0: 72
+                       1: 82
+                       2: 92
+                       3: 102
+                       4: 112
+                 default: 122
+            }
+        72: aload_0
+        73: ldc           #25                 // String navX-Sensor
+        75: iconst_4
+        76: invokestatic  #27                 // Method edu/wpi/first/util/sendable/SendableRegistry.addLW:(Ledu/wpi/first/util/sendable/Sendable;Ljava/lang/String;I)V
+        79: goto          122
+        82: aload_0
+        83: ldc           #25                 // String navX-Sensor
+        85: iconst_1
+        86: invokestatic  #27                 // Method edu/wpi/first/util/sendable/SendableRegistry.addLW:(Ledu/wpi/first/util/sendable/Sendable;Ljava/lang/String;I)V
+        89: goto          122
+        92: aload_0
+        93: ldc           #25                 // String navX-Sensor
+        95: iconst_2
+        96: invokestatic  #27                 // Method edu/wpi/first/util/sendable/SendableRegistry.addLW:(Ledu/wpi/first/util/sendable/Sendable;Ljava/lang/String;I)V
+        99: goto          122
+       102: aload_0
+       103: ldc           #25                 // String navX-Sensor
+       105: iconst_3
+       106: invokestatic  #27                 // Method edu/wpi/first/util/sendable/SendableRegistry.addLW:(Ledu/wpi/first/util/sendable/Sendable;Ljava/lang/String;I)V
+       109: goto          122
+       112: aload_0
+       113: ldc           #25                 // String navX-Sensor
+       115: iconst_1
+       116: invokestatic  #27                 // Method edu/wpi/first/util/sendable/SendableRegistry.addLW:(Ledu/wpi/first/util/sendable/Sendable;Ljava/lang/String;I)V
+       119: goto          122
+       122: return
+      LineNumberTable:
+        line 207: 0
+        line 33: 4
+        line 208: 9
+        line 209: 21
+        line 210: 29
+        line 213: 30
+        line 214: 35
+        line 216: 72
+        line 217: 79
+        line 219: 82
+        line 220: 89
+        line 222: 92
+        line 223: 99
+        line 225: 102
+        line 226: 109
+        line 228: 112
+        line 229: 119
+        line 234: 122
+      LocalVariableTable:
+        Start  Length  Slot  Name   Signature
+            0     123     0  this   Lcom/studica/frc/AHRS;
+            0     123     1 comType   Lcom/studica/frc/AHRS$NavXComType;
+            0     123     2 customRateHz   I
+      StackMapTable: number_of_entries = 8
+        frame_type = 255 /* full_frame */
+          offset_delta = 21
+          locals = [ class com/studica/frc/AHRS, class com/studica/frc/AHRS$NavXComType, int ]
+          stack = []
+        frame_type = 8 /* same */
+        frame_type = 41 /* same */
+        frame_type = 9 /* same */
+        frame_type = 9 /* same */
+        frame_type = 9 /* same */
+        frame_type = 9 /* same */
+        frame_type = 9 /* same */
+
+  public int getPort();
+    descriptor: ()I
+    flags: (0x0001) ACC_PUBLIC
+    Code:
+      stack=1, locals=1, args_size=1
+         0: aload_0
+         1: getfield      #7                  // Field port:I
+         4: ireturn
+      LineNumberTable:
+        line 250: 0
+      LocalVariableTable:
+        Start  Length  Slot  Name   Signature
+            0       5     0  this   Lcom/studica/frc/AHRS;
+
+  public float getPitch();
+    descriptor: ()F
+    flags: (0x0001) ACC_PUBLIC
+    Code:
+      stack=1, locals=1, args_size=1
+         0: invokestatic  #58                 // Method com/studica/frc/jni/AHRSJNI.c_AHRS_GetPitch:()F
+         3: freturn
+      LineNumberTable:
+        line 260: 0
+      LocalVariableTable:
+        Start  Length  Slot  Name   Signature
+            0       4     0  this   Lcom/studica/frc/AHRS;
+
+  public float getRoll();
+    descriptor: ()F
+    flags: (0x0001) ACC_PUBLIC
+    Code:
+      stack=1, locals=1, args_size=1
+         0: invokestatic  #62                 // Method com/studica/frc/jni/AHRSJNI.c_AHRS_GetRoll:()F
+         3: freturn
+      LineNumberTable:
+        line 270: 0
+      LocalVariableTable:
+        Start  Length  Slot  Name   Signature
+            0       4     0  this   Lcom/studica/frc/AHRS;
+
+  public float getYaw();
+    descriptor: ()F
+    flags: (0x0001) ACC_PUBLIC
+    Code:
+      stack=1, locals=1, args_size=1
+         0: invokestatic  #65                 // Method com/studica/frc/jni/AHRSJNI.c_AHRS_GetYaw:()F
+         3: freturn
+      LineNumberTable:
+        line 284: 0
+      LocalVariableTable:
+        Start  Length  Slot  Name   Signature
+            0       4     0  this   Lcom/studica/frc/AHRS;
+
+  public float getCompassHeading();
+    descriptor: ()F
+    flags: (0x0001) ACC_PUBLIC
+    Code:
+      stack=1, locals=1, args_size=1
+         0: invokestatic  #68                 // Method com/studica/frc/jni/AHRSJNI.c_AHRS_GetCompassHeading:()F
+         3: freturn
+      LineNumberTable:
+        line 302: 0
+      LocalVariableTable:
+        Start  Length  Slot  Name   Signature
+            0       4     0  this   Lcom/studica/frc/AHRS;
+
+  public void zeroYaw();
+    descriptor: ()V
+    flags: (0x0001) ACC_PUBLIC
+    Code:
+      stack=0, locals=1, args_size=1
+         0: invokestatic  #71                 // Method com/studica/frc/jni/AHRSJNI.c_AHRS_ZeroYaw:()V
+         3: return
+      LineNumberTable:
+        line 318: 0
+        line 319: 3
+      LocalVariableTable:
+        Start  Length  Slot  Name   Signature
+            0       4     0  this   Lcom/studica/frc/AHRS;
+
+  public edu.wpi.first.math.geometry.Rotation2d getRotation2d();
+    descriptor: ()Ledu/wpi/first/math/geometry/Rotation2d;
+    flags: (0x0001) ACC_PUBLIC
+    Code:
+      stack=2, locals=1, args_size=1
+         0: invokestatic  #74                 // Method com/studica/frc/jni/AHRSJNI.c_AHRS_GetAngle:()D
+         3: dneg
+         4: invokestatic  #78                 // Method edu/wpi/first/math/geometry/Rotation2d.fromDegrees:(D)Ledu/wpi/first/math/geometry/Rotation2d;
+         7: areturn
+      LineNumberTable:
+        line 336: 0
+      LocalVariableTable:
+        Start  Length  Slot  Name   Signature
+            0       8     0  this   Lcom/studica/frc/AHRS;
+
+  public edu.wpi.first.math.geometry.Rotation3d getRotation3d();
+    descriptor: ()Ledu/wpi/first/math/geometry/Rotation3d;
+    flags: (0x0001) ACC_PUBLIC
+    Code:
+      stack=10, locals=2, args_size=1
+         0: new           #84                 // class edu/wpi/first/math/geometry/Quaternion
+         3: dup
+         4: invokestatic  #86                 // Method com/studica/frc/jni/AHRSJNI.c_AHRS_GetQuaternionW:()F
+         7: f2d
+         8: invokestatic  #89                 // Method com/studica/frc/jni/AHRSJNI.c_AHRS_GetQuaternionX:()F
+        11: f2d
+        12: invokestatic  #92                 // Method com/studica/frc/jni/AHRSJNI.c_AHRS_GetQuaternionY:()F
+        15: f2d
+        16: invokestatic  #95                 // Method com/studica/frc/jni/AHRSJNI.c_AHRS_GetQuaternionZ:()F
+        19: f2d
+        20: invokespecial #98                 // Method edu/wpi/first/math/geometry/Quaternion."<init>":(DDDD)V
+        23: astore_1
+        24: new           #101                // class edu/wpi/first/math/geometry/Rotation3d
+        27: dup
+        28: aload_1
+        29: invokespecial #103                // Method edu/wpi/first/math/geometry/Rotation3d."<init>":(Ledu/wpi/first/math/geometry/Quaternion;)V
+        32: areturn
+      LineNumberTable:
+        line 347: 0
+        line 348: 24
+      LocalVariableTable:
+        Start  Length  Slot  Name   Signature
+            0      33     0  this   Lcom/studica/frc/AHRS;
+           24       9     1     q   Ledu/wpi/first/math/geometry/Quaternion;
+
+  public boolean isCalibrating();
+    descriptor: ()Z
+    flags: (0x0001) ACC_PUBLIC
+    Code:
+      stack=1, locals=1, args_size=1
+         0: invokestatic  #106                // Method com/studica/frc/jni/AHRSJNI.c_AHRS_IsCalibrating:()Z
+         3: ireturn
+      LineNumberTable:
+        line 368: 0
+      LocalVariableTable:
+        Start  Length  Slot  Name   Signature
+            0       4     0  this   Lcom/studica/frc/AHRS;
+
+  public boolean isConnected();
+    descriptor: ()Z
+    flags: (0x0001) ACC_PUBLIC
+    Code:
+      stack=1, locals=1, args_size=1
+         0: invokestatic  #110                // Method com/studica/frc/jni/AHRSJNI.c_AHRS_IsConnected:()Z
+         3: ireturn
+      LineNumberTable:
+        line 380: 0
+      LocalVariableTable:
+        Start  Length  Slot  Name   Signature
+            0       4     0  this   Lcom/studica/frc/AHRS;
+
+  public double getByteCount();
+    descriptor: ()D
+    flags: (0x0001) ACC_PUBLIC
+    Code:
+      stack=2, locals=1, args_size=1
+         0: invokestatic  #113                // Method com/studica/frc/jni/AHRSJNI.c_AHRS_GetByteCount:()D
+         3: dreturn
+      LineNumberTable:
+        line 394: 0
+      LocalVariableTable:
+        Start  Length  Slot  Name   Signature
+            0       4     0  this   Lcom/studica/frc/AHRS;
+
+  public double getUpdateCount();
+    descriptor: ()D
+    flags: (0x0001) ACC_PUBLIC
+    Code:
+      stack=2, locals=1, args_size=1
+         0: invokestatic  #116                // Method com/studica/frc/jni/AHRSJNI.c_AHRS_GetUpdateCount:()D
+         3: dreturn
+      LineNumberTable:
+        line 404: 0
+      LocalVariableTable:
+        Start  Length  Slot  Name   Signature
+            0       4     0  this   Lcom/studica/frc/AHRS;
+
+  public long getLastSensorTimestamp();
+    descriptor: ()J
+    flags: (0x0001) ACC_PUBLIC
+    Code:
+      stack=2, locals=1, args_size=1
+         0: invokestatic  #119                // Method com/studica/frc/jni/AHRSJNI.c_AHRS_GetLastSensorTimestamp:()J
+         3: lreturn
+      LineNumberTable:
+        line 417: 0
+      LocalVariableTable:
+        Start  Length  Slot  Name   Signature
+            0       4     0  this   Lcom/studica/frc/AHRS;
+
+  public float getWorldLinearAccelX();
+    descriptor: ()F
+    flags: (0x0001) ACC_PUBLIC
+    Code:
+      stack=1, locals=1, args_size=1
+         0: invokestatic  #123                // Method com/studica/frc/jni/AHRSJNI.c_AHRS_GetWorldLinearAccelX:()F
+         3: freturn
+      LineNumberTable:
+        line 432: 0
+      LocalVariableTable:
+        Start  Length  Slot  Name   Signature
+            0       4     0  this   Lcom/studica/frc/AHRS;
+
+  public float getWorldLinearAccelY();
+    descriptor: ()F
+    flags: (0x0001) ACC_PUBLIC
+    Code:
+      stack=1, locals=1, args_size=1
+         0: invokestatic  #126                // Method com/studica/frc/jni/AHRSJNI.c_AHRS_GetWorldLinearAccelY:()F
+         3: freturn
+      LineNumberTable:
+        line 447: 0
+      LocalVariableTable:
+        Start  Length  Slot  Name   Signature
+            0       4     0  this   Lcom/studica/frc/AHRS;
+
+  public float getWorldLinearAccelZ();
+    descriptor: ()F
+    flags: (0x0001) ACC_PUBLIC
+    Code:
+      stack=1, locals=1, args_size=1
+         0: invokestatic  #129                // Method com/studica/frc/jni/AHRSJNI.c_AHRS_GetWorldLinearAccelZ:()F
+         3: freturn
+      LineNumberTable:
+        line 462: 0
+      LocalVariableTable:
+        Start  Length  Slot  Name   Signature
+            0       4     0  this   Lcom/studica/frc/AHRS;
+
+  public boolean isMoving();
+    descriptor: ()Z
+    flags: (0x0001) ACC_PUBLIC
+    Code:
+      stack=1, locals=1, args_size=1
+         0: invokestatic  #132                // Method com/studica/frc/jni/AHRSJNI.c_AHRS_IsMoving:()Z
+         3: ireturn
+      LineNumberTable:
+        line 474: 0
+      LocalVariableTable:
+        Start  Length  Slot  Name   Signature
+            0       4     0  this   Lcom/studica/frc/AHRS;
+
+  public boolean isRotating();
+    descriptor: ()Z
+    flags: (0x0001) ACC_PUBLIC
+    Code:
+      stack=1, locals=1, args_size=1
+         0: invokestatic  #135                // Method com/studica/frc/jni/AHRSJNI.c_AHRS_IsRotating:()Z
+         3: ireturn
+      LineNumberTable:
+        line 489: 0
+      LocalVariableTable:
+        Start  Length  Slot  Name   Signature
+            0       4     0  this   Lcom/studica/frc/AHRS;
+
+  public float getBarometricPressure();
+    descriptor: ()F
+    flags: (0x0001) ACC_PUBLIC
+    Code:
+      stack=1, locals=1, args_size=1
+         0: invokestatic  #138                // Method com/studica/frc/jni/AHRSJNI.c_AHRS_GetBarometricPressure:()F
+         3: freturn
+      LineNumberTable:
+        line 501: 0
+      LocalVariableTable:
+        Start  Length  Slot  Name   Signature
+            0       4     0  this   Lcom/studica/frc/AHRS;
+
+  public float getAltitude();
+    descriptor: ()F
+    flags: (0x0001) ACC_PUBLIC
+    Code:
+      stack=1, locals=1, args_size=1
+         0: invokestatic  #141                // Method com/studica/frc/jni/AHRSJNI.c_AHRS_GetAltitude:()F
+         3: freturn
+      LineNumberTable:
+        line 517: 0
+      LocalVariableTable:
+        Start  Length  Slot  Name   Signature
+            0       4     0  this   Lcom/studica/frc/AHRS;
+
+  public boolean isAltitudeValid();
+    descriptor: ()Z
+    flags: (0x0001) ACC_PUBLIC
+    Code:
+      stack=1, locals=1, args_size=1
+         0: invokestatic  #144                // Method com/studica/frc/jni/AHRSJNI.c_AHRS_IsAltitudeValid:()Z
+         3: ireturn
+      LineNumberTable:
+        line 531: 0
+      LocalVariableTable:
+        Start  Length  Slot  Name   Signature
+            0       4     0  this   Lcom/studica/frc/AHRS;
+
+  public float getFusedHeading();
+    descriptor: ()F
+    flags: (0x0001) ACC_PUBLIC
+    Code:
+      stack=1, locals=1, args_size=1
+         0: invokestatic  #147                // Method com/studica/frc/jni/AHRSJNI.c_AHRS_GetFusedHeading:()F
+         3: freturn
+      LineNumberTable:
+        line 550: 0
+      LocalVariableTable:
+        Start  Length  Slot  Name   Signature
+            0       4     0  this   Lcom/studica/frc/AHRS;
+
+  public boolean isMagneticDisturbance();
+    descriptor: ()Z
+    flags: (0x0001) ACC_PUBLIC
+    Code:
+      stack=1, locals=1, args_size=1
+         0: invokestatic  #150                // Method com/studica/frc/jni/AHRSJNI.c_AHRS_IsMagneticDisturbance:()Z
+         3: ireturn
+      LineNumberTable:
+        line 563: 0
+      LocalVariableTable:
+        Start  Length  Slot  Name   Signature
+            0       4     0  this   Lcom/studica/frc/AHRS;
+
+  public boolean isMagnetometerCalibrated();
+    descriptor: ()Z
+    flags: (0x0001) ACC_PUBLIC
+    Code:
+      stack=1, locals=1, args_size=1
+         0: invokestatic  #153                // Method com/studica/frc/jni/AHRSJNI.c_AHRS_IsMagnetometerCalibrated:()Z
+         3: ireturn
+      LineNumberTable:
+        line 578: 0
+      LocalVariableTable:
+        Start  Length  Slot  Name   Signature
+            0       4     0  this   Lcom/studica/frc/AHRS;
+
+  public float getQuaternionW();
+    descriptor: ()F
+    flags: (0x0001) ACC_PUBLIC
+    Code:
+      stack=1, locals=1, args_size=1
+         0: invokestatic  #86                 // Method com/studica/frc/jni/AHRSJNI.c_AHRS_GetQuaternionW:()F
+         3: freturn
+      LineNumberTable:
+        line 594: 0
+      LocalVariableTable:
+        Start  Length  Slot  Name   Signature
+            0       4     0  this   Lcom/studica/frc/AHRS;
+
+  public float getQuaternionX();
+    descriptor: ()F
+    flags: (0x0001) ACC_PUBLIC
+    Code:
+      stack=1, locals=1, args_size=1
+         0: invokestatic  #89                 // Method com/studica/frc/jni/AHRSJNI.c_AHRS_GetQuaternionX:()F
+         3: freturn
+      LineNumberTable:
+        line 610: 0
+      LocalVariableTable:
+        Start  Length  Slot  Name   Signature
+            0       4     0  this   Lcom/studica/frc/AHRS;
+
+  public float getQuaternionY();
+    descriptor: ()F
+    flags: (0x0001) ACC_PUBLIC
+    Code:
+      stack=1, locals=1, args_size=1
+         0: invokestatic  #92                 // Method com/studica/frc/jni/AHRSJNI.c_AHRS_GetQuaternionY:()F
+         3: freturn
+      LineNumberTable:
+        line 629: 0
+      LocalVariableTable:
+        Start  Length  Slot  Name   Signature
+            0       4     0  this   Lcom/studica/frc/AHRS;
+
+  public float getQuaternionZ();
+    descriptor: ()F
+    flags: (0x0001) ACC_PUBLIC
+    Code:
+      stack=1, locals=1, args_size=1
+         0: invokestatic  #95                 // Method com/studica/frc/jni/AHRSJNI.c_AHRS_GetQuaternionZ:()F
+         3: freturn
+      LineNumberTable:
+        line 648: 0
+      LocalVariableTable:
+        Start  Length  Slot  Name   Signature
+            0       4     0  this   Lcom/studica/frc/AHRS;
+
+  public void resetDisplacement();
+    descriptor: ()V
+    flags: (0x0001) ACC_PUBLIC
+    Code:
+      stack=0, locals=1, args_size=1
+         0: invokestatic  #156                // Method com/studica/frc/jni/AHRSJNI.c_AHRS_ResetDisplacement:()V
+         3: return
+      LineNumberTable:
+        line 656: 0
+        line 657: 3
+      LocalVariableTable:
+        Start  Length  Slot  Name   Signature
+            0       4     0  this   Lcom/studica/frc/AHRS;
+
+  public void updateDisplacement(float, float, int, boolean);
+    descriptor: (FFIZ)V
+    flags: (0x0001) ACC_PUBLIC
+    Code:
+      stack=4, locals=5, args_size=5
+         0: fload_1
+         1: fload_2
+         2: iload_3
+         3: iload         4
+         5: invokestatic  #159                // Method com/studica/frc/jni/AHRSJNI.c_AHRS_UpdateDisplacement:(FFIZ)V
+         8: return
+      LineNumberTable:
+        line 670: 0
+        line 671: 8
+      LocalVariableTable:
+        Start  Length  Slot  Name   Signature
+            0       9     0  this   Lcom/studica/frc/AHRS;
+            0       9     1 accelXG   F
+            0       9     2 accelYG   F
+            0       9     3 updateRateHz   I
+            0       9     4 isMoving   Z
+
+  public void configureVelocity(boolean, boolean, boolean, boolean);
+    descriptor: (ZZZZ)V
+    flags: (0x0001) ACC_PUBLIC
+    Code:
+      stack=4, locals=5, args_size=5
+         0: iload_1
+         1: iload_2
+         2: iload_3
+         3: iload         4
+         5: invokestatic  #163                // Method com/studica/frc/jni/AHRSJNI.c_AHRS_ConfigureVelocity:(ZZZZ)V
+         8: return
+      LineNumberTable:
+        line 683: 0
+        line 684: 8
+      LocalVariableTable:
+        Start  Length  Slot  Name   Signature
+            0       9     0  this   Lcom/studica/frc/AHRS;
+            0       9     1 swapAxes   Z
+            0       9     2 invertX   Z
+            0       9     3 invertY   Z
+            0       9     4 invertZ   Z
+
+  public float getVelocityX();
+    descriptor: ()F
+    flags: (0x0001) ACC_PUBLIC
+    Code:
+      stack=1, locals=1, args_size=1
+         0: invokestatic  #167                // Method com/studica/frc/jni/AHRSJNI.c_AHRS_GetVelocityX:()F
+         3: freturn
+      LineNumberTable:
+        line 695: 0
+      LocalVariableTable:
+        Start  Length  Slot  Name   Signature
+            0       4     0  this   Lcom/studica/frc/AHRS;
+
+  public float getVelocityY();
+    descriptor: ()F
+    flags: (0x0001) ACC_PUBLIC
+    Code:
+      stack=1, locals=1, args_size=1
+         0: invokestatic  #170                // Method com/studica/frc/jni/AHRSJNI.c_AHRS_GetVelocityY:()F
+         3: freturn
+      LineNumberTable:
+        line 707: 0
+      LocalVariableTable:
+        Start  Length  Slot  Name   Signature
+            0       4     0  this   Lcom/studica/frc/AHRS;
+
+  public float getVelocityZ();
+    descriptor: ()F
+    flags: (0x0001) ACC_PUBLIC
+    Code:
+      stack=1, locals=1, args_size=1
+         0: invokestatic  #173                // Method com/studica/frc/jni/AHRSJNI.c_AHRS_GetVelocityZ:()F
+         3: freturn
+      LineNumberTable:
+        line 719: 0
+      LocalVariableTable:
+        Start  Length  Slot  Name   Signature
+            0       4     0  this   Lcom/studica/frc/AHRS;
+
+  public float getDisplacementX();
+    descriptor: ()F
+    flags: (0x0001) ACC_PUBLIC
+    Code:
+      stack=1, locals=1, args_size=1
+         0: invokestatic  #176                // Method com/studica/frc/jni/AHRSJNI.c_AHRS_GetDisplacementX:()F
+         3: freturn
+      LineNumberTable:
+        line 733: 0
+      LocalVariableTable:
+        Start  Length  Slot  Name   Signature
+            0       4     0  this   Lcom/studica/frc/AHRS;
+
+  public float getDisplacementY();
+    descriptor: ()F
+    flags: (0x0001) ACC_PUBLIC
+    Code:
+      stack=1, locals=1, args_size=1
+         0: invokestatic  #179                // Method com/studica/frc/jni/AHRSJNI.c_AHRS_GetDisplacementY:()F
+         3: freturn
+      LineNumberTable:
+        line 747: 0
+      LocalVariableTable:
+        Start  Length  Slot  Name   Signature
+            0       4     0  this   Lcom/studica/frc/AHRS;
+
+  public float getDisplacementZ();
+    descriptor: ()F
+    flags: (0x0001) ACC_PUBLIC
+    Code:
+      stack=1, locals=1, args_size=1
+         0: invokestatic  #182                // Method com/studica/frc/jni/AHRSJNI.c_AHRS_GetDisplacementZ:()F
+         3: freturn
+      LineNumberTable:
+        line 761: 0
+      LocalVariableTable:
+        Start  Length  Slot  Name   Signature
+            0       4     0  this   Lcom/studica/frc/AHRS;
+
+  public float getRobotCentricVelocityX();
+    descriptor: ()F
+    flags: (0x0001) ACC_PUBLIC
+    Code:
+      stack=1, locals=1, args_size=1
+         0: invokestatic  #185                // Method com/studica/frc/jni/AHRSJNI.c_AHRS_GetRobotCentricVelocityX:()F
+         3: freturn
+      LineNumberTable:
+        line 774: 0
+      LocalVariableTable:
+        Start  Length  Slot  Name   Signature
+            0       4     0  this   Lcom/studica/frc/AHRS;
+
+  public float getRobotCentricVelocityY();
+    descriptor: ()F
+    flags: (0x0001) ACC_PUBLIC
+    Code:
+      stack=1, locals=1, args_size=1
+         0: invokestatic  #185                // Method com/studica/frc/jni/AHRSJNI.c_AHRS_GetRobotCentricVelocityX:()F
+         3: freturn
+      LineNumberTable:
+        line 787: 0
+      LocalVariableTable:
+        Start  Length  Slot  Name   Signature
+            0       4     0  this   Lcom/studica/frc/AHRS;
+
+  public float getRobotCentricVelocityZ();
+    descriptor: ()F
+    flags: (0x0001) ACC_PUBLIC
+    Code:
+      stack=1, locals=1, args_size=1
+         0: invokestatic  #185                // Method com/studica/frc/jni/AHRSJNI.c_AHRS_GetRobotCentricVelocityX:()F
+         3: freturn
+      LineNumberTable:
+        line 800: 0
+      LocalVariableTable:
+        Start  Length  Slot  Name   Signature
+            0       4     0  this   Lcom/studica/frc/AHRS;
+
+  public double getAngle();
+    descriptor: ()D
+    flags: (0x0001) ACC_PUBLIC
+    Code:
+      stack=2, locals=1, args_size=1
+         0: invokestatic  #74                 // Method com/studica/frc/jni/AHRSJNI.c_AHRS_GetAngle:()D
+         3: dreturn
+      LineNumberTable:
+        line 820: 0
+      LocalVariableTable:
+        Start  Length  Slot  Name   Signature
+            0       4     0  this   Lcom/studica/frc/AHRS;
+
+  public double getRate();
+    descriptor: ()D
+    flags: (0x0001) ACC_PUBLIC
+    Code:
+      stack=2, locals=1, args_size=1
+         0: invokestatic  #188                // Method com/studica/frc/jni/AHRSJNI.c_AHRS_GetRate:()D
+         3: dreturn
+      LineNumberTable:
+        line 831: 0
+      LocalVariableTable:
+        Start  Length  Slot  Name   Signature
+            0       4     0  this   Lcom/studica/frc/AHRS;
+
+  public void setAngleAdjustment(double);
+    descriptor: (D)V
+    flags: (0x0001) ACC_PUBLIC
+    Code:
+      stack=2, locals=3, args_size=2
+         0: dload_1
+         1: invokestatic  #191                // Method com/studica/frc/jni/AHRSJNI.c_AHRS_SetAngleAdjustment:(D)V
+         4: return
+      LineNumberTable:
+        line 850: 0
+        line 851: 4
+      LocalVariableTable:
+        Start  Length  Slot  Name   Signature
+            0       5     0  this   Lcom/studica/frc/AHRS;
+            0       5     1 angle   D
+
+  public double getAngleAdjustment();
+    descriptor: ()D
+    flags: (0x0001) ACC_PUBLIC
+    Code:
+      stack=2, locals=1, args_size=1
+         0: invokestatic  #195                // Method com/studica/frc/jni/AHRSJNI.c_AHRS_GetAngleAdjustment:()D
+         3: dreturn
+      LineNumberTable:
+        line 862: 0
+      LocalVariableTable:
+        Start  Length  Slot  Name   Signature
+            0       4     0  this   Lcom/studica/frc/AHRS;
+
+  public void reset();
+    descriptor: ()V
+    flags: (0x0001) ACC_PUBLIC
+    Code:
+      stack=0, locals=1, args_size=1
+         0: invokestatic  #198                // Method com/studica/frc/jni/AHRSJNI.c_AHRS_Reset:()V
+         3: return
+      LineNumberTable:
+        line 873: 0
+        line 874: 3
+      LocalVariableTable:
+        Start  Length  Slot  Name   Signature
+            0       4     0  this   Lcom/studica/frc/AHRS;
+
+  public float getRawGyroX();
+    descriptor: ()F
+    flags: (0x0001) ACC_PUBLIC
+    Code:
+      stack=1, locals=1, args_size=1
+         0: invokestatic  #201                // Method com/studica/frc/jni/AHRSJNI.c_AHRS_GetRawGyroX:()F
+         3: freturn
+      LineNumberTable:
+        line 885: 0
+      LocalVariableTable:
+        Start  Length  Slot  Name   Signature
+            0       4     0  this   Lcom/studica/frc/AHRS;
+
+  public float getRawGyroY();
+    descriptor: ()F
+    flags: (0x0001) ACC_PUBLIC
+    Code:
+      stack=1, locals=1, args_size=1
+         0: invokestatic  #204                // Method com/studica/frc/jni/AHRSJNI.c_AHRS_GetRawGyroY:()F
+         3: freturn
+      LineNumberTable:
+        line 897: 0
+      LocalVariableTable:
+        Start  Length  Slot  Name   Signature
+            0       4     0  this   Lcom/studica/frc/AHRS;
+
+  public float getRawGyroZ();
+    descriptor: ()F
+    flags: (0x0001) ACC_PUBLIC
+    Code:
+      stack=1, locals=1, args_size=1
+         0: invokestatic  #207                // Method com/studica/frc/jni/AHRSJNI.c_AHRS_GetRawGyroZ:()F
+         3: freturn
+      LineNumberTable:
+        line 909: 0
+      LocalVariableTable:
+        Start  Length  Slot  Name   Signature
+            0       4     0  this   Lcom/studica/frc/AHRS;
+
+  public float getRawAccelX();
+    descriptor: ()F
+    flags: (0x0001) ACC_PUBLIC
+    Code:
+      stack=1, locals=1, args_size=1
+         0: invokestatic  #210                // Method com/studica/frc/jni/AHRSJNI.c_AHRS_GetRawAccelX:()F
+         3: freturn
+      LineNumberTable:
+        line 922: 0
+      LocalVariableTable:
+        Start  Length  Slot  Name   Signature
+            0       4     0  this   Lcom/studica/frc/AHRS;
+
+  public float getRawAccelY();
+    descriptor: ()F
+    flags: (0x0001) ACC_PUBLIC
+    Code:
+      stack=1, locals=1, args_size=1
+         0: invokestatic  #213                // Method com/studica/frc/jni/AHRSJNI.c_AHRS_GetRawAccelY:()F
+         3: freturn
+      LineNumberTable:
+        line 935: 0
+      LocalVariableTable:
+        Start  Length  Slot  Name   Signature
+            0       4     0  this   Lcom/studica/frc/AHRS;
+
+  public float getRawAccelZ();
+    descriptor: ()F
+    flags: (0x0001) ACC_PUBLIC
+    Code:
+      stack=1, locals=1, args_size=1
+         0: invokestatic  #216                // Method com/studica/frc/jni/AHRSJNI.c_AHRS_GetRawAccelZ:()F
+         3: freturn
+      LineNumberTable:
+        line 948: 0
+      LocalVariableTable:
+        Start  Length  Slot  Name   Signature
+            0       4     0  this   Lcom/studica/frc/AHRS;
+
+  public float getRawMagX();
+    descriptor: ()F
+    flags: (0x0001) ACC_PUBLIC
+    Code:
+      stack=1, locals=1, args_size=1
+         0: invokestatic  #219                // Method com/studica/frc/jni/AHRSJNI.c_AHRS_GetRawMagX:()F
+         3: freturn
+      LineNumberTable:
+        line 961: 0
+      LocalVariableTable:
+        Start  Length  Slot  Name   Signature
+            0       4     0  this   Lcom/studica/frc/AHRS;
+
+  public float getRawMagY();
+    descriptor: ()F
+    flags: (0x0001) ACC_PUBLIC
+    Code:
+      stack=1, locals=1, args_size=1
+         0: invokestatic  #222                // Method com/studica/frc/jni/AHRSJNI.c_AHRS_GetRawMagY:()F
+         3: freturn
+      LineNumberTable:
+        line 974: 0
+      LocalVariableTable:
+        Start  Length  Slot  Name   Signature
+            0       4     0  this   Lcom/studica/frc/AHRS;
+
+  public float getRawMagZ();
+    descriptor: ()F
+    flags: (0x0001) ACC_PUBLIC
+    Code:
+      stack=1, locals=1, args_size=1
+         0: invokestatic  #225                // Method com/studica/frc/jni/AHRSJNI.c_AHRS_GetRawMagZ:()F
+         3: freturn
+      LineNumberTable:
+        line 987: 0
+      LocalVariableTable:
+        Start  Length  Slot  Name   Signature
+            0       4     0  this   Lcom/studica/frc/AHRS;
+
+  public float getPressure();
+    descriptor: ()F
+    flags: (0x0001) ACC_PUBLIC
+    Code:
+      stack=1, locals=1, args_size=1
+         0: invokestatic  #228                // Method com/studica/frc/jni/AHRSJNI.c_AHRS_GetPressure:()F
+         3: freturn
+      LineNumberTable:
+        line 998: 0
+      LocalVariableTable:
+        Start  Length  Slot  Name   Signature
+            0       4     0  this   Lcom/studica/frc/AHRS;
+
+  public float getTempC();
+    descriptor: ()F
+    flags: (0x0001) ACC_PUBLIC
+    Code:
+      stack=1, locals=1, args_size=1
+         0: invokestatic  #231                // Method com/studica/frc/jni/AHRSJNI.c_AHRS_GetTempC:()F
+         3: freturn
+      LineNumberTable:
+        line 1011: 0
+      LocalVariableTable:
+        Start  Length  Slot  Name   Signature
+            0       4     0  this   Lcom/studica/frc/AHRS;
+
+  public com.studica.frc.AHRS$BoardYawAxis getBoardYawAxis();
+    descriptor: ()Lcom/studica/frc/AHRS$BoardYawAxis;
+    flags: (0x0001) ACC_PUBLIC
+    Code:
+      stack=1, locals=1, args_size=1
+         0: invokestatic  #234                // Method com/studica/frc/jni/AHRSJNI.c_AHRS_GetBoardYawAxis:()Lcom/studica/frc/AHRS$BoardYawAxis;
+         3: areturn
+      LineNumberTable:
+        line 1027: 0
+      LocalVariableTable:
+        Start  Length  Slot  Name   Signature
+            0       4     0  this   Lcom/studica/frc/AHRS;
+
+  public java.lang.String getFirmwareVersion();
+    descriptor: ()Ljava/lang/String;
+    flags: (0x0001) ACC_PUBLIC
+    Code:
+      stack=1, locals=1, args_size=1
+         0: invokestatic  #238                // Method com/studica/frc/jni/AHRSJNI.c_AHRS_GetFirmwareVersion:()Ljava/lang/String;
+         3: areturn
+      LineNumberTable:
+        line 1041: 0
+      LocalVariableTable:
+        Start  Length  Slot  Name   Signature
+            0       4     0  this   Lcom/studica/frc/AHRS;
+
+  public int getActualUpdateRate();
+    descriptor: ()I
+    flags: (0x0001) ACC_PUBLIC
+    Code:
+      stack=1, locals=1, args_size=1
+         0: invokestatic  #242                // Method com/studica/frc/jni/AHRSJNI.c_AHRS_GetActualUpdateRate:()I
+         3: ireturn
+      LineNumberTable:
+        line 1061: 0
+      LocalVariableTable:
+        Start  Length  Slot  Name   Signature
+            0       4     0  this   Lcom/studica/frc/AHRS;
+
+  public int getRequestedUpdateRate();
+    descriptor: ()I
+    flags: (0x0001) ACC_PUBLIC
+    Code:
+      stack=1, locals=1, args_size=1
+         0: invokestatic  #245                // Method com/studica/frc/jni/AHRSJNI.c_AHRS_GetRequestedUpdateRate:()I
+         3: ireturn
+      LineNumberTable:
+        line 1077: 0
+      LocalVariableTable:
+        Start  Length  Slot  Name   Signature
+            0       4     0  this   Lcom/studica/frc/AHRS;
+
+  public void enableLogging(boolean);
+    descriptor: (Z)V
+    flags: (0x0001) ACC_PUBLIC
+    Code:
+      stack=1, locals=2, args_size=2
+         0: iload_1
+         1: invokestatic  #248                // Method com/studica/frc/jni/AHRSJNI.c_AHRS_EnableLogging:(Z)V
+         4: return
+      LineNumberTable:
+        line 1086: 0
+        line 1087: 4
+      LocalVariableTable:
+        Start  Length  Slot  Name   Signature
+            0       5     0  this   Lcom/studica/frc/AHRS;
+            0       5     1 enable   Z
+
+  public void enableBoardlevelYawReset(boolean);
+    descriptor: (Z)V
+    flags: (0x0001) ACC_PUBLIC
+    Code:
+      stack=1, locals=2, args_size=2
+         0: iload_1
+         1: invokestatic  #252                // Method com/studica/frc/jni/AHRSJNI.c_AHRS_EnableBoardlevelYawReset:(Z)V
+         4: return
+      LineNumberTable:
+        line 1104: 0
+        line 1105: 4
+      LocalVariableTable:
+        Start  Length  Slot  Name   Signature
+            0       5     0  this   Lcom/studica/frc/AHRS;
+            0       5     1 enable   Z
+
+  public boolean isBoardlevelYawResetEnabled();
+    descriptor: ()Z
+    flags: (0x0001) ACC_PUBLIC
+    Code:
+      stack=1, locals=1, args_size=1
+         0: invokestatic  #255                // Method com/studica/frc/jni/AHRSJNI.c_AHRS_IsBoardlevelYawResetEnabled:()Z
+         3: ireturn
+      LineNumberTable:
+        line 1115: 0
+      LocalVariableTable:
+        Start  Length  Slot  Name   Signature
+            0       4     0  this   Lcom/studica/frc/AHRS;
+
+  public short getGyroFullScaleRangeDPS();
+    descriptor: ()S
+    flags: (0x0001) ACC_PUBLIC
+    Code:
+      stack=1, locals=1, args_size=1
+         0: invokestatic  #258                // Method com/studica/frc/jni/AHRSJNI.c_AHRS_GetGyroFullScaleRangeDPS:()S
+         3: ireturn
+      LineNumberTable:
+        line 1125: 0
+      LocalVariableTable:
+        Start  Length  Slot  Name   Signature
+            0       4     0  this   Lcom/studica/frc/AHRS;
+
+  public short getAccelFullScaleRangeG();
+    descriptor: ()S
+    flags: (0x0001) ACC_PUBLIC
+    Code:
+      stack=1, locals=1, args_size=1
+         0: invokestatic  #262                // Method com/studica/frc/jni/AHRSJNI.c_AHRS_GetAccelFullScaleRangeG:()S
+         3: ireturn
+      LineNumberTable:
+        line 1135: 0
+      LocalVariableTable:
+        Start  Length  Slot  Name   Signature
+            0       4     0  this   Lcom/studica/frc/AHRS;
+
+  public void close();
+    descriptor: ()V
+    flags: (0x0001) ACC_PUBLIC
+    Code:
+      stack=1, locals=1, args_size=1
+         0: aload_0
+         1: invokestatic  #265                // Method edu/wpi/first/util/sendable/SendableRegistry.remove:(Ledu/wpi/first/util/sendable/Sendable;)Z
+         4: pop
+         5: aload_0
+         6: invokevirtual #269                // Method destroy:()V
+         9: return
+      LineNumberTable:
+        line 1140: 0
+        line 1141: 5
+        line 1142: 9
+      LocalVariableTable:
+        Start  Length  Slot  Name   Signature
+            0      10     0  this   Lcom/studica/frc/AHRS;
+
+  public void initSendable(edu.wpi.first.networktables.NTSendableBuilder);
+    descriptor: (Ledu/wpi/first/networktables/NTSendableBuilder;)V
+    flags: (0x0001) ACC_PUBLIC
+    Code:
+      stack=4, locals=2, args_size=2
+         0: aload_1
+         1: ldc_w         #272                // String Gyro
+         4: invokeinterface #274,  2          // InterfaceMethod edu/wpi/first/networktables/NTSendableBuilder.setSmartDashboardType:(Ljava/lang/String;)V
+         9: aload_1
+        10: ldc_w         #279                // String Value
+        13: aload_0
+        14: invokedynamic #281,  0            // InvokeDynamic #0:getAsDouble:(Lcom/studica/frc/AHRS;)Ljava/util/function/DoubleSupplier;
+        19: aconst_null
+        20: invokeinterface #285,  4          // InterfaceMethod edu/wpi/first/networktables/NTSendableBuilder.addDoubleProperty:(Ljava/lang/String;Ljava/util/function/DoubleSupplier;Ljava/util/function/DoubleConsumer;)V
+        25: return
+      LineNumberTable:
+        line 1151: 0
+        line 1152: 9
+        line 1153: 25
+      LocalVariableTable:
+        Start  Length  Slot  Name   Signature
+            0      26     0  this   Lcom/studica/frc/AHRS;
+            0      26     1 builder   Ledu/wpi/first/networktables/NTSendableBuilder;
+}
+SourceFile: "AHRS.java"
+NestMembers:
+  com/studica/frc/AHRS$BoardYawAxis
+  com/studica/frc/AHRS$NavXUpdateRate
+  com/studica/frc/AHRS$NavXComType
+  com/studica/frc/AHRS$BoardAxis
+BootstrapMethods:
+  0: #400 REF_invokeStatic java/lang/invoke/LambdaMetafactory.metafactory:(Ljava/lang/invoke/MethodHandles$Lookup;Ljava/lang/String;Ljava/lang/invoke/MethodType;Ljava/lang/invoke/MethodType;Ljava/lang/invoke/MethodHandle;Ljava/lang/invoke/MethodType;)Ljava/lang/invoke/CallSite;
+    Method arguments:
+      #407 ()D
+      #408 REF_invokeVirtual com/studica/frc/AHRS.getYaw:()F
+      #407 ()D
+InnerClasses:
+  public static final #412= #20 of #8;    // NavXComType=class com/studica/frc/AHRS$NavXComType of class com/studica/frc/AHRS
+  public static final #413= #303 of #8;   // NavXUpdateRate=class com/studica/frc/AHRS$NavXUpdateRate of class com/studica/frc/AHRS
+  public static #414= #395 of #8;         // BoardYawAxis=class com/studica/frc/AHRS$BoardYawAxis of class com/studica/frc/AHRS
+  public static final #415= #397 of #8;   // BoardAxis=class com/studica/frc/AHRS$BoardAxis of class com/studica/frc/AHRS
+  public static final #420= #416 of #418; // Lookup=class java/lang/invoke/MethodHandles$Lookup of class java/lang/invoke/MethodHandles

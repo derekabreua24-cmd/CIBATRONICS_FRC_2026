@@ -1,0 +1,32 @@
+PathPlanner deployment instructions
+
+This folder is where PathPlanner desktop-exported auto files should be placed so
+`AutoBuilder.buildAutoChooser()` can discover them at runtime.
+
+Recommended workflow (PathPlanner desktop app, version matching vendordep - 2026.1.2):
+
+1. In PathPlanner, design your trajectories and save them in a project.
+2. Use File -> Export -> "Deploy to Robot" (or similar). Point the export target to this
+   repository's `src/main/deploy` folder or the generated `deploy` folder (if available).
+
+   - Example local path to export into:
+     <repo_root>/src/main/deploy/PathPlanner/
+
+3. The export should create JSON files for each path. After exporting, rebuild the robot
+   code (`./gradlew.bat build` or run the simulator) so the deploy artifacts are packaged
+   and discoverable by the AutoBuilder at runtime.
+
+4. Start the robot (in simulator or on the robot). The AutoBuilder chooser will list
+   the deployed paths under the Shuffleboard "PathPlanner Autos" chooser. Select the
+   desired path and enable autonomous.
+
+Notes:
+- Some PathPlanner desktop versions export to a folder named `Pathplanner` or `pathplanner`.
+  If AutoBuilder doesn't discover your files, check the exact output folder name and
+  ensure it's inside `src/main/deploy` before rebuilding.
+- If you prefer manual copy, copy the exported JSON files from PathPlanner's export
+  location into `src/main/deploy/PathPlanner/` and rebuild.
+- If you want me to programmatically add a sample valid path JSON, send me an
+  exported JSON from your PathPlanner app or allow me to craft a simple valid
+  path (I can attempt to create one, but matching exact PathPlanner JSON schema can
+  vary between versions).
