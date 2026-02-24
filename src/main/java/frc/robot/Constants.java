@@ -58,7 +58,7 @@ public final class Constants {
   // Gear ratio: motor rotations per wheel rotation (assumed). Tune to your gearbox.
   public static final double kDriveGearRatio = 10.71;
   // Track width (distance between left and right wheels) in meters (assumed for kitbot)
-  public static final double kTrackwidthMeters = 0.60;
+  public static final double kTrackwidthMeters = 0.57;
 
   // Drive feedforward placeholders (V, V/(m/s), V/(m/s^2)).
   // IMPORTANT: Replace these with values from WPILib robot characterization (ks, kv, ka).
