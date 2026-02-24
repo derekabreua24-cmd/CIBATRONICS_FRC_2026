@@ -4,17 +4,20 @@
 
 package frc.robot;
 
-import edu.wpi.first.wpilibj.TimedRobot;
 import edu.wpi.first.wpilibj2.command.Command;
 import edu.wpi.first.wpilibj2.command.CommandScheduler;
 import edu.wpi.first.wpilibj.DataLogManager;
+
+import org.littletonrobotics.junction.LoggedRobot;
+import org.littletonrobotics.junction.Logger;
+import org.littletonrobotics.junction.networktables.NT4Publisher;
 
 /**
  * Los métodos en esta clase son llamados automáticamente según el modo (Disabled/Auton/Teleop),
  * como se describe en la documentación de TimedRobot. Si cambia el nombre de esta clase o el
  * paquete después de crear el proyecto, también debe actualizar el archivo Main.java.
  */
-public class Robot extends TimedRobot {
+public class Robot extends LoggedRobot {
   private Command m_autonomousCommand;
 
   private final RobotContainer m_robotContainer;
@@ -33,6 +36,9 @@ public class Robot extends TimedRobot {
   @Override
   public void robotInit() {
     DataLogManager.start();
+
+    Logger.addDataReceiver(new NT4Publisher());
+    Logger.start();
   }
 
   /**

@@ -19,6 +19,7 @@ import edu.wpi.first.math.estimator.DifferentialDrivePoseEstimator;
 import edu.wpi.first.math.VecBuilder;
 import edu.wpi.first.wpilibj.smartdashboard.Field2d;
 import edu.wpi.first.wpilibj.smartdashboard.SmartDashboard;
+import org.littletonrobotics.junction.Logger;
 
 import frc.robot.Constants.DriveConstants;
 
@@ -82,9 +83,6 @@ public class DriveSubsystem extends SubsystemBase {
   public DriveSubsystem() {
 
   SmartDashboard.putData("Field", m_field);
-
-  // Invertir lado derecho (configuración estándar de diferencial)
-  m_rightGroup.setInverted(true);
 
   // Seguridad de motores (motor safety)
   m_drive.setSafetyEnabled(true);
@@ -261,16 +259,18 @@ public class DriveSubsystem extends SubsystemBase {
 
   @Override
   public void periodic() {
-  m_field.setRobotPose(m_poseEstimator.getEstimatedPosition());
+   Pose2d pose = m_poseEstimator.getEstimatedPosition();
 
-  Pose2d pose = m_poseEstimator.getEstimatedPosition();
+  m_field.setRobotPose(pose);
+
+  Logger.recordOutput("RobotPose", pose);
 
   m_field.setRobotPose(pose);
 
   SmartDashboard.putNumber("Robot X", pose.getX());
   SmartDashboard.putNumber("Robot Y", pose.getY());
   SmartDashboard.putNumber("Robot Heading", pose.getRotation().getDegrees());
-  
+
   }
 
   // ===============================
