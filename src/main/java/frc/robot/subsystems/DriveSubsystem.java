@@ -17,6 +17,8 @@ import edu.wpi.first.math.geometry.Rotation2d;
 import edu.wpi.first.math.kinematics.DifferentialDriveKinematics;
 import edu.wpi.first.math.estimator.DifferentialDrivePoseEstimator;
 import edu.wpi.first.math.VecBuilder;
+import edu.wpi.first.wpilibj.smartdashboard.Field2d;
+import edu.wpi.first.wpilibj.smartdashboard.SmartDashboard;
 
 import frc.robot.Constants.DriveConstants;
 
@@ -41,6 +43,8 @@ public class DriveSubsystem extends SubsystemBase {
 
   private final SparkMax m_rightRear =
       new SparkMax(DriveConstants.kRightRearMotorPort, MotorType.kBrushless);
+
+  private final Field2d m_field = new Field2d();
 
   // ===============================
   // Encoders
@@ -76,6 +80,8 @@ public class DriveSubsystem extends SubsystemBase {
   private final DifferentialDrivePoseEstimator m_poseEstimator;
 
   public DriveSubsystem() {
+
+  SmartDashboard.putData("Field", m_field);
 
   // Invertir lado derecho (configuración estándar de diferencial)
   m_rightGroup.setInverted(true);
@@ -255,7 +261,16 @@ public class DriveSubsystem extends SubsystemBase {
 
   @Override
   public void periodic() {
-  // La odometria se actualiza externamente via updateOdometry()
+  m_field.setRobotPose(m_poseEstimator.getEstimatedPosition());
+
+  Pose2d pose = m_poseEstimator.getEstimatedPosition();
+
+  m_field.setRobotPose(pose);
+
+  SmartDashboard.putNumber("Robot X", pose.getX());
+  SmartDashboard.putNumber("Robot Y", pose.getY());
+  SmartDashboard.putNumber("Robot Heading", pose.getRotation().getDegrees());
+  
   }
 
   // ===============================
