@@ -189,16 +189,16 @@ private GenericEntry m_angTolEntry;
       double ppltvGain = m_ppltvGainEntry.getDouble(1.0);
 
       AutoBuilder.configure(
-          m_driveSubsystem::getPose,
-          pose -> m_odometrySubsystem.resetOdometry(pose),
-          m_driveSubsystem::getChassisSpeeds,
-          m_driveSubsystem::driveWithSpeeds,
-          new PPLTVController(ppltvGain),
-          config,
-          () -> DriverStation.getAlliance()
-                  .orElse(Alliance.Blue) == Alliance.Red,
-          m_driveSubsystem
-      );
+    m_odometrySubsystem::getPose,              // ✅ Pose supplier
+    m_odometrySubsystem::resetOdometry,        // ✅ Reset pose
+    m_driveSubsystem::getChassisSpeeds,
+    m_driveSubsystem::driveWithSpeeds,
+    new PPLTVController(ppltvGain),
+    config,
+    () -> DriverStation.getAlliance()
+            .orElse(Alliance.Blue) == Alliance.Red,
+    m_driveSubsystem
+);
 
             edu.wpi.first.wpilibj.DataLogManager.log("PathPlanner 2026 fully configured.");
 
