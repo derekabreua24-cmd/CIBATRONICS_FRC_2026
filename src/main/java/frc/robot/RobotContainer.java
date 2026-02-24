@@ -199,8 +199,7 @@ private GenericEntry m_angTolEntry;
             .orElse(Alliance.Blue) == Alliance.Red,
     m_driveSubsystem
 );
-
-            edu.wpi.first.wpilibj.DataLogManager.log("PathPlanner 2026 fully configured.");
+        edu.wpi.first.wpilibj.DataLogManager.log("PathPlanner 2026 fully configured.");
 
             // Build the PathPlanner auto chooser and show it on Shuffleboard
             try {
