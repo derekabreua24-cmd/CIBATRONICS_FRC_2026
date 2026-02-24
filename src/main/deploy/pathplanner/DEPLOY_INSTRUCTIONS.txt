@@ -1,4 +1,4 @@
-PathPlanner deployment instructions
+ñPathPlanner deployment instructions
 
 This folder is where PathPlanner desktop-exported auto files should be placed so
 `AutoBuilder.buildAutoChooser()` can discover them at runtime.
