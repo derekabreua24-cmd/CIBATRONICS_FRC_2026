@@ -267,6 +267,12 @@ public class DriveSubsystem extends SubsystemBase {
     return rotations * wheelCirc / DriveConstants.kDriveGearRatio;
   }
 
+  private static double rpmToMetersPerSecond(double rpm) {
+  double wheelCirc = Math.PI * DriveConstants.kWheelDiameterMeters;
+  double rps = rpm / 60.0;
+  return (rps * wheelCirc) / DriveConstants.kDriveGearRatio;
+}
+
   public void updateOdometry(Rotation2d heading) {
     double leftMeters = rotationsToMeters(getLeftAveragePosition());
     double rightMeters = rotationsToMeters(getRightAveragePosition());
@@ -293,14 +299,16 @@ public class DriveSubsystem extends SubsystemBase {
   }
 
   public ChassisSpeeds getChassisSpeeds() {
-  double leftVel = getLeftAverageVelocity();   // must be meters/sec
-  double rightVel = getRightAverageVelocity(); // must be meters/sec
+
+  // Convert SparkMax RPM to meters per second
+  double leftVel = rpmToMetersPerSecond(getLeftAverageVelocity());
+  double rightVel = rpmToMetersPerSecond(getRightAverageVelocity());
 
   double vx = (leftVel + rightVel) / 2.0;
   double omega = (rightVel - leftVel) / DriveConstants.kTrackwidthMeters;
 
   return new ChassisSpeeds(vx, 0.0, omega);
-  }
+}
 
   /**
    * BiConsumer target for PathPlanner's AutoBuilder: accept desired chassis speeds
