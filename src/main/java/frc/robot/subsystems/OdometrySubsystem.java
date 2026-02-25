@@ -31,6 +31,8 @@ public class OdometrySubsystem extends SubsystemBase {
     // Actualizar el estimador una vez por bucle usando la orientacion actual del giroscopio
     Rotation2d heading = m_navx.getRotation2d();
     m_drive.updateOdometry(heading);
+
+    System.out.println("Odometry updating...");
   }
 
   /** Devuelve la pose estimada actual del robot. */

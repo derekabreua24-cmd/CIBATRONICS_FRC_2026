@@ -43,14 +43,15 @@ import com.pathplanner.lib.controllers.PPLTVController;
 
 public class RobotContainer {
 
-  private final DriveSubsystem m_driveSubsystem = new DriveSubsystem();
+  private final NavXSubsystem m_navxSubsystem = new NavXSubsystem();
+  private final DriveSubsystem m_driveSubsystem = new DriveSubsystem(m_navxSubsystem);
+  private final OdometrySubsystem m_odometrySubsystem =
+      new OdometrySubsystem(m_driveSubsystem, m_navxSubsystem);
   private final IntakeSubsystem m_intakeSubsystem = new IntakeSubsystem();
   private final IndexerSubsystem m_indexerSubsystem = new IndexerSubsystem();
   private final ShooterSubsystem m_shooterSubsystem = new ShooterSubsystem();
   private final TelemetrySubsystem m_telemetrySubsystem;
-  private final NavXSubsystem m_navxSubsystem = new NavXSubsystem();
-  private final OdometrySubsystem m_odometrySubsystem =
-      new OdometrySubsystem(m_driveSubsystem, m_navxSubsystem);
+  
 
   private final frc.robot.subsystems.OperatorSubsystem m_operatorSubsystem =
       new frc.robot.subsystems.OperatorSubsystem();

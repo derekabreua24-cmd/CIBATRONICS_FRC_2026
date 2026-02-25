@@ -7,7 +7,6 @@ import com.revrobotics.RelativeEncoder;
 import edu.wpi.first.wpilibj2.command.SubsystemBase;
 import edu.wpi.first.wpilibj.drive.DifferentialDrive;
 import edu.wpi.first.wpilibj.motorcontrol.MotorControllerGroup;
-
 import edu.wpi.first.math.kinematics.ChassisSpeeds;
 import com.pathplanner.lib.util.DriveFeedforwards;
 import edu.wpi.first.networktables.NetworkTableInstance;
@@ -21,6 +20,14 @@ import edu.wpi.first.wpilibj.smartdashboard.Field2d;
 import edu.wpi.first.wpilibj.smartdashboard.SmartDashboard;
 import org.littletonrobotics.junction.Logger;
 
+// Drive simulation imports:
+
+import edu.wpi.first.math.system.plant.DCMotor;
+import edu.wpi.first.wpilibj.simulation.DifferentialDrivetrainSim;
+import edu.wpi.first.wpilibj.RobotBase;
+
+
+
 import frc.robot.Constants.DriveConstants;
 
 public class DriveSubsystem extends SubsystemBase {
@@ -28,22 +35,26 @@ public class DriveSubsystem extends SubsystemBase {
   // Flags to avoid spamming logs from frequently-called driveWithSpeeds when networktables or ff fails
   private boolean m_loggedNetworkTableError = false;
   private boolean m_loggedFFError = false;
+  
+  // drive sim variables
+  
+  private DifferentialDrivetrainSim m_driveSim;
 
   // ===============================
   // Motores
   // ===============================
 
   private final SparkMax m_leftFront =
-      new SparkMax(DriveConstants.kLeftFrontMotorPort, MotorType.kBrushless);
+      new SparkMax(DriveConstants.kLeftFrontMotorPort, MotorType.kBrushed);
 
   private final SparkMax m_leftRear =
-      new SparkMax(DriveConstants.kLeftRearMotorPort, MotorType.kBrushless);
+      new SparkMax(DriveConstants.kLeftRearMotorPort, MotorType.kBrushed);
 
   private final SparkMax m_rightFront =
-      new SparkMax(DriveConstants.kRightFrontMotorPort, MotorType.kBrushless);
+      new SparkMax(DriveConstants.kRightFrontMotorPort, MotorType.kBrushed);
 
   private final SparkMax m_rightRear =
-      new SparkMax(DriveConstants.kRightRearMotorPort, MotorType.kBrushless);
+      new SparkMax(DriveConstants.kRightRearMotorPort, MotorType.kBrushed);
 
   private final Field2d m_field = new Field2d();
 
@@ -80,32 +91,32 @@ public class DriveSubsystem extends SubsystemBase {
 
   private final DifferentialDrivePoseEstimator m_poseEstimator;
 
-  public DriveSubsystem() {
+  private final NavXSubsystem m_navx;
+
+  public DriveSubsystem(NavXSubsystem navx) {
+    m_navx = navx;
+
+
+  if (RobotBase.isSimulation()) {
+
+    m_driveSim = new DifferentialDrivetrainSim(
+        DCMotor.getCIM(4),                    
+        DriveConstants.kDriveGearRatio,
+        2.1,                                  
+        7.5,                                 
+        DriveConstants.kWheelDiameterMeters / 2.0,
+        DriveConstants.kTrackwidthMeters,
+        null
+    );
+}
+
 
   SmartDashboard.putData("Field", m_field);
 
   // Seguridad de motores (motor safety)
   m_drive.setSafetyEnabled(true);
   m_drive.setExpiration(0.1);
-
-  // Configurar SPARK MAXs a valores seguros y reproducibles
-  try {
-  com.revrobotics.spark.config.SparkMaxConfig cfg = new com.revrobotics.spark.config.SparkMaxConfig();
-  cfg.idleMode(com.revrobotics.spark.config.SparkBaseConfig.IdleMode.kBrake);
-  cfg.smartCurrentLimit(40);
-  cfg.openLoopRampRate(0.2);
-  cfg.voltageCompensation(12.0f);
-
-    // Aplicar configuracion y persistir en el dispositivo
-    m_leftFront.configure(cfg, com.revrobotics.ResetMode.kResetSafeParameters, com.revrobotics.PersistMode.kPersistParameters);
-    m_leftRear.configure(cfg, com.revrobotics.ResetMode.kResetSafeParameters, com.revrobotics.PersistMode.kPersistParameters);
-    m_rightFront.configure(cfg, com.revrobotics.ResetMode.kResetSafeParameters, com.revrobotics.PersistMode.kPersistParameters);
-    m_rightRear.configure(cfg, com.revrobotics.ResetMode.kResetSafeParameters, com.revrobotics.PersistMode.kPersistParameters);
-  } catch (RuntimeException e) {
-    // No bloquear el init del robot si la configuracion falla; registrar el error
-  edu.wpi.first.wpilibj.DataLogManager.log("[DriveSubsystem] SparkMax configure failed: " + e.toString());
-  }
-
+  
   // Inicializar estimador de pose
     m_poseEstimator =
         new DifferentialDrivePoseEstimator(
@@ -258,20 +269,29 @@ public class DriveSubsystem extends SubsystemBase {
   // ===============================
 
   @Override
-  public void periodic() {
-   Pose2d pose = m_poseEstimator.getEstimatedPosition();
+public void periodic() {
 
-  m_field.setRobotPose(pose);
+    Rotation2d heading;
 
-  Logger.recordOutput("RobotPose", pose);
+    if (RobotBase.isSimulation() && m_driveSim != null) {
+        heading = m_driveSim.getHeading();
+    } else {
+        // TEMP: if you don't yet have navX connected
+        heading = new Rotation2d();
+    }
 
-  m_field.setRobotPose(pose);
+    updateOdometry(heading);
 
-  SmartDashboard.putNumber("Robot X", pose.getX());
-  SmartDashboard.putNumber("Robot Y", pose.getY());
-  SmartDashboard.putNumber("Robot Heading", pose.getRotation().getDegrees());
+    Pose2d pose = m_poseEstimator.getEstimatedPosition();
 
-  }
+    m_field.setRobotPose(pose);
+
+    Logger.recordOutput("Odometry/Robot", pose);
+
+    SmartDashboard.putNumber("Robot X", pose.getX());
+    SmartDashboard.putNumber("Robot Y", pose.getY());
+    SmartDashboard.putNumber("Robot Heading", pose.getRotation().getDegrees());
+}
 
   // ===============================
   // Odometría
@@ -396,4 +416,37 @@ public class DriveSubsystem extends SubsystemBase {
   m_rightGroup.setVoltage(rightVolts);
   m_drive.feed();
   }
+   
+  @Override
+    public void simulationPeriodic() {
+
+    if (m_driveSim == null) return;
+
+    // Feed motor outputs into sim (convert percent to volts)
+    m_driveSim.setInputs(
+        m_leftGroup.get() * 12.0,
+        m_rightGroup.get() * 12.0
+    );
+
+    m_driveSim.update(0.02);
+
+    // Get simulated positions in meters
+    double leftMeters = m_driveSim.getLeftPositionMeters();
+    double rightMeters = m_driveSim.getRightPositionMeters();
+
+    // Convert meters to motor rotations
+    double wheelCirc = Math.PI * DriveConstants.kWheelDiameterMeters;
+
+    double leftRotations =
+        (leftMeters / wheelCirc) * DriveConstants.kDriveGearRatio;
+
+    double rightRotations =
+        (rightMeters / wheelCirc) * DriveConstants.kDriveGearRatio;
+
+    // Set SparkMax encoder positions manually
+    m_leftFrontEncoder.setPosition(leftRotations);
+    m_leftRearEncoder.setPosition(leftRotations);
+    m_rightFrontEncoder.setPosition(rightRotations);
+    m_rightRearEncoder.setPosition(rightRotations);
+}
 }
