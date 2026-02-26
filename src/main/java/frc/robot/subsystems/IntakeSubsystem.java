@@ -7,27 +7,16 @@ import frc.robot.Constants.DriveConstants;
 
 /** Subsistema sencillo de intake usando un único SparkMax (brushless). */
 public class IntakeSubsystem extends SubsystemBase {
-  private final SparkMax m_intake = new SparkMax(DriveConstants.kIntakeMotorPort, MotorType.kBrushless);
+  private final SparkMax m_intake = new SparkMax(DriveConstants.kIntakeMotorPort, MotorType.kBrushed);
 
   @SuppressWarnings("deprecation")
   public IntakeSubsystem() {
     // Configurar inversión si es necesario
-    m_intake.setInverted(false);
-    // Configuracion segura para el motor del intake
-    try {
-      com.revrobotics.spark.config.SparkMaxConfig cfg = new com.revrobotics.spark.config.SparkMaxConfig();
-      cfg.idleMode(com.revrobotics.spark.config.SparkBaseConfig.IdleMode.kCoast);
-      cfg.smartCurrentLimit(30);
-      cfg.openLoopRampRate(0.2);
-      m_intake.configure(cfg, com.revrobotics.ResetMode.kResetSafeParameters, com.revrobotics.PersistMode.kPersistParameters);
-      } catch (RuntimeException e) {
-  edu.wpi.first.wpilibj.DataLogManager.log("[IntakeSubsystem] SparkMax configure failed: " + e.toString());
-    }
-  }
+    m_intake.setInverted(false); }
 
   /** Ejecuta el motor del intake con un porcentaje solicitado (-1..1). */
-  public void run(double percent) {
-    m_intake.set(percent);
+  public void run(double kIntakeSpeed) {
+    m_intake.set(kIntakeSpeed);
   }
 
   /** Detiene el motor del intake. */

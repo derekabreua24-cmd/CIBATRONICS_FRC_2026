@@ -115,6 +115,14 @@ public class Robot extends LoggedRobot {
     // so we can verify the AutoBuilder/chooser wiring without a physical Driver Station.
   edu.wpi.first.wpilibj.DataLogManager.log("simulationInit: auto-starting autonomous for smoke test.\n");
     autonomousInit();
+    // Publish a small AdvantageKit/Logger smoke signal so AdvantageScope/NT4 can detect it.
+    try {
+      Logger.recordOutput("Smoke/AdvantageKit/Alive", 1);
+      Logger.recordOutput("Smoke/AdvantageKit/Message", "simInit");
+    } catch (Throwable t) {
+      // Non-fatal: log via DataLogManager if Logger isn't available for any reason.
+      DataLogManager.log("[simulationInit] Logger smoke-test failed: " + t.toString());
+    }
   }
 
   /** Esta función se llama periódicamente durante la simulación. */

@@ -24,10 +24,10 @@ public final class Constants {
   // 6-wheel drivetrain mechanically (6 wheels) driven by 4 motors
   // (two motors per side). Update these arrays if your wiring differs.
   // Current layout: left motors at CAN IDs {1,2}, right motors at {3,4}.
-    public static final int kLeftFrontMotorPort = 1;
-    public static final int kLeftRearMotorPort = 2;
-    public static final int kRightFrontMotorPort = 3;
-    public static final int kRightRearMotorPort = 4;
+    public static final int kRightFrontMotorPort = 1;
+    public static final int kRightRearMotorPort = 2;
+    public static final int kLeftFrontMotorPort = 3;
+    public static final int kLeftRearMotorPort = 4;
     public static final int[] kLeftMotorPorts = {kLeftFrontMotorPort, kLeftRearMotorPort};
     public static final int[] kRightMotorPorts = {kRightFrontMotorPort, kRightRearMotorPort};
 

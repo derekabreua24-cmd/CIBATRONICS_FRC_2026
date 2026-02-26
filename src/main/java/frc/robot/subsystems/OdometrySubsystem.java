@@ -3,6 +3,7 @@ package frc.robot.subsystems;
 import edu.wpi.first.math.geometry.Pose2d;
 import edu.wpi.first.math.geometry.Rotation2d;
 import edu.wpi.first.wpilibj2.command.SubsystemBase;
+import edu.wpi.first.wpilibj.DataLogManager;
 
 /**
  * Gestor centralizado de odometría.
@@ -32,7 +33,7 @@ public class OdometrySubsystem extends SubsystemBase {
     Rotation2d heading = m_navx.getRotation2d();
     m_drive.updateOdometry(heading);
 
-    System.out.println("Odometry updating...");
+  DataLogManager.log("[Odometry] Updating odometry. pose=" + getPose());
   }
 
   /** Devuelve la pose estimada actual del robot. */

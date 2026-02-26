@@ -11,12 +11,18 @@ import frc.robot.subsystems.DriveSubsystem;
 import frc.robot.commands.Drv_Commands.DriveCommand;
 import frc.robot.commands.Drv_Commands.TurnToAngleCommand;
 import frc.robot.subsystems.IndexerSubsystem;
-import frc.robot.commands.IndexerCommand;
 import frc.robot.subsystems.TelemetrySubsystem;
 import frc.robot.subsystems.NavXSubsystem;
 import frc.robot.subsystems.VisionSubsystem;
 import frc.robot.subsystems.OdometrySubsystem;
 import edu.wpi.first.math.geometry.Pose2d;
+import edu.wpi.first.math.geometry.Rotation2d;
+import java.nio.file.Path;
+import java.nio.file.Files;
+import java.nio.charset.StandardCharsets;
+import java.util.regex.Matcher;
+import java.util.regex.Pattern;
+import edu.wpi.first.networktables.NetworkTableInstance;
 
 import frc.robot.subsystems.UsbAprilTagProcessor;
 import frc.robot.commands.Rst_Commands.ResetGyroCommand;
@@ -51,8 +57,6 @@ public class RobotContainer {
   private final IndexerSubsystem m_indexerSubsystem = new IndexerSubsystem();
   private final ShooterSubsystem m_shooterSubsystem = new ShooterSubsystem();
   private final TelemetrySubsystem m_telemetrySubsystem;
-  
-
   private final frc.robot.subsystems.OperatorSubsystem m_operatorSubsystem =
       new frc.robot.subsystems.OperatorSubsystem();
 
@@ -239,10 +243,8 @@ private GenericEntry m_angTolEntry;
     m_operatorController.rightBumper()
         .whileTrue(new IntakeCommand(m_intakeSubsystem));
 
-    m_operatorController.leftBumper()
-        .whileTrue(new IndexerCommand(m_indexerSubsystem));
-
     m_operatorController.a()
+    
         .whileTrue(new frc.robot.commands.ShootSequenceCommand(
             m_shooterSubsystem,
             m_indexerSubsystem,
@@ -264,13 +266,78 @@ private GenericEntry m_angTolEntry;
             if (ppCmd != null) {
                 // reset sensors/odometry before running the selected auto
                 m_navxSubsystem.reset();
-                m_odometrySubsystem.resetOdometry(new Pose2d());
-                return ppCmd;
+        // Attempt to read the chooser's selected name from Shuffleboard's NetworkTables
+        try {
+          var table = NetworkTableInstance.getDefault()
+            .getTable("Shuffleboard")
+            .getSubTable("Autonomous")
+            .getSubTable("PathPlanner Autos");
+
+          String selected = table.getEntry("selected").getString("");
+          if (selected == null || selected.isEmpty()) {
+            // Some SendableChooser variants prefix with the title; try a fallback
+            selected = table.getEntry("default").getString("");
+          }
+
+          if (selected != null && !selected.isEmpty()) {
+            // Try common filename patterns for autos in deploy/PathPlanner/autos
+            Path deployAutos = edu.wpi.first.wpilibj.Filesystem.getDeployDirectory().toPath().resolve("PathPlanner").resolve("autos");
+            Path autoFile = null;
+            String[] candidates = new String[] { selected, selected + ".auto", selected + ".auto.json" };
+            for (String c : candidates) {
+              Path p = deployAutos.resolve(c);
+              if (Files.exists(p)) {
+                autoFile = p;
+                break;
+              }
             }
+
+            if (autoFile != null) {
+              String autoJson = Files.readString(autoFile, StandardCharsets.UTF_8);
+              boolean resetOdom = autoJson.contains("\"resetOdom\": true") || autoJson.contains("\"resetOdom\":true");
+              if (resetOdom) {
+                // Extract pathName value from the auto JSON
+                Pattern p = Pattern.compile("\"pathName\"\\s*:\\s*\"([^\"]+)\"");
+                Matcher m = p.matcher(autoJson);
+                if (m.find()) {
+                  String pathName = m.group(1);
+                  // Locate the path file in deploy/PathPlanner/paths
+                  Path pathFile = edu.wpi.first.wpilibj.Filesystem.getDeployDirectory().toPath().resolve("PathPlanner").resolve("paths").resolve(pathName + ".path");
+                  if (Files.exists(pathFile)) {
+                    String pathJson = Files.readString(pathFile, StandardCharsets.UTF_8);
+                    // Find the first waypoint anchor x/y
+                    Pattern wp = Pattern.compile("\"waypoints\"\\s*:\\s*\\[([\\s\\S]*?)\\]", Pattern.MULTILINE);
+                    Matcher wpm = wp.matcher(pathJson);
+                    if (wpm.find()) {
+                      String waypointsArray = wpm.group(1);
+                      Pattern anchor = Pattern.compile("\"anchor\"\\s*:\\s*\\{[^}]*?\"x\"\\s*:\\s*([0-9.+\\-Eed]+)\\s*,[^}]*?\"y\"\\s*:\\s*([0-9.+\\-Eed]+)");
+                      Matcher am = anchor.matcher(waypointsArray);
+                      if (am.find()) {
+                        double x = Double.parseDouble(am.group(1));
+                        double y = Double.parseDouble(am.group(2));
+                        // Use 0 radians as a sensible default heading; PathPlanner may encode rotations elsewhere
+                        Pose2d startPose = new Pose2d(x, y, new Rotation2d(0.0));
+                        m_odometrySubsystem.resetOdometry(startPose);
+                        edu.wpi.first.wpilibj.DataLogManager.log("[AutoChooser] Reset odometry to path start: " + startPose);
+                      }
+                    }
+                  }
+                }
+              }
+            }
+          }
+        } catch (Exception e) {
+          // Non-fatal: log and fall back to origin reset
+          edu.wpi.first.wpilibj.DataLogManager.log("[AutoChooser] Failed to parse selected auto for odometry reset: " + e.toString());
+          m_odometrySubsystem.resetOdometry(new Pose2d());
         }
 
-        // No PathPlanner auto selected; return no-op
-        return Commands.none();
+        return ppCmd;
+      }
+    }
+
+    // No PathPlanner auto selected; return no-op
+    return Commands.none();
   }
 
   public void shutdownVision() {
