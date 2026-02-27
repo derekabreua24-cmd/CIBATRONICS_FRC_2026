@@ -1,4 +1,3 @@
-```markdown
 # Final code 2 — Proyecto del robot
 
 Este proyecto es un proyecto de robot FRC en Java (WPILib) orientado a WPILib 2026. Incluye:
@@ -46,5 +45,3 @@ Pasos siguientes recomendados
 - Ajuste la ganancia `PPLTVController` usada por PathPlanner (el valor por
   defecto en el código es conservador).
 - Opcional: agregue más pruebas unitarias y CI para compilar y validar en cada push.
-
-```

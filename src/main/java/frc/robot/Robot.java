@@ -39,6 +39,18 @@ public class Robot extends LoggedRobot {
 
     Logger.addDataReceiver(new NT4Publisher());
     Logger.start();
+    // Publish drivetrain metadata for AdvantageKit / AdvantageScope so tools can
+    // identify this robot's drive type and basic physical parameters.
+    try {
+      Logger.recordOutput("Robot/Drivetrain/Type", "DifferentialDrive");
+      Logger.recordOutput("Robot/Drivetrain/TrackwidthMeters", Constants.DriveConstants.kTrackwidthMeters);
+      Logger.recordOutput("Robot/Drivetrain/WheelDiameterMeters", Constants.DriveConstants.kWheelDiameterMeters);
+      Logger.recordOutput("Robot/Drivetrain/GearRatio", Constants.DriveConstants.kDriveGearRatio);
+      Logger.recordOutput("Robot/Drivetrain/DriveMotors", "SparkMax x4 (left/right pairs)");
+    } catch (Throwable t) {
+      // Not fatal if Logger isn't ready; fall back to DataLogManager so there's a record.
+      DataLogManager.log("[robotInit] Failed to publish drivetrain metadata to Logger: " + t.toString());
+    }
   }
 
   /**

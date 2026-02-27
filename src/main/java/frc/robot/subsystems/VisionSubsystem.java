@@ -10,6 +10,12 @@ import edu.wpi.first.wpilibj2.command.SubsystemBase;
 import java.util.Optional;
 import java.util.OptionalDouble;
 import java.util.concurrent.atomic.AtomicReference;
+import org.littletonrobotics.junction.Logger;
+import edu.wpi.first.networktables.NetworkTableInstance;
+import edu.wpi.first.math.geometry.Transform2d;
+import edu.wpi.first.math.geometry.Translation2d;
+import edu.wpi.first.math.geometry.Rotation2d;
+import edu.wpi.first.wpilibj.DataLogManager;
 
 public class VisionSubsystem extends SubsystemBase {
 
@@ -18,6 +24,7 @@ public class VisionSubsystem extends SubsystemBase {
 
   // Thread-safe storage
   private final AtomicReference<Pose2d> m_lastPose = new AtomicReference<>();
+  private final AtomicReference<Pose2d[]> m_lastCandidates = new AtomicReference<>();
   private volatile double m_lastTimestamp = 0.0;
 
   // ----------------------------------------------------
@@ -53,6 +60,42 @@ public class VisionSubsystem extends SubsystemBase {
     pose.ifPresent(p -> {
       m_lastPose.set(p);
       m_lastTimestamp = timestampSeconds;
+      // Build a small array of candidate poses around the detected pose for debugging
+      try {
+        Pose2d base = p;
+        Pose2d[] candidates = new Pose2d[] {
+          base,
+          base.transformBy(new Transform2d(new Translation2d(0.1, 0.0), new Rotation2d(0.0))),
+          base.transformBy(new Transform2d(new Translation2d(-0.1, 0.0), new Rotation2d(0.0)))
+        };
+        m_lastCandidates.set(candidates);
+
+        // Publish a compact JSON array to Logger and NetworkTables for AdvantageScope / debugging
+        StringBuilder sb = new StringBuilder();
+        sb.append('[');
+        for (int i = 0; i < candidates.length; ++i) {
+          Pose2d c = candidates[i];
+          sb.append('{')
+            .append("\"x\":").append(c.getX()).append(',')
+            .append("\"y\":").append(c.getY()).append(',')
+            .append("\"rotDeg\":").append(c.getRotation().getDegrees())
+            .append('}');
+          if (i < candidates.length - 1) sb.append(',');
+        }
+        sb.append(']');
+        try {
+          Logger.recordOutput("Vision/Candidates", sb.toString());
+        } catch (Throwable t) {
+          DataLogManager.log("VisionSubsystem: Logger publish failed -> " + t.toString());
+        }
+        try {
+          NetworkTableInstance.getDefault().getTable("Vision").getEntry("Candidates").setString(sb.toString());
+        } catch (RuntimeException e) {
+          DataLogManager.log("VisionSubsystem: NT publish failed -> " + e.toString());
+        }
+      } catch (RuntimeException ex) {
+        DataLogManager.log("VisionSubsystem: failed to compute/publish candidates -> " + ex.toString());
+      }
     });
 
     return pose;
@@ -96,6 +139,11 @@ public class VisionSubsystem extends SubsystemBase {
   // ----------------------------------------------------
   public Optional<Pose2d> getLastPose() {
     return Optional.ofNullable(m_lastPose.get());
+  }
+
+  /** Returns the last computed array of Pose2d candidate poses (may be null). */
+  public Pose2d[] getLastPoseCandidates() {
+    return m_lastCandidates.get();
   }
 
   public OptionalDouble getLastTimestamp() {

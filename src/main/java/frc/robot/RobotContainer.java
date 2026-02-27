@@ -16,6 +16,7 @@ import frc.robot.subsystems.NavXSubsystem;
 import frc.robot.subsystems.VisionSubsystem;
 import frc.robot.subsystems.OdometrySubsystem;
 import edu.wpi.first.math.geometry.Pose2d;
+import java.io.IOException;
 import edu.wpi.first.math.geometry.Rotation2d;
 import java.nio.file.Path;
 import java.nio.file.Files;
@@ -78,6 +79,7 @@ private GenericEntry m_posTolEntry;
   @SuppressWarnings("unused")
 private GenericEntry m_angTolEntry;
     private GenericEntry m_ppltvGainEntry;
+    private GenericEntry m_resetOdomEntry;
 
   private final CommandXboxController m_driverController =
       new CommandXboxController(OperatorConstants.kDriverControllerPort);
@@ -97,9 +99,70 @@ private GenericEntry m_angTolEntry;
           CameraCalibrationLoader.loadFromProperties(
               "camera/camera_calib.properties");
 
-      edu.wpi.first.apriltag.AprilTagFieldLayout fieldLayout =
-          edu.wpi.first.apriltag.AprilTagFieldLayout.loadField(
+      // Prefer a deploy-time APRILTAG JSON if present (e.g. apriltagfield_2026.json)
+      edu.wpi.first.apriltag.AprilTagFieldLayout fieldLayout = null;
+      try {
+        java.nio.file.Path deploy = edu.wpi.first.wpilibj.Filesystem.getDeployDirectory().toPath();
+        java.nio.file.Path[] candidates = new java.nio.file.Path[] {
+          deploy.resolve("apriltagfield_2026.json"),
+          deploy.resolve("apriltagfield.json"),
+          deploy.resolve("apriltag_field_2026.json")
+        };
+
+        java.nio.file.Path found = null;
+        for (java.nio.file.Path p : candidates) {
+          if (java.nio.file.Files.exists(p)) {
+            found = p;
+            break;
+          }
+        }
+
+        if (found != null) {
+          // Use reflection to call AprilTagFieldLayout.loadFromFile(File) if available.
+          try {
+            Class<?> cls = Class.forName("edu.wpi.first.apriltag.AprilTagFieldLayout");
+            java.lang.reflect.Method m = cls.getMethod("loadFromFile", java.io.File.class);
+            Object obj = m.invoke(null, found.toFile());
+            if (obj instanceof edu.wpi.first.apriltag.AprilTagFieldLayout) {
+              fieldLayout = (edu.wpi.first.apriltag.AprilTagFieldLayout) obj;
+              edu.wpi.first.wpilibj.DataLogManager.log("Loaded AprilTag field layout from deploy: " + found.toString());
+            }
+          } catch (Throwable t) {
+            // reflection failed; fall back below
+            edu.wpi.first.wpilibj.DataLogManager.log("AprilTagFieldLayout.loadFromFile reflection failed: " + t.toString());
+          }
+        }
+
+        if (fieldLayout == null) {
+          // Fallback to built-in resource (may be older). Keep existing behavior.
+          fieldLayout = edu.wpi.first.apriltag.AprilTagFieldLayout.loadField(
               edu.wpi.first.apriltag.AprilTagFields.kDefaultField);
+          edu.wpi.first.wpilibj.DataLogManager.log("Using built-in AprilTagFieldLayout (default)");
+        }
+        else {
+          // If we successfully loaded a built-in layout (e.g., 2026), but no deploy
+          // JSON was present, serialize the layout to deploy so users can inspect or
+          // ship it to robot. This is non-fatal and best-effort.
+          try {
+            java.nio.file.Path exportPath = edu.wpi.first.wpilibj.Filesystem.getDeployDirectory().toPath().resolve("apriltagfield_2026.json");
+            if (!java.nio.file.Files.exists(exportPath)) {
+              fieldLayout.serialize(exportPath);
+              edu.wpi.first.wpilibj.DataLogManager.log("Exported AprilTagFieldLayout to deploy: " + exportPath.toString());
+            }
+          } catch (Throwable t) {
+            edu.wpi.first.wpilibj.DataLogManager.log("Failed to export AprilTagFieldLayout to deploy: " + t.toString());
+          }
+        }
+      } catch (Throwable t) {
+        // Defensive fallback: if anything goes wrong, try to load the default field layout
+        try {
+          fieldLayout = edu.wpi.first.apriltag.AprilTagFieldLayout.loadField(
+              edu.wpi.first.apriltag.AprilTagFields.kDefaultField);
+        } catch (Throwable t2) {
+          edu.wpi.first.wpilibj.DataLogManager.log("Failed to initialize AprilTagFieldLayout: " + t2.toString());
+          fieldLayout = null;
+        }
+      }
 
       m_visionSubsystem =
           new VisionSubsystem(fieldLayout, calib.cameraToRobot);
@@ -137,12 +200,17 @@ private GenericEntry m_angTolEntry;
     var autoTab = Shuffleboard.getTab("Autonomous");
     var tuningTab = Shuffleboard.getTab("Tuning");
 
-    m_targetXEntry = autoTab.add("Target X (m)", 1.5).getEntry();
+  m_targetXEntry = autoTab.add("Target X (m)", 1.5).getEntry();
     m_targetYEntry = autoTab.add("Target Y (m)", 0.0).getEntry();
     m_targetHeadingEntry = autoTab.add("Target Heading (deg)", 0.0).getEntry();
     m_maxSpeedEntry = autoTab.add("Max Speed (m/s)", 0.6).getEntry();
     m_posTolEntry = autoTab.add("Pos Tol (m)", 0.1).getEntry();
     m_angTolEntry = autoTab.add("Ang Tol (deg)", 5.0).getEntry();
+
+  // Opción para controlar si queremos que el robot reinicie la odometría al inicio
+  // del auto seleccionado (cuando el archivo .auto tiene resetOdom=true).
+  var resetOdomWidget = autoTab.add("Reset odom to path start", true).withPosition(0, 4).withSize(2, 1);
+  m_resetOdomEntry = resetOdomWidget.getEntry();
 
   // Entradas de afinación (ganancias ajustables en tiempo de ejecución)
     m_ppltvGainEntry = tuningTab.add("PPLTV Gain", 1.0).withPosition(0, 0).withSize(2, 1).getEntry();
@@ -189,7 +257,7 @@ private GenericEntry m_angTolEntry;
     // ================= PATHPLANNER 2026.1.2 CONFIG =================
     try {
 
-      RobotConfig config = RobotConfig.fromGUISettings();
+  RobotConfig config = RobotConfig.fromGUISettings();
 
       double ppltvGain = m_ppltvGainEntry.getDouble(1.0);
 
@@ -231,9 +299,10 @@ private GenericEntry m_angTolEntry;
       }
 
     } catch (Exception e) {
-
-  edu.wpi.first.wpilibj.DataLogManager.log("PathPlanner configuration failed: " + e.getMessage());
-
+      // RobotConfig.fromGUISettings may throw checked parsing exceptions from
+      // the PathPlanner config loader; keep a broad catch here to avoid
+      // crashing robot initialization while logging the root cause.
+      edu.wpi.first.wpilibj.DataLogManager.log("PathPlanner configuration failed: " + e.getMessage());
     }
     // ================================================================
 
@@ -268,7 +337,7 @@ private GenericEntry m_angTolEntry;
                 // reiniciar sensores/odometría antes de ejecutar el auto seleccionado
                 m_navxSubsystem.reset();
         // Attempt to read the chooser's selected name from Shuffleboard's NetworkTables
-        try {
+                try {
           var table = NetworkTableInstance.getDefault()
             .getTable("Shuffleboard")
             .getSubTable("Autonomous")
@@ -280,7 +349,7 @@ private GenericEntry m_angTolEntry;
             selected = table.getEntry("default").getString("");
           }
 
-          if (selected != null && !selected.isEmpty()) {
+                    if (selected != null && !selected.isEmpty()) {
             // Try common filename patterns for autos in deploy/PathPlanner/autos
             Path deployAutos = edu.wpi.first.wpilibj.Filesystem.getDeployDirectory().toPath().resolve("PathPlanner").resolve("autos");
             Path autoFile = null;
@@ -296,7 +365,10 @@ private GenericEntry m_angTolEntry;
             if (autoFile != null) {
               String autoJson = Files.readString(autoFile, StandardCharsets.UTF_8);
               boolean resetOdom = autoJson.contains("\"resetOdom\": true") || autoJson.contains("\"resetOdom\":true");
-              if (resetOdom) {
+              // Only perform the automatic odometry reset if the user enabled
+              // the Shuffleboard toggle for it.
+              boolean userRequested = m_resetOdomEntry.getBoolean(true);
+              if (resetOdom && userRequested) {
                 // Extract pathName value from the auto JSON
                 Pattern p = Pattern.compile("\"pathName\"\\s*:\\s*\"([^\"]+)\"");
                 Matcher m = p.matcher(autoJson);
@@ -327,11 +399,11 @@ private GenericEntry m_angTolEntry;
               }
             }
           }
-        } catch (Exception e) {
-          // Non-fatal: log and fall back to origin reset
-          edu.wpi.first.wpilibj.DataLogManager.log("[AutoChooser] Failed to parse selected auto for odometry reset: " + e.toString());
-          m_odometrySubsystem.resetOdometry(new Pose2d());
-        }
+                } catch (IOException | RuntimeException e) {
+                  // Non-fatal: log and fall back to origin reset
+                  edu.wpi.first.wpilibj.DataLogManager.log("[AutoChooser] Failed to parse selected auto for odometry reset: " + e.toString());
+                  m_odometrySubsystem.resetOdometry(new Pose2d());
+                }
 
         return ppCmd;
       }

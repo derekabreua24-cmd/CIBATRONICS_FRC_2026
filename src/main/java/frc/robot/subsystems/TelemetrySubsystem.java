@@ -11,6 +11,10 @@ import edu.wpi.first.wpilibj.Timer;
 import edu.wpi.first.wpilibj2.command.Command;
 import edu.wpi.first.wpilibj2.command.CommandScheduler;
 import edu.wpi.first.math.geometry.Pose2d;
+import edu.wpi.first.math.geometry.Transform2d;
+import edu.wpi.first.math.geometry.Translation2d;
+import edu.wpi.first.math.geometry.Rotation2d;
+import frc.robot.util.GeometryUtils;
 import edu.wpi.first.wpilibj.DataLogManager;
 import edu.wpi.first.networktables.NetworkTable;
 import edu.wpi.first.networktables.NetworkTableInstance;
@@ -322,7 +326,13 @@ public class TelemetrySubsystem extends SubsystemBase {
   var maybePose = m_vision.getLastPose();
   var maybeTs = m_vision.getLastTimestamp();
       if (maybePose.isPresent() && maybeTs.isPresent()) {
-        m_drive.addVisionMeasurement(maybePose.get(), maybeTs.getAsDouble());
+        // Only apply vision measurements when not in teleop to avoid unpredictable
+        // operator-facing corrections. This implements Test A: disable vision during teleop.
+        if (!edu.wpi.first.wpilibj.DriverStation.isTeleop()) {
+          m_drive.addVisionMeasurement(maybePose.get(), maybeTs.getAsDouble());
+        } else {
+          // Teleop: skip vision fusion
+        }
       }
     }
 
@@ -461,6 +471,19 @@ public class TelemetrySubsystem extends SubsystemBase {
           visionX = String.format("%.3f", vp.getX());
           visionY = String.format("%.3f", vp.getY());
           visionDeg = String.format("%.2f", vp.getRotation().getDegrees());
+
+          // ---- New: publish a small Pose2d[] of vision candidates using Transform2d ----
+          try {
+            Pose2d base = vp;
+            Pose2d[] candidates = new Pose2d[] {
+              base,
+              base.transformBy(new Transform2d(new Translation2d(0.2, 0.0), new Rotation2d(0.0))),
+              base.transformBy(new Transform2d(new Translation2d(-0.2, 0.0), new Rotation2d(0.0)))
+            };
+            GeometryUtils.publishPose2dArrayToField2d(m_field2d, "VisionCandidates", candidates);
+          } catch (RuntimeException e) {
+            DataLogManager.log("TelemetrySubsystem: failed to publish Pose2d[] candidates -> " + e.toString());
+          }
         }
         if (maybeTs.isPresent()) {
           visionTs = String.format("%.3f", maybeTs.getAsDouble());

@@ -45,16 +45,16 @@ public class DriveSubsystem extends SubsystemBase {
   // ===============================
 
   private final SparkMax m_leftFront =
-    new SparkMax(DriveConstants.kRightFrontMotorPort, MotorType.kBrushed);
-
-  private final SparkMax m_leftRear =
-    new SparkMax(DriveConstants.kRightRearMotorPort, MotorType.kBrushed);
-
-  private final SparkMax m_rightFront =
     new SparkMax(DriveConstants.kLeftFrontMotorPort, MotorType.kBrushed);
 
-  private final SparkMax m_rightRear =
+  private final SparkMax m_leftRear =
     new SparkMax(DriveConstants.kLeftRearMotorPort, MotorType.kBrushed);
+
+  private final SparkMax m_rightFront =
+    new SparkMax(DriveConstants.kRightFrontMotorPort, MotorType.kBrushed);
+
+  private final SparkMax m_rightRear =
+    new SparkMax(DriveConstants.kRightRearMotorPort, MotorType.kBrushed);
 
   private final Field2d m_field = new Field2d();
 

@@ -1,47 +1,25 @@
-AdvantageScope & WPILib Simulator — Quick Setup
+## Configuración rápida de AdvantageScope y simulación
 
-This short guide explains how to run the WPILib simulator for this project and verify AdvantageKit / AdvantageScope is receiving telemetry (NT4).
+Este documento explica cómo verificar que el proyecto funcione en simulación y cómo conectar AdvantageScope.
 
-Prerequisites
-- Java 17 (installed on your machine)
-- WPILib / GradleRIO development environment (installed via WPILib installer)
-- AdvantageScope app (Mechanical Advantage) installed on your PC
-- Firewall rules allow local TCP/UDP between simulator and AdvantageScope (localhost should be allowed)
+1) Verifique las dependencias de AdvantageKit
+   - El proyecto incluye `akit-java` y `akit-wpilibio` en vendordeps. Estas bibliotecas proveen los binarios nativos necesarios para la simulación de escritorio.
+   - Asegúrese de que esas dependencias estén en el classpath de runtime; la salida de Gradle (`./gradlew dependencies`) debería listarlas en `runtimeClasspath` y `nativeDebug`.
 
-Run the simulator
-1. Build the project:
+2) Inicie la simulación
+   - Desde VS Code use el plugin WPILib: "Simulate Robot" o ejecute la tarea Gradle `simulateRobot`.
+   - El proyecto publica claves del `Logger` y valores de AdvantageKit en `Robot.simulationInit()` para facilitar la detección por AdvantageScope.
 
-```powershell
-./gradlew.bat build
-```
+3) Abra AdvantageScope y conéctese
+   - Inicie AdvantageScope en la misma máquina o en una que pueda alcanzar la dirección del simulador.
+   - Si la simulación corre localmente, usar `localhost` suele funcionar.
+   - Busque las entradas del `Logger` y los topics NT4 que comienzan con `akit/` o las claves que se han publicado (ej. `Smoke/AdvantageKit/Alive`).
 
-2. Start the simulator (desktop run):
+4) Prueba rápida (smoke test)
+   - Con la simulación en marcha, active Teleop o Autonomous desde la UI de simulación o seleccione un auto en Shuffleboard y habilite Autonomous.
+   - La simulación publicará las claves "smoke" (configuradas en `Robot.simulationInit()`), y AdvantageScope debería detectarlas automáticamente.
 
-```powershell
-./gradlew.bat simulateRobot
-```
-
-What to expect
-- The simulator will launch the WPILib GUI. The robot code will call `simulationInit()` which:
-  - Starts the selected autonomous command (useful for smoke tests).
-  - Publishes a small AdvantageKit "smoke" signal (Logger.recordOutput entries "Smoke/AdvantageKit/Alive" and "Smoke/AdvantageKit/Message").
-- In the simulator console you should see log lines indicating `simulationInit`.
-
-Verify AdvantageScope
-1. Open AdvantageScope on the same machine.
-2. It should auto-detect the robot's NT4 stream. If not, connect to localhost or the simulator address.
-3. Look for data under the logger/junction frames or a key named similar to "Smoke/AdvantageKit/Alive".
-4. You should see the message "simInit" appear under "Smoke/AdvantageKit/Message".
-
-Troubleshooting
-- No data in AdvantageScope:
-  - Make sure both the simulator and AdvantageScope are on the same machine.
-  - Temporarily disable Windows Firewall or add a rule to allow the simulator's Java process and AdvantageScope to communicate over the local network.
-  - Confirm `Robot.robotInit()` called `Logger.start()` (this project does this by default).
-- JNI or native load errors:
-  - Check the simulation console for UnsatisfiedLinkError messages; vendordeps contains platform-native artifacts for AdvantageKit - ensure `windowsx86-64` is allowed.
-- Shuffleboard entries missing:
-  - Open Shuffleboard and check the "Autonomous" tab. The PathPlanner chooser is displayed as "PathPlanner Autos".
-
-Next steps
-- If you want automated verification, I can add a short unit/integration test that runs in desktop mode and asserts Logger produced a frame; this requires wiring a test NT4 consumer and is optional.
+Consejos y solución de problemas
+   - Si no aparece información en AdvantageScope, compruebe reglas de firewall y que el publisher NT4 esté activo.
+   - Verifique que las vendordeps nativas están presentes (si faltan, la simulación puede no publicar datos nativos). Revise la salida de Gradle para confirmar.
+   - Si usa una red diferente (ej. dos máquinas), asegúrese de que las direcciones IP y el enrutamiento de NT4 permitan la conexión.
