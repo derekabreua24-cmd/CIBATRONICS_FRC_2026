@@ -108,19 +108,26 @@ public class Robot extends LoggedRobot {
   @Override
   public void testPeriodic() {}
 
-  /** Esta función se llama una vez cuando se inicia la simulación. */
+  /**
+   * Llamado una vez cuando se inicia la simulación en modo escritorio.
+   *
+   * Esta implementación inicia automáticamente el autónomo seleccionado para
+   * facilitar pruebas rápidas (smoke tests) y publica una señal mínima a
+   * AdvantageKit/Logger para que AdvantageScope pueda detectar que la
+   * telemetría está activa.
+   */
   @Override
   public void simulationInit() {
-    // For simulator smoke tests: automatically start the selected autonomous command
-    // so we can verify the AutoBuilder/chooser wiring without a physical Driver Station.
-  edu.wpi.first.wpilibj.DataLogManager.log("simulationInit: auto-starting autonomous for smoke test.\n");
+    // Iniciar el autónomo seleccionado para pruebas rápidas del AutoBuilder/chooser
+    edu.wpi.first.wpilibj.DataLogManager.log("simulationInit: auto-starting autonomous for smoke test.\n");
     autonomousInit();
-    // Publish a small AdvantageKit/Logger smoke signal so AdvantageScope/NT4 can detect it.
+
+    // Publicar una señal simple de AdvantageKit/Logger para verificación en AdvantageScope
     try {
       Logger.recordOutput("Smoke/AdvantageKit/Alive", 1);
       Logger.recordOutput("Smoke/AdvantageKit/Message", "simInit");
     } catch (Throwable t) {
-      // Non-fatal: log via DataLogManager if Logger isn't available for any reason.
+      // No fatal: registrar mediante DataLogManager si Logger no está disponible
       DataLogManager.log("[simulationInit] Logger smoke-test failed: " + t.toString());
     }
   }

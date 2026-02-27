@@ -144,9 +144,9 @@ private GenericEntry m_angTolEntry;
     m_posTolEntry = autoTab.add("Pos Tol (m)", 0.1).getEntry();
     m_angTolEntry = autoTab.add("Ang Tol (deg)", 5.0).getEntry();
 
-    // Tuning entries (live-adjustable gains)
+  // Entradas de afinación (ganancias ajustables en tiempo de ejecución)
     m_ppltvGainEntry = tuningTab.add("PPLTV Gain", 1.0).withPosition(0, 0).withSize(2, 1).getEntry();
-    // Drive feedforward live-tuning entries (used by DriveSubsystem if present)
+  // Entradas de feedforward de la unidad de tracción (usadas por DriveSubsystem si están habilitadas)
     tuningTab.add("Drive KS", DriveConstants.kDriveKS).withPosition(0, 1).withSize(2, 1).getEntry();
     tuningTab.add("Drive KV", DriveConstants.kDriveKV).withPosition(2, 1).withSize(2, 1).getEntry();
     tuningTab.add("Drive KA", DriveConstants.kDriveKA).withPosition(4, 1).withSize(2, 1).getEntry();
@@ -156,7 +156,7 @@ private GenericEntry m_angTolEntry;
     tuningTab.add("Use PathPlanner FF", false).withPosition(2, 0).withSize(2, 1).getEntry();
     tuningTab.add("PP FF Scale", 1.0).withPosition(4, 0).withSize(2, 1).getEntry();
 
-    // Legacy string-based chooser removed; PathPlanner chooser is primary.
+  // El selector legacy basado en cadenas fue removido; el selector de PathPlanner es el principal.
 
     autoTab.addBoolean("Alliance Is Red",
         () -> DriverStation.getAlliance()
@@ -206,15 +206,16 @@ private GenericEntry m_angTolEntry;
 );
         edu.wpi.first.wpilibj.DataLogManager.log("PathPlanner 2026 fully configured.");
 
-            // Build the PathPlanner auto chooser and show it on Shuffleboard
+            // Construir el selector de autos de PathPlanner y mostrarlo en Shuffleboard
             try {
                 m_ppAutoChooser = AutoBuilder.buildAutoChooser();
                         autoTab.add("PathPlanner Autos", m_ppAutoChooser).withPosition(4, 3).withSize(3, 2);
 
-                        // Add a simple programmatic example to the PathPlanner chooser so there's
-                        // always at least one selectable option for smoke testing. Make it the
-                        // default so the simulator/DS will pick it automatically if nothing else
-                        // is selected from the GUI.
+                        // Añadir un ejemplo programático simple al selector de PathPlanner para
+                        // asegurar que siempre haya al menos una opción seleccionable para pruebas
+                        // rápidas (smoke tests). Lo establecemos como predeterminado para que el
+                        // simulador/Driver Station lo elija automáticamente si no se selecciona
+                        // otra opción en la GUI.
                         try {
                             Command exampleCmd = Commands.run(() -> m_driveSubsystem.arcadeDrive(0.4, 0.0), m_driveSubsystem)
                                     .withTimeout(1.5)
@@ -264,7 +265,7 @@ private GenericEntry m_angTolEntry;
         if (m_ppAutoChooser != null) {
             Command ppCmd = m_ppAutoChooser.getSelected();
             if (ppCmd != null) {
-                // reset sensors/odometry before running the selected auto
+                // reiniciar sensores/odometría antes de ejecutar el auto seleccionado
                 m_navxSubsystem.reset();
         // Attempt to read the chooser's selected name from Shuffleboard's NetworkTables
         try {

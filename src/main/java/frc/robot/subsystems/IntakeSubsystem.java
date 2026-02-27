@@ -5,7 +5,7 @@ import com.revrobotics.spark.SparkLowLevel.MotorType;
 import edu.wpi.first.wpilibj2.command.SubsystemBase;
 import frc.robot.Constants.DriveConstants;
 
-/** Subsistema sencillo de intake usando un único SparkMax (brushless). */
+/** Subsistema sencillo de intake usando un único SparkMax (brushed). */
 public class IntakeSubsystem extends SubsystemBase {
   private final SparkMax m_intake = new SparkMax(DriveConstants.kIntakeMotorPort, MotorType.kBrushed);
 
@@ -14,7 +14,7 @@ public class IntakeSubsystem extends SubsystemBase {
     // Configurar inversión si es necesario
     m_intake.setInverted(false); }
 
-  /** Ejecuta el motor del intake con un porcentaje solicitado (-1..1). */
+  /** Ejecuta el motor del intake haciendo uso de la constante "Velocidad del Intake". */
   public void run(double kIntakeSpeed) {
     m_intake.set(kIntakeSpeed);
   }
@@ -26,7 +26,7 @@ public class IntakeSubsystem extends SubsystemBase {
 
   @Override
   public void periodic() {
-    // nothing
+    // Nada por ahora
   }
 
   /** Devuelve el último setpoint solicitado para el motor del intake (-1..1). */

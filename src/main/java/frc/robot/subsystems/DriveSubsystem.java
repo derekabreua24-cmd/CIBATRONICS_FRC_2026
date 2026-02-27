@@ -20,7 +20,7 @@ import edu.wpi.first.wpilibj.smartdashboard.Field2d;
 import edu.wpi.first.wpilibj.smartdashboard.SmartDashboard;
 import org.littletonrobotics.junction.Logger;
 
-// Drive simulation imports:
+// Importaciones para la simulación del tren de rodaje
 
 import edu.wpi.first.math.system.plant.DCMotor;
 import edu.wpi.first.wpilibj.simulation.DifferentialDrivetrainSim;
@@ -45,16 +45,16 @@ public class DriveSubsystem extends SubsystemBase {
   // ===============================
 
   private final SparkMax m_leftFront =
-      new SparkMax(DriveConstants.kRightFrontMotorPort, MotorType.kBrushed);
+    new SparkMax(DriveConstants.kRightFrontMotorPort, MotorType.kBrushed);
 
   private final SparkMax m_leftRear =
-      new SparkMax(DriveConstants.kRightRearMotorPort, MotorType.kBrushed);
+    new SparkMax(DriveConstants.kRightRearMotorPort, MotorType.kBrushed);
 
   private final SparkMax m_rightFront =
-      new SparkMax(DriveConstants.kLeftFrontMotorPort, MotorType.kBrushed);
+    new SparkMax(DriveConstants.kLeftFrontMotorPort, MotorType.kBrushed);
 
   private final SparkMax m_rightRear =
-      new SparkMax(DriveConstants.kLeftRearMotorPort, MotorType.kBrushed);
+    new SparkMax(DriveConstants.kLeftRearMotorPort, MotorType.kBrushed);
 
   private final Field2d m_field = new Field2d();
 
@@ -137,7 +137,7 @@ public class DriveSubsystem extends SubsystemBase {
   }
 
   // ===============================
-  // Conducción
+  // Métodos de conducción (teleop / básicos)
   // ===============================
 
   public void arcadeDrive(double fwd, double rot) {
@@ -266,32 +266,36 @@ public class DriveSubsystem extends SubsystemBase {
 
   // ===============================
   // Periodic
+  // Se ejecuta cada ciclo del robot; actualiza la odometría y publica telemetría
   // ===============================
 
   @Override
-public void periodic() {
+  public void periodic() {
 
     Rotation2d heading;
 
     if (RobotBase.isSimulation() && m_driveSim != null) {
-        heading = m_driveSim.getHeading();
+      // En simulación usamos la orientación proporcionada por el simulador
+      heading = m_driveSim.getHeading();
     } else {
-        // TEMP: if you don't yet have navX connected
-        heading = new Rotation2d();
+      // En hardware real usamos la lectura del NavX
+      heading = m_navx.getRotation2d();
     }
 
+    // Actualizar el estimador de pose con la orientación y las distancias de rueda
     updateOdometry(heading);
 
     Pose2d pose = m_poseEstimator.getEstimatedPosition();
 
+    // Actualizar la visualización del campo y registrar la pose para AdvantageKit
     m_field.setRobotPose(pose);
-
     Logger.recordOutput("Odometry/Robot", pose);
 
+    // Publicar valores principales en SmartDashboard/Shuffleboard
     SmartDashboard.putNumber("Robot X", pose.getX());
     SmartDashboard.putNumber("Robot Y", pose.getY());
     SmartDashboard.putNumber("Robot Heading", pose.getRotation().getDegrees());
-}
+  }
 
   // ===============================
   // Odometría
