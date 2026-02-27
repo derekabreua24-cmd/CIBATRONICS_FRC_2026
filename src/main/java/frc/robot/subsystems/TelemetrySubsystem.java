@@ -5,7 +5,6 @@ import edu.wpi.first.wpilibj.shuffleboard.BuiltInLayouts;
 import edu.wpi.first.networktables.GenericEntry;
 import edu.wpi.first.wpilibj2.command.SubsystemBase;
 import edu.wpi.first.wpilibj2.command.button.CommandXboxController;
-// importaciones del mismo paquete eliminadas
 import edu.wpi.first.wpilibj.RobotController;
 import edu.wpi.first.wpilibj.DriverStation;
 import edu.wpi.first.wpilibj.Timer;
@@ -487,7 +486,7 @@ public class TelemetrySubsystem extends SubsystemBase {
       parts.add(String.format("%.3f", m_drive.getLeftTotalCurrent()));
 
       if (extended) {
-        // detailed left motor fields
+  // Campos detallados del motor izquierdo
         parts.add(String.format("%.3f", m_drive.getLeftFrontCurrent()));
         parts.add(String.format("%.3f", m_drive.getLeftRearCurrent()));
         parts.add(String.format("%.3f", m_drive.getLeftFrontOutput()));
