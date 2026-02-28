@@ -3,7 +3,7 @@ package frc.robot.commands;
 import frc.robot.subsystems.IntakeSubsystem;
 import frc.robot.Constants.DriveConstants;
 import edu.wpi.first.wpilibj2.command.Command;
-import edu.wpi.first.wpilibj.DataLogManager;
+import org.littletonrobotics.junction.Logger;
 
 /** Ejecuta el motor del intake a una velocidad fija mientras el comando este activo. */
 public class IntakeCommand extends Command {
@@ -19,8 +19,8 @@ public class IntakeCommand extends Command {
 
   @Override
   public void execute() {
-    m_intake.run(DriveConstants.kIntakeSpeed);
-    DataLogManager.log("[IntakeCommand] Executing intake at speed=" + DriveConstants.kIntakeSpeed);
+  m_intake.run(DriveConstants.kIntakeSpeed);
+  Logger.recordOutput("Intake/Events", "[IntakeCommand] Executing intake at speed=" + DriveConstants.kIntakeSpeed);
   }
 
   @Override

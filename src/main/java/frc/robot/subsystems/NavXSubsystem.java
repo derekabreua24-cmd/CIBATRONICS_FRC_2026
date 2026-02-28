@@ -1,8 +1,9 @@
 package frc.robot.subsystems;
 
+import org.littletonrobotics.junction.Logger;
+
 import com.studica.frc.AHRS;
 import edu.wpi.first.math.geometry.Rotation2d;
-import edu.wpi.first.wpilibj.DataLogManager;
 import edu.wpi.first.wpilibj.smartdashboard.SmartDashboard;
 import edu.wpi.first.wpilibj2.command.SubsystemBase;
 
@@ -15,9 +16,9 @@ public class NavXSubsystem extends SubsystemBase {
     try {
       // For NavX2 on RoboRIO MXP port
       tmp = new AHRS(AHRS.NavXComType.kMXP_SPI);
-      DataLogManager.log("NavX initialized on MXP SPI.");
+  Logger.recordOutput("NavX/Status", "NavX initialized on MXP SPI.");
     } catch (RuntimeException e) {
-      DataLogManager.log("NavX failed to initialize: " + e.toString());
+  Logger.recordOutput("NavX/Errors", "NavX failed to initialize: " + e.toString());
       tmp = null;
     }
     m_ahrs = tmp;

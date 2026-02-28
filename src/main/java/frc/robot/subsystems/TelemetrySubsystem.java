@@ -15,7 +15,7 @@ import edu.wpi.first.math.geometry.Transform2d;
 import edu.wpi.first.math.geometry.Translation2d;
 import edu.wpi.first.math.geometry.Rotation2d;
 import frc.robot.util.GeometryUtils;
-import edu.wpi.first.wpilibj.DataLogManager;
+import org.littletonrobotics.junction.Logger;
 import edu.wpi.first.networktables.NetworkTable;
 import edu.wpi.first.networktables.NetworkTableInstance;
 import edu.wpi.first.wpilibj.smartdashboard.Field2d;
@@ -25,7 +25,6 @@ public class TelemetrySubsystem extends SubsystemBase {
   private final DriveSubsystem m_drive;
   private final NavXSubsystem m_navx;
   private final IntakeSubsystem m_intake;
-  private final IndexerSubsystem m_indexer;
   private final ShooterSubsystem m_shooter;
   private final VisionSubsystem m_vision;
   private final CommandXboxController m_controller;
@@ -81,11 +80,7 @@ public class TelemetrySubsystem extends SubsystemBase {
   private final GenericEntry m_intakeVelEntry;
   private final GenericEntry m_intakeCurrentEntry;
   
-  // Telemetria del indexer
-  private final GenericEntry m_indexerSetEntry;
-  private final GenericEntry m_indexerPosEntry;
-  private final GenericEntry m_indexerVelEntry;
-  private final GenericEntry m_indexerCurrentEntry;
+  // Indexer removed from project — telemetry fields omitted
   private final GenericEntry m_shooterVelEntry;
   private final GenericEntry m_shooterCurrentEntry;
   private final GenericEntry m_navxYawEntry;
@@ -112,10 +107,9 @@ public class TelemetrySubsystem extends SubsystemBase {
   private final GenericEntry m_extendedLoggingEntry;
   private final GenericEntry m_snapshotRateEntry;
 
-  public TelemetrySubsystem(DriveSubsystem drive, IntakeSubsystem intake, IndexerSubsystem indexer, ShooterSubsystem shooter, CommandXboxController controller, CommandXboxController operatorController, NavXSubsystem navx, VisionSubsystem vision) {
+  public TelemetrySubsystem(DriveSubsystem drive, IntakeSubsystem intake, ShooterSubsystem shooter, CommandXboxController controller, CommandXboxController operatorController, NavXSubsystem navx, VisionSubsystem vision) {
     m_drive = drive;
     m_intake = intake;
-    m_indexer = indexer;
     m_shooter = shooter;
     m_controller = controller;
     m_operatorController = operatorController;
@@ -154,7 +148,7 @@ public class TelemetrySubsystem extends SubsystemBase {
             try {
               m_field2d.getObject("Tag" + id).setPose(p2);
             } catch (RuntimeException e) {
-              DataLogManager.log("TelemetrySubsystem: failed to set Field2d tag pose for id=" + id + " -> " + e.toString());
+              Logger.recordOutput("Telemetry/Errors", "TelemetrySubsystem: failed to set Field2d tag pose for id=" + id + " -> " + e.toString());
             }
           }
         }
@@ -204,12 +198,7 @@ public class TelemetrySubsystem extends SubsystemBase {
   m_intakeVelEntry = intakeLayout.add("Intake Vel", 0.0).getEntry();
   m_intakeCurrentEntry = intakeLayout.add("Intake Current", 0.0).getEntry();
 
-  // Diseño de Indexer
-  var indexerLayout = tab.getLayout("Indexer", BuiltInLayouts.kList).withSize(2, 3);
-  m_indexerSetEntry = indexerLayout.add("Indexer Setpoint", 0.0).getEntry();
-  m_indexerPosEntry = indexerLayout.add("Indexer Pos", 0.0).getEntry();
-  m_indexerVelEntry = indexerLayout.add("Indexer Vel", 0.0).getEntry();
-  m_indexerCurrentEntry = indexerLayout.add("Indexer Current", 0.0).getEntry();
+  // Indexer telemetry removed
 
   // Diseño de Shooter
   var shooterLayout = tab.getLayout("Shooter", BuiltInLayouts.kList).withSize(2, 3);
@@ -276,31 +265,37 @@ public class TelemetrySubsystem extends SubsystemBase {
   m_snapshotRateEntry = displayLayout.add("Snapshot Rate (Hz)", 5.0).getEntry();
   m_driverModeEntry = displayLayout.add("Driver Mode", false).getEntry();
   // Registrar eventos del ciclo de vida de comandos para trazabilidad
-    CommandScheduler.getInstance().onCommandInitialize(cmd -> {
+  CommandScheduler.getInstance().onCommandInitialize(cmd -> {
     String txt = "[Command] init: " + cmd.getClass().getSimpleName();
-    DataLogManager.log(txt);
+    try {
+      Logger.recordOutput("Telemetry/CommandInit", txt);
+    } catch (Throwable ignore) {}
     try {
       m_driverEventLogEntry.setString(txt);
     } catch (RuntimeException e) {
-      DataLogManager.log("TelemetrySubsystem: failed to update driver event entry on init -> " + e.toString());
+      Logger.recordOutput("Telemetry/Errors", "TelemetrySubsystem: failed to update driver event entry on init -> " + e.toString());
     }
   });
   CommandScheduler.getInstance().onCommandFinish(cmd -> {
     String txt = "[Command] finish: " + cmd.getClass().getSimpleName();
-    DataLogManager.log(txt);
+    try {
+      Logger.recordOutput("Telemetry/CommandFinish", txt);
+    } catch (Throwable ignore) {}
     try {
       m_driverEventLogEntry.setString(txt);
     } catch (RuntimeException e) {
-      DataLogManager.log("TelemetrySubsystem: failed to update driver event entry on finish -> " + e.toString());
+      Logger.recordOutput("Telemetry/Errors", "TelemetrySubsystem: failed to update driver event entry on finish -> " + e.toString());
     }
   });
   CommandScheduler.getInstance().onCommandInterrupt(cmd -> {
     String txt = "[Command] interrupt: " + cmd.getClass().getSimpleName();
-    DataLogManager.log(txt);
+    try {
+      Logger.recordOutput("Telemetry/CommandInterrupt", txt);
+    } catch (Throwable ignore) {}
     try {
       m_driverEventLogEntry.setString(txt);
     } catch (RuntimeException e) {
-      DataLogManager.log("TelemetrySubsystem: failed to update driver event entry on interrupt -> " + e.toString());
+      Logger.recordOutput("Telemetry/Errors", "TelemetrySubsystem: failed to update driver event entry on interrupt -> " + e.toString());
     }
   });
   }
@@ -311,9 +306,9 @@ public class TelemetrySubsystem extends SubsystemBase {
     // Mostrar el ultimo evento en Shuffleboard
     m_eventLogEntry.setString(timestamped);
     // Also update the compact driver event log entry if present
-  try { m_driverEventLogEntry.setString(timestamped); } catch (RuntimeException e) { DataLogManager.log("TelemetrySubsystem: failed to set driver event entry -> " + e.toString()); }
-    // Tambien escribir en el registro persistente de datos
-    DataLogManager.log("Event: " + timestamped);
+  try { m_driverEventLogEntry.setString(timestamped); } catch (RuntimeException e) { Logger.recordOutput("Telemetry/Errors", "TelemetrySubsystem: failed to set driver event entry -> " + e.toString()); }
+    // Tambien escribir en el registro persistente de datos (AdvantageKit Logger)
+  Logger.recordOutput("Telemetry/Event", timestamped);
   }
 
   @Override
@@ -365,17 +360,17 @@ public class TelemetrySubsystem extends SubsystemBase {
 
     // Telemetria expandida desde WPILib
     m_batteryVoltageEntry.setDouble(RobotController.getBatteryVoltage());
-  // Tambien escribir valores importantes en DataLogManager (registro persistente)
-  DataLogManager.log(String.format("BatteryVoltage=%.3f", RobotController.getBatteryVoltage()));
+  // Tambien escribir valores importantes en el registro persistente (AdvantageKit Logger)
+  Logger.recordOutput("Telemetry/BatteryVoltage", RobotController.getBatteryVoltage());
     m_enabledEntry.setBoolean(DriverStation.isEnabled());
     m_autonomousEntry.setBoolean(DriverStation.isAutonomous());
     m_matchTimeEntry.setDouble(DriverStation.getMatchTime());
     m_fpgaTimeEntry.setDouble(Timer.getFPGATimestamp());
 
   // Registrar promedios del drive y setpoints de intake/indexer periodicamente
-  DataLogManager.log(String.format("DriveLeftAvg=%.3f", m_drive.getLeftAverage()));
-  DataLogManager.log(String.format("DriveRightAvg=%.3f", m_drive.getRightAverage()));
-  DataLogManager.log(String.format("IntakeSet=%.3f", m_intake.getSetpoint()));
+  Logger.recordOutput("Telemetry/DriveLeftAvg", m_drive.getLeftAverage());
+  Logger.recordOutput("Telemetry/DriveRightAvg", m_drive.getRightAverage());
+  Logger.recordOutput("Telemetry/IntakeSet", m_intake.getSetpoint());
 
   // Drive/intake encoder & current telemetry (dev only)
   boolean extended = m_extendedLoggingEntry.getBoolean(true);
@@ -404,7 +399,7 @@ public class TelemetrySubsystem extends SubsystemBase {
     try {
       m_field2dDriver.setRobotPose(m_drive.getPose());
     } catch (RuntimeException e) {
-      DataLogManager.log("TelemetrySubsystem: failed to set driver Field2d pose -> " + e.toString());
+      Logger.recordOutput("Telemetry/Errors", "TelemetrySubsystem: failed to set driver Field2d pose -> " + e.toString());
     }
   }
 
@@ -417,11 +412,6 @@ public class TelemetrySubsystem extends SubsystemBase {
   m_navxPitchEntry.setDouble(m_navx.getPitch());
   m_navxRollEntry.setDouble(m_navx.getRoll());
 
-  // Valores de telemetria del indexer
-    m_indexerSetEntry.setDouble(m_indexer.getSetpoint());
-    m_indexerPosEntry.setDouble(m_indexer.getEncoderPosition());
-    m_indexerVelEntry.setDouble(m_indexer.getEncoderVelocity());
-    m_indexerCurrentEntry.setDouble(m_indexer.getOutputCurrent());
 
   // Telemetria del shooter
   m_shooterVelEntry.setDouble(m_shooter.getAverageVelocity());
@@ -451,7 +441,7 @@ public class TelemetrySubsystem extends SubsystemBase {
       try {
         m_field2d.setRobotPose(pose);
       } catch (RuntimeException e) {
-        DataLogManager.log("TelemetrySubsystem: failed to set Field2d robot pose -> " + e.toString());
+        Logger.recordOutput("Telemetry/Errors", "TelemetrySubsystem: failed to set Field2d robot pose -> " + e.toString());
       }
       String visionX = "";
       String visionY = "";
@@ -466,7 +456,7 @@ public class TelemetrySubsystem extends SubsystemBase {
           try {
             m_field2d.getObject("Vision").setPose(vp);
           } catch (RuntimeException e) {
-            DataLogManager.log("TelemetrySubsystem: failed to set Field2d vision pose -> " + e.toString());
+            Logger.recordOutput("Telemetry/Errors", "TelemetrySubsystem: failed to set Field2d vision pose -> " + e.toString());
           }
           visionX = String.format("%.3f", vp.getX());
           visionY = String.format("%.3f", vp.getY());
@@ -482,7 +472,7 @@ public class TelemetrySubsystem extends SubsystemBase {
             };
             GeometryUtils.publishPose2dArrayToField2d(m_field2d, "VisionCandidates", candidates);
           } catch (RuntimeException e) {
-            DataLogManager.log("TelemetrySubsystem: failed to publish Pose2d[] candidates -> " + e.toString());
+            Logger.recordOutput("Telemetry/Errors", "TelemetrySubsystem: failed to publish Pose2d[] candidates -> " + e.toString());
           }
         }
         if (maybeTs.isPresent()) {
@@ -544,10 +534,6 @@ public class TelemetrySubsystem extends SubsystemBase {
       parts.add(String.format("%.3f", m_intake.getEncoderVelocity()));
       parts.add(String.format("%.3f", m_intake.getOutputCurrent()));
 
-      parts.add(String.format("%.3f", m_indexer.getSetpoint()));
-      parts.add(String.format("%.3f", m_indexer.getEncoderPosition()));
-      parts.add(String.format("%.3f", m_indexer.getEncoderVelocity()));
-      parts.add(String.format("%.3f", m_indexer.getOutputCurrent()));
 
       parts.add(String.format("%.3f", m_shooter.getTargetRpm()));
       parts.add(String.format("%.3f", m_shooter.getAverageVelocity()));
@@ -568,7 +554,7 @@ public class TelemetrySubsystem extends SubsystemBase {
       parts.add(scmd == null ? "None" : scmd.getClass().getSimpleName());
 
       String csv = String.join(",", parts);
-      DataLogManager.log("SNAP," + csv);
+  Logger.recordOutput("Telemetry/Snapshot", csv);
     }
   }
 }

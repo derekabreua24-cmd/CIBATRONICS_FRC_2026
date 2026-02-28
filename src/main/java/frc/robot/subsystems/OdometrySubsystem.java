@@ -1,9 +1,10 @@
 package frc.robot.subsystems;
 
+import org.littletonrobotics.junction.Logger;
+
 import edu.wpi.first.math.geometry.Pose2d;
 import edu.wpi.first.math.geometry.Rotation2d;
 import edu.wpi.first.wpilibj2.command.SubsystemBase;
-import edu.wpi.first.wpilibj.DataLogManager;
 
 /**
  * Gestor centralizado de odometría.
@@ -33,7 +34,7 @@ public class OdometrySubsystem extends SubsystemBase {
     Rotation2d heading = m_navx.getRotation2d();
     m_drive.updateOdometry(heading);
 
-  DataLogManager.log("[Odometry] Updating odometry. pose=" + getPose());
+  Logger.recordOutput("Odometry/Update", "[Odometry] Updating odometry. pose=" + getPose());
   }
 
   /** Devuelve la pose estimada actual del robot. */
@@ -48,7 +49,7 @@ public class OdometrySubsystem extends SubsystemBase {
   public void resetOdometry(Pose2d pose) {
     Rotation2d heading = m_navx.getRotation2d();
     m_drive.resetOdometry(pose, heading);
-    edu.wpi.first.wpilibj.DataLogManager.log("[Odometry] Reset to pose: " + pose);
+    Logger.recordOutput("Odometry/Reset", "[Odometry] Reset to pose: " + pose);
   }
 
   /**
@@ -59,6 +60,6 @@ public class OdometrySubsystem extends SubsystemBase {
    */
   public void addVisionMeasurement(Pose2d visionPose, double timestampSeconds) {
     m_drive.addVisionMeasurement(visionPose, timestampSeconds);
-    edu.wpi.first.wpilibj.DataLogManager.log("[Odometry] Vision measurement added at t=" + timestampSeconds + " pose=" + visionPose);
+    Logger.recordOutput("Odometry/Vision", "[Odometry] Vision measurement added at t=" + timestampSeconds + " pose=" + visionPose);
   }
 }

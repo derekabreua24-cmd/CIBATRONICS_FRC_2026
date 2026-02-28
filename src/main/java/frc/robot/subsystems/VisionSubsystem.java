@@ -15,7 +15,7 @@ import edu.wpi.first.networktables.NetworkTableInstance;
 import edu.wpi.first.math.geometry.Transform2d;
 import edu.wpi.first.math.geometry.Translation2d;
 import edu.wpi.first.math.geometry.Rotation2d;
-import edu.wpi.first.wpilibj.DataLogManager;
+// DataLogManager usage removed in favor of AdvantageKit Logger
 
 public class VisionSubsystem extends SubsystemBase {
 
@@ -86,15 +86,15 @@ public class VisionSubsystem extends SubsystemBase {
         try {
           Logger.recordOutput("Vision/Candidates", sb.toString());
         } catch (Throwable t) {
-          DataLogManager.log("VisionSubsystem: Logger publish failed -> " + t.toString());
+          Logger.recordOutput("Vision/Errors", "VisionSubsystem: Logger publish failed -> " + t.toString());
         }
         try {
           NetworkTableInstance.getDefault().getTable("Vision").getEntry("Candidates").setString(sb.toString());
         } catch (RuntimeException e) {
-          DataLogManager.log("VisionSubsystem: NT publish failed -> " + e.toString());
+          Logger.recordOutput("Vision/Errors", "VisionSubsystem: NT publish failed -> " + e.toString());
         }
       } catch (RuntimeException ex) {
-        DataLogManager.log("VisionSubsystem: failed to compute/publish candidates -> " + ex.toString());
+        Logger.recordOutput("Vision/Errors", "VisionSubsystem: failed to compute/publish candidates -> " + ex.toString());
       }
     });
 

@@ -4,7 +4,7 @@ import edu.wpi.first.wpilibj2.command.SubsystemBase;
 import edu.wpi.first.wpilibj.shuffleboard.Shuffleboard;
 import edu.wpi.first.wpilibj.shuffleboard.BuiltInLayouts;
 import edu.wpi.first.networktables.GenericEntry;
-import edu.wpi.first.wpilibj.DataLogManager;
+import org.littletonrobotics.junction.Logger;
 
 /**
  * Subsistema simple de modo operador. Mantiene un toggle de 'operator mode' que otros
@@ -26,7 +26,7 @@ public class OperatorSubsystem extends SubsystemBase {
   public void toggleMode() {
     m_operatorMode = !m_operatorMode;
     m_modeEntry.setBoolean(m_operatorMode);
-    DataLogManager.log("OperatorMode=" + m_operatorMode);
+  Logger.recordOutput("Operator/Mode", "OperatorMode=" + m_operatorMode);
   }
 
   /** Devuelve si el modo operador está activado actualmente. */

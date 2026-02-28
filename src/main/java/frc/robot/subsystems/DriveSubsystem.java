@@ -366,7 +366,7 @@ public class DriveSubsystem extends SubsystemBase {
       estMax = NetworkTableInstance.getDefault().getEntry("/Shuffleboard/Tuning/Drive Est Max Speed").getDouble(estMax);
     } catch (RuntimeException e) {
       if (!m_loggedNetworkTableError) {
-        edu.wpi.first.wpilibj.DataLogManager.log("DriveSubsystem: failed to read NetworkTables tuning entries -> " + e.toString());
+  Logger.recordOutput("Telemetry/Errors", "DriveSubsystem: failed to read NetworkTables tuning entries -> " + e.toString());
         m_loggedNetworkTableError = true;
       }
     }
@@ -406,7 +406,7 @@ public class DriveSubsystem extends SubsystemBase {
       }
     } catch (RuntimeException e) {
       if (!m_loggedFFError) {
-        edu.wpi.first.wpilibj.DataLogManager.log("DriveSubsystem: failed to apply PathPlanner feedforward -> " + e.toString());
+  Logger.recordOutput("Telemetry/Errors", "DriveSubsystem: failed to apply PathPlanner feedforward -> " + e.toString());
         m_loggedFFError = true;
       }
       // Non-fatal otherwise

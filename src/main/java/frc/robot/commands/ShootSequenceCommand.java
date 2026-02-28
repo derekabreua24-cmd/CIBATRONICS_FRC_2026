@@ -2,10 +2,8 @@ package frc.robot.commands;
 
 import edu.wpi.first.wpilibj2.command.Command;
 import frc.robot.subsystems.ShooterSubsystem;
-import frc.robot.subsystems.IndexerSubsystem;
 import frc.robot.subsystems.IntakeSubsystem;
 import frc.robot.Constants.DriveConstants;
-import edu.wpi.first.wpilibj.DataLogManager;
 
 /**
  * Secuencia coordinada de disparo: iniciar lanzador e intake, esperar a que el lanzador
@@ -14,7 +12,6 @@ import edu.wpi.first.wpilibj.DataLogManager;
  */
 public class ShootSequenceCommand extends Command {
   private final ShooterSubsystem m_shooter;
-  private final IndexerSubsystem m_indexer;
   private final IntakeSubsystem m_intake;
 
   // Tolerancia (RPM) para considerar que el lanzador está "a velocidad"
@@ -23,11 +20,10 @@ public class ShootSequenceCommand extends Command {
   private long startFeedTime = 0;
   private boolean feeding = false;
 
-  public ShootSequenceCommand(ShooterSubsystem shooter, IndexerSubsystem indexer, IntakeSubsystem intake) {
+  public ShootSequenceCommand(ShooterSubsystem shooter, IntakeSubsystem intake) {
     m_shooter = shooter;
-    m_indexer = indexer;
     m_intake = intake;
-    addRequirements(shooter, indexer, intake);
+    addRequirements(shooter, intake);
   }
 
   @Override
@@ -36,8 +32,7 @@ public class ShootSequenceCommand extends Command {
     // Solicitar al subsistema de disparo la velocidad objetivo (RPM) calculada desde el setpoint porcentual
     double targetRpm = DriveConstants.kShooterMaxRPM * Math.abs(DriveConstants.kShooterSpeed);
     m_shooter.setVelocitySetpointRpm(targetRpm);
-    m_intake.run(DriveConstants.kIntakeSpeed);
-    DataLogManager.log("[ShootSequence] initialize: shooter requested speed=" + DriveConstants.kShooterSpeed);
+  m_intake.run(DriveConstants.kIntakeSpeed);
   }
 
   @Override
@@ -55,31 +50,26 @@ public class ShootSequenceCommand extends Command {
     double currentRpm = Math.abs(m_shooter.getAverageVelocity());
     if (Math.abs(currentRpm - expectedRpm) <= kRpmTolerance) {
       // Si el lanzador esta a velocidad: alimentar segun el modo seleccionado
-      if (continuous) {
-        m_indexer.run(DriveConstants.kIndexerSpeed);
-      } else {
-        // Modo pulsado: usar un temporizador simple para alternar encendido/apagado
+      // Indexer was removed; keep intake running (intake was started in initialize())
+      // For pulse-mode we keep internal timers but no indexer motor calls.
+      if (!continuous) {
         long now = System.currentTimeMillis();
         if (startFeedTime == 0) {
           startFeedTime = now;
           feeding = true;
-          m_indexer.run(DriveConstants.kIndexerSpeed);
         } else {
           long elapsed = now - startFeedTime;
           if (feeding && elapsed >= (long) (pulse * 1000)) {
             feeding = false;
             startFeedTime = now;
-            m_indexer.stop();
           } else if (!feeding && elapsed >= (long) (pause * 1000)) {
             feeding = true;
             startFeedTime = now;
-            m_indexer.run(DriveConstants.kIndexerSpeed);
           }
         }
       }
     } else {
-      // No esta a velocidad: detener indexer y resetear temporizador de pulsos
-      m_indexer.stop();
+      // No esta a velocidad: resetear temporizador de pulsos
       startFeedTime = 0;
       feeding = false;
     }
@@ -88,9 +78,8 @@ public class ShootSequenceCommand extends Command {
   @Override
   public void end(boolean interrupted) {
     m_shooter.stop();
-    m_indexer.stop();
     m_intake.stop();
-    DataLogManager.log("[ShootSequence] end interrupted=" + interrupted);
+    // Logging disabled here (AdvantageKit used elsewhere)
   }
 
   @Override

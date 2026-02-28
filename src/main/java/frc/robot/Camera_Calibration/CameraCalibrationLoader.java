@@ -9,6 +9,7 @@ import edu.wpi.first.math.geometry.Translation3d;
 import edu.wpi.first.math.geometry.Rotation3d;
 import edu.wpi.first.math.geometry.Transform3d;
 import edu.wpi.first.wpilibj.Filesystem; // --- ADDED ---
+import org.littletonrobotics.junction.Logger;
 
 /**
  * Simple loader for camera calibration stored as a Java properties file in deploy.
@@ -100,13 +101,7 @@ public final class CameraCalibrationLoader {
             Math.toRadians(rotZ)));
 
   // --- ADDED: Debug print for verification (use DataLogManager) ---
-  edu.wpi.first.wpilibj.DataLogManager.log("Loaded Camera Calibration:\n");
-  edu.wpi.first.wpilibj.DataLogManager.log("  Camera Name: " + cameraName + "\n");
-  edu.wpi.first.wpilibj.DataLogManager.log("  Device Index: " + deviceIndex + "\n");
-  edu.wpi.first.wpilibj.DataLogManager.log("  fx=" + fx + " fy=" + fy + "\n");
-  edu.wpi.first.wpilibj.DataLogManager.log("  cx=" + cx + " cy=" + cy + "\n");
-  edu.wpi.first.wpilibj.DataLogManager.log("  tagSizeMeters=" + tagSize + "\n");
-  edu.wpi.first.wpilibj.DataLogManager.log("  cameraToRobot=" + cameraToRobot + "\n");
+  Logger.recordOutput("Camera/Calibration", String.format("Loaded Camera Calibration: name=%s device=%d fx=%.1f fy=%.1f cx=%.1f cy=%.1f tagSize=%.4f cameraToRobot=%s", cameraName, deviceIndex, fx, fy, cx, cy, tagSize, cameraToRobot.toString()));
 
     return new Calibration(cameraName, deviceIndex, fx, fy, cx, cy, tagSize, cameraToRobot);
   }

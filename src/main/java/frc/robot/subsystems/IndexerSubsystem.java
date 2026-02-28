@@ -1,62 +1,47 @@
 package frc.robot.subsystems;
 
-import com.revrobotics.spark.SparkMax;
-import com.revrobotics.spark.SparkLowLevel.MotorType;
 import edu.wpi.first.wpilibj2.command.SubsystemBase;
-import frc.robot.Constants.DriveConstants;
 
-/** Subsistema sencillo de indexer que hace girar un único motor para avanzar las piezas del juego. */
+/**
+ * Indexer subsystem stub.
+ *
+ * The project was requested to remove the physical indexer; keep a lightweight stub to
+ * avoid compile errors in places where the class is still referenced. This stub performs
+ * no hardware actions and returns safe default values.
+ */
 public class IndexerSubsystem extends SubsystemBase {
-  private final SparkMax m_indexer = new SparkMax(DriveConstants.kIndexerMotorPort, MotorType.kBrushless);
-
-  @SuppressWarnings("deprecation")
   public IndexerSubsystem() {
-    // Configurar inversión si es necesario
-    m_indexer.setInverted(false);
-    // Configuracion segura para el motor del indexer
-    try {
-      com.revrobotics.spark.config.SparkMaxConfig cfg = new com.revrobotics.spark.config.SparkMaxConfig();
-      cfg.idleMode(com.revrobotics.spark.config.SparkBaseConfig.IdleMode.kCoast);
-      cfg.smartCurrentLimit(20);
-      cfg.openLoopRampRate(0.2);
-      m_indexer.configure(cfg, com.revrobotics.ResetMode.kResetSafeParameters, com.revrobotics.PersistMode.kPersistParameters);
-    } catch (RuntimeException e) {
-  edu.wpi.first.wpilibj.DataLogManager.log("[IndexerSubsystem] SparkMax configure failed: " + e.toString());
-    }
+    // Intentionally empty: real hardware removed.
   }
 
-  /** Ejecuta el indexer con el porcentaje solicitado (-1..1). */
+  /** No-op run. */
   public void run(double percent) {
-    m_indexer.set(percent);
+    // no-op
   }
 
-  /** Detiene el motor del indexer. */
+  /** No-op stop. */
   public void stop() {
-    m_indexer.stopMotor();
+    // no-op
   }
 
   @Override
   public void periodic() {
-    // Nada por ahora
+    // no periodic work
   }
 
-  /** Devuelve el último setpoint solicitado para el motor del indexer (-1..1). */
   public double getSetpoint() {
-    return m_indexer.get();
+    return 0.0;
   }
 
-  /** Devuelve la posición del encoder (rotaciones) para el motor del indexer. */
   public double getEncoderPosition() {
-    return m_indexer.getEncoder().getPosition();
+    return 0.0;
   }
 
-  /** Devuelve la velocidad del encoder para el motor del indexer. */
   public double getEncoderVelocity() {
-    return m_indexer.getEncoder().getVelocity();
+    return 0.0;
   }
 
-  /** Devuelve la corriente de salida (amperios) del motor del indexer. */
   public double getOutputCurrent() {
-    return m_indexer.getOutputCurrent();
+    return 0.0;
   }
 }

@@ -48,8 +48,12 @@ public class Robot extends LoggedRobot {
       Logger.recordOutput("Robot/Drivetrain/GearRatio", Constants.DriveConstants.kDriveGearRatio);
       Logger.recordOutput("Robot/Drivetrain/DriveMotors", "SparkMax x4 (left/right pairs)");
     } catch (Throwable t) {
-      // Not fatal if Logger isn't ready; fall back to DataLogManager so there's a record.
-      DataLogManager.log("[robotInit] Failed to publish drivetrain metadata to Logger: " + t.toString());
+      // Not fatal if Logger isn't ready; attempt to record the error and otherwise continue silently.
+      try {
+        Logger.recordOutput("Telemetry/Errors", "[robotInit] Failed to publish drivetrain metadata to Logger: " + t.toString());
+      } catch (Throwable ignore) {
+        // intentionally no further fallback to avoid terminal spam
+      }
     }
   }
 
@@ -131,7 +135,7 @@ public class Robot extends LoggedRobot {
   @Override
   public void simulationInit() {
     // Iniciar el autónomo seleccionado para pruebas rápidas del AutoBuilder/chooser
-    edu.wpi.first.wpilibj.DataLogManager.log("simulationInit: auto-starting autonomous for smoke test.\n");
+  Logger.recordOutput("Telemetry/Log", "simulationInit: auto-starting autonomous for smoke test.");
     autonomousInit();
 
     // Publicar una señal simple de AdvantageKit/Logger para verificación en AdvantageScope
@@ -139,8 +143,11 @@ public class Robot extends LoggedRobot {
       Logger.recordOutput("Smoke/AdvantageKit/Alive", 1);
       Logger.recordOutput("Smoke/AdvantageKit/Message", "simInit");
     } catch (Throwable t) {
-      // No fatal: registrar mediante DataLogManager si Logger no está disponible
-      DataLogManager.log("[simulationInit] Logger smoke-test failed: " + t.toString());
+      try {
+        Logger.recordOutput("Telemetry/Errors", "[simulationInit] Logger smoke-test failed: " + t.toString());
+      } catch (Throwable ignore) {
+        // swallow
+      }
     }
   }
 

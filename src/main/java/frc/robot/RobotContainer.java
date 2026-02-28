@@ -10,7 +10,7 @@ import frc.robot.commands.IntakeCommand;
 import frc.robot.subsystems.DriveSubsystem;
 import frc.robot.commands.Drv_Commands.DriveCommand;
 import frc.robot.commands.Drv_Commands.TurnToAngleCommand;
-import frc.robot.subsystems.IndexerSubsystem;
+// IndexerSubsystem removed — all indexer functionality trimmed from project
 import frc.robot.subsystems.TelemetrySubsystem;
 import frc.robot.subsystems.NavXSubsystem;
 import frc.robot.subsystems.VisionSubsystem;
@@ -24,6 +24,7 @@ import java.nio.charset.StandardCharsets;
 import java.util.regex.Matcher;
 import java.util.regex.Pattern;
 import edu.wpi.first.networktables.NetworkTableInstance;
+import org.littletonrobotics.junction.Logger;
 
 import frc.robot.subsystems.UsbAprilTagProcessor;
 import frc.robot.commands.Rst_Commands.ResetGyroCommand;
@@ -55,7 +56,6 @@ public class RobotContainer {
   private final OdometrySubsystem m_odometrySubsystem =
       new OdometrySubsystem(m_driveSubsystem, m_navxSubsystem);
   private final IntakeSubsystem m_intakeSubsystem = new IntakeSubsystem();
-  private final IndexerSubsystem m_indexerSubsystem = new IndexerSubsystem();
   private final ShooterSubsystem m_shooterSubsystem = new ShooterSubsystem();
   private final TelemetrySubsystem m_telemetrySubsystem;
   private final frc.robot.subsystems.OperatorSubsystem m_operatorSubsystem =
@@ -125,11 +125,11 @@ private GenericEntry m_angTolEntry;
             Object obj = m.invoke(null, found.toFile());
             if (obj instanceof edu.wpi.first.apriltag.AprilTagFieldLayout) {
               fieldLayout = (edu.wpi.first.apriltag.AprilTagFieldLayout) obj;
-              edu.wpi.first.wpilibj.DataLogManager.log("Loaded AprilTag field layout from deploy: " + found.toString());
+              Logger.recordOutput("Telemetry/Log", "Loaded AprilTag field layout from deploy: " + found.toString());
             }
           } catch (Throwable t) {
             // reflection failed; fall back below
-            edu.wpi.first.wpilibj.DataLogManager.log("AprilTagFieldLayout.loadFromFile reflection failed: " + t.toString());
+            Logger.recordOutput("Telemetry/Errors", "AprilTagFieldLayout.loadFromFile reflection failed: " + t.toString());
           }
         }
 
@@ -137,7 +137,7 @@ private GenericEntry m_angTolEntry;
           // Fallback to built-in resource (may be older). Keep existing behavior.
           fieldLayout = edu.wpi.first.apriltag.AprilTagFieldLayout.loadField(
               edu.wpi.first.apriltag.AprilTagFields.kDefaultField);
-          edu.wpi.first.wpilibj.DataLogManager.log("Using built-in AprilTagFieldLayout (default)");
+          Logger.recordOutput("Telemetry/Log", "Using built-in AprilTagFieldLayout (default)");
         }
         else {
           // If we successfully loaded a built-in layout (e.g., 2026), but no deploy
@@ -147,10 +147,10 @@ private GenericEntry m_angTolEntry;
             java.nio.file.Path exportPath = edu.wpi.first.wpilibj.Filesystem.getDeployDirectory().toPath().resolve("apriltagfield_2026.json");
             if (!java.nio.file.Files.exists(exportPath)) {
               fieldLayout.serialize(exportPath);
-              edu.wpi.first.wpilibj.DataLogManager.log("Exported AprilTagFieldLayout to deploy: " + exportPath.toString());
+              Logger.recordOutput("Telemetry/Log", "Exported AprilTagFieldLayout to deploy: " + exportPath.toString());
             }
           } catch (Throwable t) {
-            edu.wpi.first.wpilibj.DataLogManager.log("Failed to export AprilTagFieldLayout to deploy: " + t.toString());
+            Logger.recordOutput("Telemetry/Errors", "Failed to export AprilTagFieldLayout to deploy: " + t.toString());
           }
         }
       } catch (Throwable t) {
@@ -159,7 +159,7 @@ private GenericEntry m_angTolEntry;
           fieldLayout = edu.wpi.first.apriltag.AprilTagFieldLayout.loadField(
               edu.wpi.first.apriltag.AprilTagFields.kDefaultField);
         } catch (Throwable t2) {
-          edu.wpi.first.wpilibj.DataLogManager.log("Failed to initialize AprilTagFieldLayout: " + t2.toString());
+          Logger.recordOutput("Telemetry/Errors", "Failed to initialize AprilTagFieldLayout: " + t2.toString());
           fieldLayout = null;
         }
       }
@@ -178,24 +178,23 @@ private GenericEntry m_angTolEntry;
           m_visionSubsystem);
 
   edu.wpi.first.wpilibj.Filesystem.getDeployDirectory();
-  edu.wpi.first.wpilibj.DataLogManager.log("Vision successfully initialized (2026 Rebuilt).");
+  Logger.recordOutput("Telemetry/Log", "Vision successfully initialized (2026 Rebuilt).");
 
       } catch (UnsatisfiedLinkError | NoClassDefFoundError e) {
         // Native library load failures (UnsatisfiedLinkError) or missing classes should
         // be handled gracefully in simulation; log and continue with vision disabled.
-        edu.wpi.first.wpilibj.DataLogManager.log("Vision failed to initialize (native/missing class): " + e.toString());
+  Logger.recordOutput("Telemetry/Errors", "Vision failed to initialize (native/missing class): " + e.toString());
         m_visionSubsystem = null;
       }
 
-    m_telemetrySubsystem = new TelemetrySubsystem(
-        m_driveSubsystem,
-        m_intakeSubsystem,
-        m_indexerSubsystem,
-        m_shooterSubsystem,
-        m_driverController,
-        m_operatorController,
-        m_navxSubsystem,
-        m_visionSubsystem);
+  m_telemetrySubsystem = new TelemetrySubsystem(
+    m_driveSubsystem,
+    m_intakeSubsystem,
+    m_shooterSubsystem,
+    m_driverController,
+    m_operatorController,
+    m_navxSubsystem,
+    m_visionSubsystem);
 
     var autoTab = Shuffleboard.getTab("Autonomous");
     var tuningTab = Shuffleboard.getTab("Tuning");
@@ -272,7 +271,7 @@ private GenericEntry m_angTolEntry;
             .orElse(Alliance.Blue) == Alliance.Red,
     m_driveSubsystem
 );
-        edu.wpi.first.wpilibj.DataLogManager.log("PathPlanner 2026 fully configured.");
+  Logger.recordOutput("Telemetry/Log", "PathPlanner 2026 fully configured.");
 
             // Construir el selector de autos de PathPlanner y mostrarlo en Shuffleboard
             try {
@@ -292,17 +291,17 @@ private GenericEntry m_angTolEntry;
                             // Make this the default option so it is selected by default in the chooser
                             m_ppAutoChooser.setDefaultOption("Example: Straight (programmatic)", exampleCmd);
             } catch (RuntimeException e) {
-              edu.wpi.first.wpilibj.DataLogManager.log("PathPlanner chooser: failed to add example option -> " + e.toString());
+              Logger.recordOutput("Telemetry/Errors", "PathPlanner chooser: failed to add example option -> " + e.toString());
             }
       } catch (RuntimeException e) {
-        edu.wpi.first.wpilibj.DataLogManager.log("Failed to build PathPlanner auto chooser: " + e.getMessage());
+  Logger.recordOutput("Telemetry/Errors", "Failed to build PathPlanner auto chooser: " + e.getMessage());
       }
 
     } catch (Exception e) {
       // RobotConfig.fromGUISettings may throw checked parsing exceptions from
       // the PathPlanner config loader; keep a broad catch here to avoid
       // crashing robot initialization while logging the root cause.
-      edu.wpi.first.wpilibj.DataLogManager.log("PathPlanner configuration failed: " + e.getMessage());
+  Logger.recordOutput("Telemetry/Errors", "PathPlanner configuration failed: " + e.getMessage());
     }
     // ================================================================
 
@@ -313,12 +312,8 @@ private GenericEntry m_angTolEntry;
     m_operatorController.rightBumper()
         .whileTrue(new IntakeCommand(m_intakeSubsystem));
 
-    m_operatorController.a()
-    
-        .whileTrue(new frc.robot.commands.ShootSequenceCommand(
-            m_shooterSubsystem,
-            m_indexerSubsystem,
-            m_intakeSubsystem));
+  // ShootSequenceCommand removed (indexer removed). If you want a simple shooter+intake
+  // hold command, we can add it here later.
 
     m_driverController.x()
         .onTrue(new TurnToAngleCommand(
@@ -391,7 +386,7 @@ private GenericEntry m_angTolEntry;
                         // Use 0 radians as a sensible default heading; PathPlanner may encode rotations elsewhere
                         Pose2d startPose = new Pose2d(x, y, new Rotation2d(0.0));
                         m_odometrySubsystem.resetOdometry(startPose);
-                        edu.wpi.first.wpilibj.DataLogManager.log("[AutoChooser] Reset odometry to path start: " + startPose);
+                        Logger.recordOutput("Telemetry/Log", "[AutoChooser] Reset odometry to path start: " + startPose);
                       }
                     }
                   }
@@ -401,7 +396,7 @@ private GenericEntry m_angTolEntry;
           }
                 } catch (IOException | RuntimeException e) {
                   // Non-fatal: log and fall back to origin reset
-                  edu.wpi.first.wpilibj.DataLogManager.log("[AutoChooser] Failed to parse selected auto for odometry reset: " + e.toString());
+                  Logger.recordOutput("Telemetry/Errors", "[AutoChooser] Failed to parse selected auto for odometry reset: " + e.toString());
                   m_odometrySubsystem.resetOdometry(new Pose2d());
                 }
 
