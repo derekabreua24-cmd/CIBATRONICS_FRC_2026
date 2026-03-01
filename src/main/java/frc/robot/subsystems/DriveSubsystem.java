@@ -276,14 +276,13 @@ public class DriveSubsystem extends SubsystemBase {
 
     if (RobotBase.isSimulation() && m_driveSim != null) {
       // En simulación usamos la orientación proporcionada por el simulador
-      heading = m_driveSim.getHeading();
+      heading = m_driveSim.getHeading().times(-1.0); // SimGyro devuelve rotación en sentido antihorario, pero NavX es horario, así que invertimos el signo
     } else {
       // En hardware real usamos la lectura del NavX
       heading = m_navx.getRotation2d();
     }
 
     // Actualizar el estimador de pose con la orientación y las distancias de rueda
-    updateOdometry(heading);
 
     Pose2d pose = m_poseEstimator.getEstimatedPosition();
 

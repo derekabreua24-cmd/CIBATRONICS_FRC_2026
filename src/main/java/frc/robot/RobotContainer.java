@@ -30,6 +30,9 @@ import frc.robot.subsystems.UsbAprilTagProcessor;
 import frc.robot.commands.Rst_Commands.ResetGyroCommand;
 import frc.robot.commands.Rst_Commands.ResetOdometryToVisionCommand;
 import frc.robot.commands.LogEventCommand;
+import frc.robot.commands.ShooterCommand;
+import frc.robot.commands.ToggleIntakeDirectionCommand;
+import edu.wpi.first.networktables.GenericEntry;
 
 import frc.robot.subsystems.ShooterSubsystem;
 
@@ -85,6 +88,8 @@ private GenericEntry m_angTolEntry;
       new CommandXboxController(OperatorConstants.kDriverControllerPort);
   private final CommandXboxController m_operatorController =
       new CommandXboxController(OperatorConstants.kOperatorControllerPort);
+  // Shooter RPM tuning entry (adjustable at runtime)
+  private GenericEntry m_shooterRpmEntry;
 
   public RobotContainer() {
 
@@ -196,8 +201,13 @@ private GenericEntry m_angTolEntry;
     m_navxSubsystem,
     m_visionSubsystem);
 
+  // (m_shooterRpmEntry is created below once tuningTab is available)
+
     var autoTab = Shuffleboard.getTab("Autonomous");
     var tuningTab = Shuffleboard.getTab("Tuning");
+
+  // Add a tuning entry for shooter RPM on the Tuning tab (runtime-adjustable)
+  m_shooterRpmEntry = tuningTab.add("Shooter RPM", DriveConstants.kShooterMaxRPM * Math.abs(DriveConstants.kShooterSpeed)).withPosition(8, 0).withSize(2, 1).getEntry();
 
   m_targetXEntry = autoTab.add("Target X (m)", 1.5).getEntry();
     m_targetYEntry = autoTab.add("Target Y (m)", 0.0).getEntry();
@@ -309,8 +319,17 @@ private GenericEntry m_angTolEntry;
 
   private void configureBindings() {
 
-    m_operatorController.rightBumper()
-        .whileTrue(new IntakeCommand(m_intakeSubsystem));
+  // Intake on left trigger (runs in configured direction; toggle direction below)
+  m_operatorController.leftTrigger()
+    .whileTrue(new IntakeCommand(m_intakeSubsystem));
+
+  // Toggle intake direction on 'A' button (press to flip forward/back)
+  m_operatorController.a()
+    .onTrue(new ToggleIntakeDirectionCommand(m_intakeSubsystem));
+
+  // Shooter spin while operator holds right trigger (RPM adjustable via Tuning tab)
+  m_operatorController.rightTrigger()
+    .whileTrue(new ShooterCommand(m_shooterSubsystem, m_shooterRpmEntry));
 
   // ShootSequenceCommand removed (indexer removed). If you want a simple shooter+intake
   // hold command, we can add it here later.

@@ -15,7 +15,7 @@ package frc.robot;
 public final class Constants {
   public static class OperatorConstants {
     public static final int kDriverControllerPort = 0;
-    // Port for the dedicated operator controller (intake/indexer/shooter)
+  // Port for the dedicated operator controller (intake/shooter)
     public static final int kOperatorControllerPort = 1;
   }
 
@@ -33,14 +33,12 @@ public final class Constants {
 
     // CAN ID for the brushless intake motor
     public static final int kIntakeMotorPort = 5;
-  // CAN ID for a simple indexer motor (assumed brushless on CAN). Update if different.
-  public static final int kIndexerMotorPort = 6;
 
   // Shooter ports (front/rear) - update if your CAN IDs differ
   public static final int kShooterFrontMotorPort = 7;
   public static final int kShooterRearMotorPort = 8;
   public static final double kShooterSpeed = 0.9;
-  // Approximate maximum free-speed RPM for the shooter motors (Neo brushless ~5700 RPM)
+  // Approximate maximum free-speed RPM for the shooter motors (set to your motor spec)
   public static final double kShooterMaxRPM = 5700.0;
   // Feedforward gains for shooter (units: V, V/(rad/s), V/(rad/s^2))
   // These are approximate defaults for a Neo-driven flywheel; tune on robot.
@@ -71,7 +69,6 @@ public final class Constants {
 
     // Default intake running speed (percent output)
     public static final double kIntakeSpeed = 0.8;
-    // Default indexer running speed
-    public static final double kIndexerSpeed = 0.6;
+  // Indexer removed from this build - related constants deleted
   }
 }

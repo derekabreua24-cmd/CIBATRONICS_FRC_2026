@@ -6,7 +6,6 @@ package frc.robot;
 
 import edu.wpi.first.wpilibj2.command.Command;
 import edu.wpi.first.wpilibj2.command.CommandScheduler;
-import edu.wpi.first.wpilibj.DataLogManager;
 
 import org.littletonrobotics.junction.LoggedRobot;
 import org.littletonrobotics.junction.Logger;
@@ -32,11 +31,10 @@ public class Robot extends LoggedRobot {
     m_robotContainer = new RobotContainer();
   }
 
-  /** Llamado una vez cuando el robot se inicia; inicia el DataLogManager para registro. */
+  /** Llamado una vez cuando el robot se inicia; inicia la telemetría (AdvantageKit/NT4). */
   @Override
   public void robotInit() {
-    DataLogManager.start();
-
+    // AdvantageKit Logger is initialized below and publishes to NT4 for AdvantageScope.
     Logger.addDataReceiver(new NT4Publisher());
     Logger.start();
     // Publish drivetrain metadata for AdvantageKit / AdvantageScope so tools can

@@ -106,6 +106,8 @@ public class TelemetrySubsystem extends SubsystemBase {
   // Runtime display / logging controls
   private final GenericEntry m_extendedLoggingEntry;
   private final GenericEntry m_snapshotRateEntry;
+  private final GenericEntry m_intakeReversedEntry;
+  private final GenericEntry m_visionEnabledEntry;
 
   public TelemetrySubsystem(DriveSubsystem drive, IntakeSubsystem intake, ShooterSubsystem shooter, CommandXboxController controller, CommandXboxController operatorController, NavXSubsystem navx, VisionSubsystem vision) {
     m_drive = drive;
@@ -197,6 +199,7 @@ public class TelemetrySubsystem extends SubsystemBase {
   m_intakePosEntry = intakeLayout.add("Intake Pos", 0.0).getEntry();
   m_intakeVelEntry = intakeLayout.add("Intake Vel", 0.0).getEntry();
   m_intakeCurrentEntry = intakeLayout.add("Intake Current", 0.0).getEntry();
+  m_intakeReversedEntry = intakeLayout.add("Intake Reversed", false).getEntry();
 
   // Indexer telemetry removed
 
@@ -217,6 +220,8 @@ public class TelemetrySubsystem extends SubsystemBase {
   m_turnIEntry = tuningLayout.add("Turn I", 0.0).getEntry();
   m_turnDEntry = tuningLayout.add("Turn D", 0.001).getEntry();
   m_turnToleranceEntry = tuningLayout.add("Turn Tol Deg", 2.0).getEntry();
+  // Vision fusion toggle (runtime A/B testing)
+  m_visionEnabledEntry = tuningLayout.add("Vision Fusion Enabled", true).getEntry();
 
   m_estStateXEntry = tuningLayout.add("Estimator State Std X", 0.05).getEntry();
   m_estVisionXEntry = tuningLayout.add("Estimator Vision Std X", 0.5).getEntry();
@@ -320,13 +325,18 @@ public class TelemetrySubsystem extends SubsystemBase {
     if (m_vision != null) {
   var maybePose = m_vision.getLastPose();
   var maybeTs = m_vision.getLastTimestamp();
-      if (maybePose.isPresent() && maybeTs.isPresent()) {
-        // Only apply vision measurements when not in teleop to avoid unpredictable
-        // operator-facing corrections. This implements Test A: disable vision during teleop.
-        if (!edu.wpi.first.wpilibj.DriverStation.isTeleop()) {
+        if (maybePose.isPresent() && maybeTs.isPresent()) {
+        // Only apply vision measurements when not in teleop and when the runtime toggle
+        // for vision fusion is enabled. This lets us do A/B testing at runtime.
+        boolean visionEnabled = true;
+        try {
+          visionEnabled = m_visionEnabledEntry.getBoolean(true);
+        } catch (RuntimeException ex) {
+          // If Shuffleboard entry missing, default to enabled
+          visionEnabled = true;
+        }
+        if (visionEnabled && !edu.wpi.first.wpilibj.DriverStation.isTeleop()) {
           m_drive.addVisionMeasurement(maybePose.get(), maybeTs.getAsDouble());
-        } else {
-          // Teleop: skip vision fusion
         }
       }
     }
@@ -358,6 +368,13 @@ public class TelemetrySubsystem extends SubsystemBase {
       m_operatorRightXEntry.setDouble(m_operatorController.getRightX());
     }
 
+  // Update intake reversed indicator
+  try {
+    m_intakeReversedEntry.setBoolean(m_intake.isReversed());
+  } catch (RuntimeException e) {
+    Logger.recordOutput("Telemetry/Errors", "TelemetrySubsystem: failed to set intake reversed entry -> " + e.toString());
+  }
+
     // Telemetria expandida desde WPILib
     m_batteryVoltageEntry.setDouble(RobotController.getBatteryVoltage());
   // Tambien escribir valores importantes en el registro persistente (AdvantageKit Logger)
@@ -367,7 +384,7 @@ public class TelemetrySubsystem extends SubsystemBase {
     m_matchTimeEntry.setDouble(DriverStation.getMatchTime());
     m_fpgaTimeEntry.setDouble(Timer.getFPGATimestamp());
 
-  // Registrar promedios del drive y setpoints de intake/indexer periodicamente
+  // Registrar promedios del drive y setpoints del intake periodicamente
   Logger.recordOutput("Telemetry/DriveLeftAvg", m_drive.getLeftAverage());
   Logger.recordOutput("Telemetry/DriveRightAvg", m_drive.getRightAverage());
   Logger.recordOutput("Telemetry/IntakeSet", m_intake.getSetpoint());
@@ -528,7 +545,7 @@ public class TelemetrySubsystem extends SubsystemBase {
 
       parts.add(String.format("%.3f", m_drive.getRightAverage()));
 
-      // Intake/indexer/shooter
+  // Intake/shooter
       parts.add(String.format("%.3f", m_intake.getSetpoint()));
       parts.add(String.format("%.3f", m_intake.getEncoderPosition()));
       parts.add(String.format("%.3f", m_intake.getEncoderVelocity()));

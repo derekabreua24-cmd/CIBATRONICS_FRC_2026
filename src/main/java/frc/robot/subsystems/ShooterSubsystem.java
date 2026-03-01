@@ -27,8 +27,9 @@ public class ShooterSubsystem extends SubsystemBase {
   @SuppressWarnings("removal")
 public ShooterSubsystem() {
 
-  m_shooterFront = new SparkMax(DriveConstants.kShooterFrontMotorPort, MotorType.kBrushless);
-  m_shooterRear = new SparkMax(DriveConstants.kShooterRearMotorPort, MotorType.kBrushless);
+  // Shooter uses brushed SparkMax controllers (brush type depends on the motor attached)
+  m_shooterFront = new SparkMax(DriveConstants.kShooterFrontMotorPort, MotorType.kBrushed);
+  m_shooterRear = new SparkMax(DriveConstants.kShooterRearMotorPort, MotorType.kBrushed);
 
   // Construir un feedforward simple usando constantes definidas en Constants
   m_feedforward = new SimpleMotorFeedforward(
