@@ -2,7 +2,7 @@ package frc.robot.commands;
 
 import edu.wpi.first.wpilibj2.command.Command;
 import frc.robot.subsystems.IntakeSubsystem;
-import frc.robot.Constants.DriveConstants;
+import frc.robot.constants.IntakeConstants;
 
 /** Ejecuta el intake en reversa mientras se mantiene el botón. */
 public class ReverseIntakeCommand extends Command {
@@ -18,7 +18,7 @@ public class ReverseIntakeCommand extends Command {
 
   @Override
   public void execute() {
-    m_intake.run(-DriveConstants.kIntakeSpeed);
+    m_intake.run(-IntakeConstants.kIntakeSpeed);
   }
 
   @Override

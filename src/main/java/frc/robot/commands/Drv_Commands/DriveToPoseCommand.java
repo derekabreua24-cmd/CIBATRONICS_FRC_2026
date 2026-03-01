@@ -2,6 +2,7 @@ package frc.robot.commands.Drv_Commands;
 
 import edu.wpi.first.math.geometry.Pose2d;
 import edu.wpi.first.wpilibj2.command.Command;
+import frc.robot.constants.AutoConstants;
 import frc.robot.subsystems.DriveSubsystem;
 import frc.robot.subsystems.OdometrySubsystem;
 
@@ -17,9 +18,8 @@ public class DriveToPoseCommand extends Command {
   private final double m_posTolMeters;
   private final double m_angTolRad;
 
-  // Ganancias ajustables
-  private static final double kP_LINEAR = 1.2; // m/s por metro de error
-  private static final double kP_ANG = 2.0; // rad/s por rad de error
+  private static final double kP_LINEAR = AutoConstants.kDriveToPoseKpLinear;
+  private static final double kP_ANG = AutoConstants.kDriveToPoseKpAng;
 
   public DriveToPoseCommand(
       DriveSubsystem drive,

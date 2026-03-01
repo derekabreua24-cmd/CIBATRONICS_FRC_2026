@@ -35,7 +35,7 @@ import edu.wpi.first.units.measure.Voltage;
 import edu.wpi.first.wpilibj2.command.sysid.SysIdRoutine;
 
 import java.util.Optional;
-import frc.robot.Constants.DriveConstants;
+import frc.robot.constants.DriveConstants;
 
 public class DriveSubsystem extends SubsystemBase {
 
@@ -51,7 +51,7 @@ public class DriveSubsystem extends SubsystemBase {
   private final SysIdRoutine m_sysIdRoutine;
 
   // ===============================
-  // Motores (kBrushless para NEO/brushless; kBrushed para brushed — ver Constants)
+  // Motores (kBrushless para NEO/brushless; kBrushed para brushed — ver DriveConstants)
   // ===============================
 
   private final SparkMax m_leftFront =
@@ -133,9 +133,9 @@ public class DriveSubsystem extends SubsystemBase {
             VecBuilder.fill(0.05, 0.05, 0.1),
             VecBuilder.fill(0.5, 0.5, 0.5));
   
-  // Instanciar feedforward de motor con constantes (valores provisionales en Constants).
+  // Instanciar feedforward de motor con constantes (valores en DriveConstants).
   // driveWithSpeeds lo usa para calcular tensiones seguras.
-  // Mantenemos SimpleMotorFeedforward aquí para que el código use las mismas ganancias que en Constants.
+  // Mantenemos SimpleMotorFeedforward aquí para que el código use las mismas ganancias que en DriveConstants.
   // Sustituir constantes por resultados de caracterización.
 
   // Rutina SysId para caracterización del tren de rodaje: misma tensión a ambos lados, registrar posición/velocidad media en m, m/s.

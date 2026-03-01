@@ -3,35 +3,47 @@ package frc.robot.commands;
 import edu.wpi.first.wpilibj2.command.Command;
 import edu.wpi.first.networktables.GenericEntry;
 import frc.robot.subsystems.ShooterSubsystem;
-import frc.robot.Constants.DriveConstants;
+import frc.robot.subsystems.VisionSubsystem;
+import frc.robot.constants.ShooterConstants;
 
 /**
- * Command to spin up the shooter to the configured speed while held. Reads the
- * desired RPM from a Shuffleboard tuning entry (GenericEntry) so it can be adjusted at runtime.
+ * Comando para girar el shooter mientras se mantiene el botón.
+ * Si visión está disponible y hay una distancia al tag, usa RPM por distancia (setVelocitySetpointFromDistanceMeters).
+ * Si no, usa la RPM de la entrada de Shuffleboard (Tuning) o el valor por defecto.
  */
 public class ShooterCommand extends Command {
   private final ShooterSubsystem m_shooter;
   private final GenericEntry m_shooterRpmEntry;
+  private final VisionSubsystem m_vision;
 
   public ShooterCommand(ShooterSubsystem shooter, GenericEntry shooterRpmEntry) {
+    this(shooter, shooterRpmEntry, null);
+  }
+
+  public ShooterCommand(ShooterSubsystem shooter, GenericEntry shooterRpmEntry, VisionSubsystem vision) {
     m_shooter = shooter;
     m_shooterRpmEntry = shooterRpmEntry;
+    m_vision = vision;
     addRequirements(shooter);
   }
 
   @Override
   public void initialize() {
-    double defaultRpm = DriveConstants.kShooterMaxRPM * Math.abs(DriveConstants.kShooterSpeed);
-    double targetRpm = m_shooterRpmEntry == null ? defaultRpm : m_shooterRpmEntry.getDouble(defaultRpm);
-    m_shooter.setVelocitySetpointRpm(targetRpm);
+    updateSetpoint();
   }
 
   @Override
   public void execute() {
-    // Permitir afinación en vivo: leer la RPM deseada de la entrada de afinación en cada execute
-    if (m_shooterRpmEntry != null) {
-      double rpm = m_shooterRpmEntry.getDouble(m_shooter.getTargetRpm());
-      m_shooter.setVelocitySetpointRpm(rpm);
+    updateSetpoint();
+  }
+
+  private void updateSetpoint() {
+    if (m_vision != null && m_vision.getLastTargetDistanceMeters().isPresent()) {
+      m_shooter.setVelocitySetpointFromDistanceMeters(m_vision.getLastTargetDistanceMeters().getAsDouble());
+    } else {
+      double defaultRpm = ShooterConstants.kShooterMaxRPM * Math.abs(ShooterConstants.kShooterSpeed);
+      double targetRpm = m_shooterRpmEntry == null ? defaultRpm : m_shooterRpmEntry.getDouble(defaultRpm);
+      m_shooter.setVelocitySetpointRpm(targetRpm);
     }
   }
 

@@ -10,7 +10,7 @@ import edu.wpi.first.math.controller.SimpleMotorFeedforward;
 import edu.wpi.first.math.controller.PIDController;
 import edu.wpi.first.networktables.NetworkTable;
 import edu.wpi.first.networktables.NetworkTableInstance;
-import frc.robot.Constants.DriveConstants;
+import frc.robot.constants.ShooterConstants;
 
 
 public class ShooterSubsystem extends SubsystemBase {
@@ -28,14 +28,14 @@ public class ShooterSubsystem extends SubsystemBase {
 public ShooterSubsystem() {
 
   // El shooter usa controladores SparkMax brushed (el tipo depende del motor conectado)
-  m_shooterFront = new SparkMax(DriveConstants.kShooterFrontMotorPort, MotorType.kBrushed);
-  m_shooterRear = new SparkMax(DriveConstants.kShooterRearMotorPort, MotorType.kBrushed);
+  m_shooterFront = new SparkMax(ShooterConstants.kShooterFrontMotorPort, MotorType.kBrushed);
+  m_shooterRear = new SparkMax(ShooterConstants.kShooterRearMotorPort, MotorType.kBrushed);
 
-  // Construir feedforward simple con las constantes definidas en Constants
+  // Construir feedforward simple con las constantes definidas en ShooterConstants
   m_feedforward = new SimpleMotorFeedforward(
-    DriveConstants.kShooterKS,
-    DriveConstants.kShooterKV,
-    DriveConstants.kShooterKA);
+    ShooterConstants.kShooterKS,
+    ShooterConstants.kShooterKV,
+    ShooterConstants.kShooterKA);
 
   m_shooterGroup = new MotorControllerGroup(m_shooterFront, m_shooterRear);
   // Controlador PID (salida en porcentaje). Las ganancias se leeran desde la tabla "Tuning".
@@ -68,17 +68,17 @@ public void setSpeed(double speed) {
 
   /**
    * Establece la RPM del shooter según la distancia al objetivo (p. ej. desde visión o limelight).
-   * Modelo lineal: RPM = base + pendiente × distancia, limitado a min/max. Afinar en Constants.ShooterDistanceConstants.
+   * Modelo lineal: RPM = base + pendiente × distancia, limitado a min/max. Afinar en ShooterConstants.ShooterDistanceConstants.
    */
   public void setVelocitySetpointFromDistanceMeters(double distanceMeters) {
     double rpm =
-        frc.robot.Constants.ShooterDistanceConstants.kShooterRpmAt0M
-            + frc.robot.Constants.ShooterDistanceConstants.kShooterRpmPerMeter
+        ShooterConstants.ShooterDistanceConstants.kShooterRpmAt0M
+            + ShooterConstants.ShooterDistanceConstants.kShooterRpmPerMeter
                 * Math.max(0.0, distanceMeters);
     rpm =
         Math.max(
-            frc.robot.Constants.ShooterDistanceConstants.kShooterRpmMin,
-            Math.min(frc.robot.Constants.ShooterDistanceConstants.kShooterRpmMax, rpm));
+            ShooterConstants.ShooterDistanceConstants.kShooterRpmMin,
+            Math.min(ShooterConstants.ShooterDistanceConstants.kShooterRpmMax, rpm));
     setVelocitySetpointRpm(rpm);
   }
 

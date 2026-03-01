@@ -33,6 +33,8 @@ public final class CameraCalibrationLoader {
     /** Optional resolution (width, height). If both > 0, UsbAprilTagProcessor uses them; else 640x480. */
     public final int resolutionWidth;
     public final int resolutionHeight;
+    /** FPS solicitado a la cámara (1–60). Si es 0, el procesador usa 20 por defecto. */
+    public final int fps;
 
     public Calibration(
         String cameraName,
@@ -43,7 +45,7 @@ public final class CameraCalibrationLoader {
         double cy,
         double tagSizeMeters,
         Transform3d cameraToRobot) {
-      this(cameraName, deviceIndex, fx, fy, cx, cy, tagSizeMeters, cameraToRobot, 0, 0);
+      this(cameraName, deviceIndex, fx, fy, cx, cy, tagSizeMeters, cameraToRobot, 0, 0, 20);
     }
 
     public Calibration(
@@ -57,6 +59,21 @@ public final class CameraCalibrationLoader {
         Transform3d cameraToRobot,
         int resolutionWidth,
         int resolutionHeight) {
+      this(cameraName, deviceIndex, fx, fy, cx, cy, tagSizeMeters, cameraToRobot, resolutionWidth, resolutionHeight, 20);
+    }
+
+    public Calibration(
+        String cameraName,
+        int deviceIndex,
+        double fx,
+        double fy,
+        double cx,
+        double cy,
+        double tagSizeMeters,
+        Transform3d cameraToRobot,
+        int resolutionWidth,
+        int resolutionHeight,
+        int fps) {
       this.cameraName = cameraName;
       this.deviceIndex = deviceIndex;
       this.fx = fx;
@@ -67,6 +84,7 @@ public final class CameraCalibrationLoader {
       this.cameraToRobot = cameraToRobot;
       this.resolutionWidth = resolutionWidth;
       this.resolutionHeight = resolutionHeight;
+      this.fps = fps;
     }
   }
 
@@ -123,6 +141,14 @@ public final class CameraCalibrationLoader {
       }
     }
 
+    int fps = 20;
+    if (p.getProperty("fps") != null) {
+      fps = Integer.parseInt(p.getProperty("fps").trim());
+      if (fps < 1 || fps > 60) {
+        throw new IllegalArgumentException("fps debe estar entre 1 y 60");
+      }
+    }
+
     Transform3d cameraToRobot = new Transform3d(
         new Translation3d(tx, ty, tz),
         new Rotation3d(
@@ -133,6 +159,6 @@ public final class CameraCalibrationLoader {
   // Registro de depuración para verificación.
   Logger.recordOutput("Camera/Calibration", String.format("Calibración de cámara cargada: name=%s device=%d fx=%.1f fy=%.1f cx=%.1f cy=%.1f tagSize=%.4f cameraToRobot=%s", cameraName, deviceIndex, fx, fy, cx, cy, tagSize, cameraToRobot.toString()));
 
-    return new Calibration(cameraName, deviceIndex, fx, fy, cx, cy, tagSize, cameraToRobot, resW, resH);
+    return new Calibration(cameraName, deviceIndex, fx, fy, cx, cy, tagSize, cameraToRobot, resW, resH, fps);
   }
 }

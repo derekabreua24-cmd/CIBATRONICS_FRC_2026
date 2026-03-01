@@ -39,9 +39,9 @@ public class Robot extends LoggedRobot {
     // Publicar metadatos del tren de rodaje para AdvantageKit/AdvantageScope.
     try {
       Logger.recordOutput("Robot/Drivetrain/Type", "DifferentialDrive");
-      Logger.recordOutput("Robot/Drivetrain/TrackwidthMeters", Constants.DriveConstants.kTrackwidthMeters);
-      Logger.recordOutput("Robot/Drivetrain/WheelDiameterMeters", Constants.DriveConstants.kWheelDiameterMeters);
-      Logger.recordOutput("Robot/Drivetrain/GearRatio", Constants.DriveConstants.kDriveGearRatio);
+      Logger.recordOutput("Robot/Drivetrain/TrackwidthMeters", frc.robot.constants.DriveConstants.kTrackwidthMeters);
+      Logger.recordOutput("Robot/Drivetrain/WheelDiameterMeters", frc.robot.constants.DriveConstants.kWheelDiameterMeters);
+      Logger.recordOutput("Robot/Drivetrain/GearRatio", frc.robot.constants.DriveConstants.kDriveGearRatio);
       Logger.recordOutput("Robot/Drivetrain/DriveMotors", "SparkMax x4 (left/right pairs)");
     } catch (Throwable t) {
       // No es fatal si el Logger no está listo; registrar el error y continuar.
@@ -144,5 +144,7 @@ public class Robot extends LoggedRobot {
 
   /** Esta función se llama periódicamente durante la simulación. */
   @Override
-  public void simulationPeriodic() {}
+  public void simulationPeriodic() {
+    m_robotContainer.simulationPeriodic();
+  }
 }

@@ -18,7 +18,7 @@ import java.util.concurrent.atomic.AtomicReference;
 import org.littletonrobotics.junction.Logger;
 import edu.wpi.first.networktables.NetworkTableInstance;
 
-import frc.robot.Constants.VisionConstants;
+import frc.robot.constants.VisionConstants;
 
 public class VisionSubsystem extends SubsystemBase {
 
@@ -33,6 +33,8 @@ public class VisionSubsystem extends SubsystemBase {
   private final AtomicReference<Pose2d[]> m_lastCandidates = new AtomicReference<>();
   private final AtomicReference<Matrix<N3, N1>> m_lastStdDevs = new AtomicReference<>();
   private volatile double m_lastTimestamp = 0.0;
+  /** Distancia (m) desde la cámara al tag más cercano en el último frame; &lt; 0 si no hay detección válida. Usado para RPM por distancia del shooter. */
+  private volatile double m_lastTargetDistanceMeters = -1.0;
 
   // ----------------------------------------------------
   // Constructores
@@ -64,6 +66,7 @@ public class VisionSubsystem extends SubsystemBase {
    */
   public Optional<Pose2d> processDetections(List<VisionDetection> detections, double timestampSeconds) {
     if (detections == null || detections.isEmpty()) {
+      m_lastTargetDistanceMeters = -1.0;
       return Optional.empty();
     }
     List<Pose2d> validPoses = new ArrayList<>();
@@ -108,7 +111,10 @@ public class VisionSubsystem extends SubsystemBase {
     m_lastPose.set(fusedPose);
     m_lastTimestamp = timestampSeconds;
     m_lastStdDevs.set(stdDevs);
+    double minDist = distances.stream().mapToDouble(Double::doubleValue).min().orElse(-1.0);
+    m_lastTargetDistanceMeters = minDist >= 0 ? minDist : -1.0;
     Logger.recordOutput("Vision/RobotPose", fusedPose);
+    Logger.recordOutput("Vision/TargetDistanceMeters", m_lastTargetDistanceMeters);
 
     try {
       Pose2d[] candidates = new Pose2d[] {
@@ -203,6 +209,27 @@ public class VisionSubsystem extends SubsystemBase {
   /** Desv. tip. (x, y, theta) de la última pose de visión fusionada; usar con addVisionMeasurement(pose, tiempo, stdDevs). */
   public Optional<Matrix<N3, N1>> getLastVisionStdDevs() {
     return Optional.ofNullable(m_lastStdDevs.get());
+  }
+
+  /** Distancia (m) desde la cámara al tag más cercano en el último frame. Vacío si no hay detección válida. Usar para setVelocitySetpointFromDistanceMeters. */
+  public OptionalDouble getLastTargetDistanceMeters() {
+    return m_lastTargetDistanceMeters >= 0 ? OptionalDouble.of(m_lastTargetDistanceMeters) : OptionalDouble.empty();
+  }
+
+  /**
+   * Inyecta pose y distancia sintéticos en simulación (sin cámara) para probar la tubería de visión en AdvantageScope.
+   * Solo debe llamarse cuando {@code RobotBase.isSimulation()} es true. Registra Vision/RobotPose y Vision/TargetDistanceMeters.
+   */
+  public void setSimulationPoseAndDistance(Pose2d pose, double distanceMeters) {
+    m_lastPose.set(pose);
+    m_lastTimestamp = edu.wpi.first.wpilibj.Timer.getFPGATimestamp();
+    m_lastTargetDistanceMeters = distanceMeters >= 0 ? distanceMeters : -1.0;
+    m_lastStdDevs.set(VecBuilder.fill(
+        VisionConstants.kVisionStdDevXYSingleOrFar,
+        VisionConstants.kVisionStdDevXYSingleOrFar,
+        VisionConstants.kVisionStdDevThetaSingle));
+    Logger.recordOutput("Vision/RobotPose", pose);
+    Logger.recordOutput("Vision/TargetDistanceMeters", m_lastTargetDistanceMeters);
   }
 
   @Override

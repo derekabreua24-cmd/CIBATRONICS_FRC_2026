@@ -1,4 +1,4 @@
-Cl# Code Audit Report — FRC Robot (2026)
+# Code Audit Report — FRC Robot (2026)
 
 Audit date: 2026-02-28. Scope: all Java sources, entry points, subsystems, commands, and utilities.
 
@@ -218,6 +218,47 @@ Verified against WPILib 2026.2.2 and PathPlanner 2026 API:
 
 ---
 
+## FRC structure, framework, and rules (audit)
+
+**Project structure**
+
+- Standard layout: `src/main/java/frc/robot/`, `src/main/deploy/`, `build.gradle`, `.vscode/launch.json`. GradleRIO 2026.1.1, Java 17. Team number from `.wpilib/wpilib_preferences.json`. PathPlanner and AdvantageKit via vendordeps.
+- Package naming: `frc.robot` with subpackages `subsystems`, `commands` (and `commands.Drv_Commands`, `commands.Rst_Commands`), `Camera_Calibration`, `util`. Underscore in package names is nonstandard but valid.
+
+**Command-based framework**
+
+- All subsystems extend `SubsystemBase`; only `DriveSubsystem` has a default command (`DriveCommand`). Others are trigger-bound — correct.
+- Commands declare requirements via `addRequirements(subsystem)`; no subsystem used without being required. Autonomous uses PathPlanner’s `AutoBuilder.buildAutoChooser()` and `getAutonomousCommand()` — correct SendableChooser pattern.
+- `Robot` extends `LoggedRobot`; `robotPeriodic()` runs only `CommandScheduler.getInstance().run()`. Lifecycle (robotInit, disabledInit, autonomousInit, teleopInit, testInit) is used correctly; no long-running work in init.
+
+**Constants and configuration**
+
+- Constants are in `frc.robot.constants` package: `OperatorConstants`, `DriveConstants`, `IntakeConstants`, `ShooterConstants` (with `ShooterDistanceConstants`), `VisionConstants`, `AutoConstants`. No single `Constants` class; each area has its own file.
+
+**FRC rules and best practices**
+
+- No reliance on NetworkTables for match state in init. DriverStation alliance used for PathPlanner and widgets. File I/O: camera calibration and AprilTag layout are loaded in `RobotContainer` constructor (acceptable at startup); PathPlanner auto/path files are read when auto starts — consider caching if many autos.
+- Vision runs in a daemon thread; shared state in `VisionSubsystem` is thread-safe. Vision is shut down in `disabledInit()`.
+
+**What is necessary**
+
+- Command-based structure, single odometry update in `OdometrySubsystem`, vision fusion with std devs, PathPlanner integration, AdvantageKit logging, constants in one place, proper requirements and default command.
+
+**What is optional / can be simplified**
+
+- **Heavy constructor work:** Camera + AprilTag layout loading in `RobotContainer` could be deferred (lazy or background) to speed startup if needed.
+- **DriveToPoseCommand:** Not bound to any button; useful for custom autos or testing. Gains now in `frc.robot.constants.AutoConstants`; can be bound later if desired.
+- **ShootSequenceCommand:** Still uses shooter + intake (no physical indexer); Feed tuning entries (FeedPulseSec, etc.) control pulse/pause behavior. Kept for operator “hold to shoot” flow; remove only if that flow is abandoned.
+- **Unused Shuffleboard entries:** Some `GenericEntry`s are `@SuppressWarnings("unused")` (e.g. target X/Y, heading) — for display or future use; remove if never wired.
+
+**Fixes applied in this pass**
+
+- `.vscode/launch.json`: Removed trailing commas after `"desktop": true` and `"desktop": false` (invalid JSON).
+- `Constants.java`: Added `AutoConstants` with `kDriveToPoseKpLinear` and `kDriveToPoseKpAng`.
+- `DriveToPoseCommand`: Uses `AutoConstants` instead of local magic numbers.
+
+---
+
 ## Final logic verification (one fix applied)
 
 | Area | Verification | Result |
@@ -233,3 +274,25 @@ Verified against WPILib 2026.2.2 and PathPlanner 2026 API:
 | **Reset odometry** | **Fix:** `OdometrySubsystem.resetOdometry(pose)` now uses `pose.getRotation()` so PathPlanner’s reset pose (including heading) is applied. Previously it used `m_navx.getRotation2d()`, which ignored the path’s intended starting rotation. | Fixed |
 | **Shooter** | PID(measurement, setpoint); FF from target rad/s; output clamped to ±1; `m_targetRpm > 1.0` gate. | OK |
 | **Reset to vision** | `ResetOdometryToVisionCommand` uses vision pose position + NavX heading (intentional: vision for xy, gyro for theta). | OK |
+
+---
+
+## Logic verification (re-check)
+
+Re-verified after constants split and encoding fix. All of the below are consistent and correct.
+
+| Area | Check | Status |
+|------|--------|--------|
+| **Odometry** | Single update in `OdometrySubsystem.periodic()` with `updateOdometryWithTime(FPGATimestamp, heading)`. Heading from sim in sim, NavX on robot. | OK |
+| **Reset pose** | `OdometrySubsystem.resetOdometry(pose)` uses `pose.getRotation()` and calls `m_drive.resetOdometry(pose, heading)`; encoders zeroed, estimator reset. | OK |
+| **Encoders → meters** | `rotationsToMeters(rot) = rot × π×D / gearRatio`; `rpmToMetersPerSecond(rpm)` same relation for velocity. | OK |
+| **ChassisSpeeds** | `vx = (left+right)/2`, `omega = (right−left)/trackwidth` (positive omega = CCW). | OK |
+| **DrivePhysics** | `leftVel = vx − ω×L/2`, `rightVel = vx + ω×L/2`; FF + ±12 V clamp. | OK |
+| **arcadeDrive** | `fwd` and `rot` scaled by `kDriveSpeedScale` and `kTurnSpeedScale`; DriveCommand negates `rot` so stick right → turn right. | OK |
+| **Precision drive** | Driver left trigger > 0.5 applies `kPrecisionDriveScale` to fwd/rot. | OK |
+| **Vision** | Tag→camera→field then camera→robot via `cameraToRobot.inverse()` (calibration = camera in robot frame). Multi-tag fusion: average x, y, angle; std devs from tag count/distance. | OK |
+| **Vision fusion** | TelemetrySubsystem only adds vision when `m_vision != null`, `visionEnabled`, and `!isTeleop()`; uses optional std devs when present. | OK |
+| **PathPlanner** | getPose and resetOdometry from OdometrySubsystem; driveWithSpeeds on DriveSubsystem; auto start can reset odometry to path first waypoint when resetOdom and user toggle set. | OK |
+| **Shooter** | setpoint RPM, PID+FF in periodic(), output clamped ±1; distance-based RPM via ShooterDistanceConstants. | OK |
+| **Intake** | run(speed) uses `m_reversed` to flip sign; toggleReverse() flips `m_reversed`; IntakeCommand/ReverseIntakeCommand/UnjamCommand use IntakeConstants. | OK |
+| **Reset to vision** | Back button: vision pose (x,y) + NavX heading for reset (vision for position, gyro for theta). | OK |

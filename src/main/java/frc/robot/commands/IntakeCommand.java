@@ -1,7 +1,7 @@
 package frc.robot.commands;
 
 import frc.robot.subsystems.IntakeSubsystem;
-import frc.robot.Constants.DriveConstants;
+import frc.robot.constants.IntakeConstants;
 import edu.wpi.first.wpilibj2.command.Command;
 import org.littletonrobotics.junction.Logger;
 
@@ -19,8 +19,8 @@ public class IntakeCommand extends Command {
 
   @Override
   public void execute() {
-  m_intake.run(DriveConstants.kIntakeSpeed);
-  Logger.recordOutput("Intake/Events", "[IntakeCommand] Executing intake at speed=" + DriveConstants.kIntakeSpeed);
+  m_intake.run(IntakeConstants.kIntakeSpeed);
+  Logger.recordOutput("Intake/Events", "[IntakeCommand] Executing intake at speed=" + IntakeConstants.kIntakeSpeed);
   }
 
   @Override

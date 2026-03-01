@@ -125,14 +125,15 @@ deployArtifact.jarTask = jar
 wpi.java.configureExecutableTasks(jar)
 wpi.java.configureTestTasks(test)
 
-// Configure string concat to always inline compile
-tasks.withType(JavaCompile) {
+// Use UTF-8 for source so accented characters in comments (e.g. Spanish) compile on Windows
+tasks.withType(JavaCompile).configureEach {
+    options.encoding = 'UTF-8'
     options.compilerArgs.add '-XDstringConcat=inline'
 }
 
 // Enable Xlint to surface potential warnings during local builds. This helps find
 // unused imports, unchecked casts, and other common issues. We do not fail the
 // build on warnings here so CI remains stable; this is for developer diagnostics.
-tasks.withType(JavaCompile) {
+tasks.withType(JavaCompile).configureEach {
     options.compilerArgs.add '-Xlint:all'
 }

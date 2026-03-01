@@ -61,13 +61,32 @@ public class UsbAprilTagProcessor extends SubsystemBase {
       VisionSubsystem vision,
       int resolutionWidth,
       int resolutionHeight) {
+    this(cameraName, deviceIndex, tagSizeMeters, fx, fy, cx, cy, vision, resolutionWidth, resolutionHeight, 20);
+  }
+
+  /**
+   * Constructor con resolución y FPS configurables.
+   * @param fps fotogramas por segundo solicitados a la cámara (1–60). Si ≤ 0 se usa 20.
+   */
+  public UsbAprilTagProcessor(
+      String cameraName,
+      int deviceIndex,
+      double tagSizeMeters,
+      double fx,
+      double fy,
+      double cx,
+      double cy,
+      VisionSubsystem vision,
+      int resolutionWidth,
+      int resolutionHeight,
+      int fps) {
 
     m_camera = CameraServer.startAutomaticCapture(cameraName, deviceIndex);
 
     int w = (resolutionWidth > 0 && resolutionHeight > 0) ? resolutionWidth : 640;
     int h = (resolutionWidth > 0 && resolutionHeight > 0) ? resolutionHeight : 480;
     m_camera.setResolution(w, h);
-    m_camera.setFPS(20);
+    m_camera.setFPS((fps > 0 && fps <= 60) ? fps : 20);
 
     m_sink = new CvSink("UsbCvSink-" + cameraName);
     m_sink.setSource(m_camera);

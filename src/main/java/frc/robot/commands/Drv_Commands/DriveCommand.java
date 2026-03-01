@@ -3,7 +3,8 @@ package frc.robot.commands.Drv_Commands;
 import edu.wpi.first.wpilibj2.command.Command;
 import edu.wpi.first.wpilibj2.command.button.CommandXboxController;
 import edu.wpi.first.math.MathUtil;
-import edu.wpi.first.math.filter.SlewRateLimiter; // === ADDED ===
+import edu.wpi.first.math.filter.SlewRateLimiter;
+import frc.robot.constants.DriveConstants;
 import frc.robot.subsystems.DriveSubsystem;
 
 /** Comando por defecto para conducir con un controlador Xbox (conduccion tipo arcade). */
@@ -34,12 +35,16 @@ public class DriveCommand extends Command {
     fwd = Math.copySign(fwd * fwd, fwd);
     rot = Math.copySign(rot * rot, rot);
 
-    // === ADDED ===
     // Limitación de slew rate
     fwd = m_fwdLimiter.calculate(fwd);
     rot = m_rotLimiter.calculate(rot);
 
-    // Conduccion por arcade
+    // Modo precisión: gatillo izquierdo reduce velocidad para alineación fina
+    if (m_controller.getLeftTriggerAxis() > 0.5) {
+      fwd *= DriveConstants.kPrecisionDriveScale;
+      rot *= DriveConstants.kPrecisionDriveScale;
+    }
+
     m_drive.arcadeDrive(fwd, rot);
   }
 

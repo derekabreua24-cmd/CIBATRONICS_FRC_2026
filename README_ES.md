@@ -21,7 +21,7 @@ PathPlanner
 Feedforward / caracterización del tren de rodaje
 -----------------------------------------------
 - Este proyecto contiene constantes de feedforward temporales en
-  `Constants.DriveConstants`: `kDriveKS`, `kDriveKV`, `kDriveKA` y
+  `frc.robot.constants.DriveConstants`: `kDriveKS`, `kDriveKV`, `kDriveKA` y
   `kDriveEstMaxSpeed`.
 - Son valores de ejemplo. Para un seguimiento de trayectoria preciso, ejecute la
   caracterización de su robot con las utilidades WPILib y reemplace esos valores

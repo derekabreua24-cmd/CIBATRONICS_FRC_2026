@@ -16,10 +16,16 @@ The following has been verified so that the robot behaves correctly when running
 | **Robot pose (3D Field)** | The same `Odometry/Robot` (`Pose2d`) works in the **3D Field** tab: AdvantageScope accepts 2D poses and shows the robot at ground level (Z=0). Open **3D Field** → drag **Odometry/Robot** into Poses to see the robot in 3D; use Orbit Field / Orbit Robot / Driver Station cameras as needed. |
 | **Sim gyro** | In simulation, `OdometrySubsystem` uses `DriveSubsystem.getSimHeading()` instead of NavX, so pose updates correctly from `DifferentialDrivetrainSim` and the robot moves/turns as expected on the field view. |
 | **NavX in sim** | NavX may fail to initialize on desktop (no MXP); code uses sim heading when `RobotBase.isSimulation()` is true, so no dependency on real hardware. |
-| **Vision in sim** | Vision init failures (e.g. native/missing class) set `m_visionSubsystem = null`; `TelemetrySubsystem` and bindings null-check vision everywhere. |
+| **Vision in sim** | If the USB camera/processor fails (e.g. no camera in desktop sim), `VisionSubsystem` is kept and **synthetic vision** is injected each sim cycle: current odometry pose and a fixed distance (2 m) are written to `Vision/RobotPose` and `Vision/TargetDistanceMeters`, so you can test the vision pipeline and see vision data in AdvantageScope without a real camera. |
 | **Autonomous in sim** | `simulationInit()` calls `autonomousInit()`; if no auto is selected, `getAutonomousCommand()` returns null and no command is scheduled—robot still runs and logs. |
 
 **Quick check:** Run "Simulate Robot", enable Teleop or Autonomous, open AdvantageScope → **File → Connect to Simulator → Default**. In the **2D Field** or **3D Field** tab, add **Odometry/Robot** to Poses; you should see the robot pose update as you drive. This setup is for **drive/pose visualization only** (no field collision or game piece physics in sim).
+
+### Testing AprilTag / vision in AdvantageScope
+
+- **Desktop simulation (no camera):** The project injects **synthetic vision** when the camera is not available: each sim cycle it sets `Vision/RobotPose` to the current odometry pose and `Vision/TargetDistanceMeters` to 2.0 m. In AdvantageScope you can add **Vision/RobotPose** to the 2D or 3D Field **Poses** to see the “vision” pose (it will track the robot). The pose estimator still receives these as vision measurements in auto (when “Vision Fusion Enabled” is on), so you can verify fusion and logging without a real AprilTag or camera.
+- **Real robot (with camera):** Run the robot with a USB camera and AprilTags in view; the real pipeline fills `Vision/RobotPose`, `Vision/TargetDistanceMeters`, and vision fusion. Record a log, then open it in AdvantageScope and add **Vision/RobotPose** and **Odometry/Robot** to Poses to compare vision vs estimated pose.
+- **3D Field:** The **3D Field** tab is useful for AprilTag-style 3D visualization; use the same pose keys as above.
 
 ### Testing PathPlanner autos — what to add to Poses
 

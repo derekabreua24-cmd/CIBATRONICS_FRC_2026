@@ -2,8 +2,9 @@ package frc.robot;
 
 import frc.robot.Camera_Calibration.CameraCalibrationLoader;
 import frc.robot.Camera_Calibration.CameraCalibrationLoader.Calibration;
-import frc.robot.Constants.OperatorConstants;
-import frc.robot.Constants.DriveConstants;
+import frc.robot.constants.OperatorConstants;
+import frc.robot.constants.DriveConstants;
+import frc.robot.constants.ShooterConstants;
 
 import frc.robot.subsystems.IntakeSubsystem;
 import frc.robot.commands.IntakeCommand;
@@ -62,26 +63,18 @@ public class RobotContainer {
   private final IntakeSubsystem m_intakeSubsystem = new IntakeSubsystem();
   private final ShooterSubsystem m_shooterSubsystem = new ShooterSubsystem();
   private final TelemetrySubsystem m_telemetrySubsystem;
-  private final frc.robot.subsystems.OperatorSubsystem m_operatorSubsystem =
-      new frc.robot.subsystems.OperatorSubsystem();
 
   private VisionSubsystem m_visionSubsystem = null;
   private UsbAprilTagProcessor m_usbProcessor = null;
 
     private edu.wpi.first.wpilibj.smartdashboard.SendableChooser<Command> m_ppAutoChooser = null;
 
-  @SuppressWarnings("unused")
-private GenericEntry m_targetXEntry;
-  @SuppressWarnings("unused")
-private GenericEntry m_targetYEntry;
-  @SuppressWarnings("unused")
-private GenericEntry m_targetHeadingEntry;
-  @SuppressWarnings("unused")
-private GenericEntry m_maxSpeedEntry;
-  @SuppressWarnings("unused")
-private GenericEntry m_posTolEntry;
-  @SuppressWarnings("unused")
-private GenericEntry m_angTolEntry;
+  private GenericEntry m_targetXEntry;
+  private GenericEntry m_targetYEntry;
+  private GenericEntry m_targetHeadingEntry;
+  private GenericEntry m_maxSpeedEntry;
+  private GenericEntry m_posTolEntry;
+  private GenericEntry m_angTolEntry;
     private GenericEntry m_ppltvGainEntry;
     private GenericEntry m_resetOdomEntry;
 
@@ -96,12 +89,7 @@ private GenericEntry m_angTolEntry;
 
     // Crear pestaña Tuning y entrada de RPM del shooter antes de configureBindings() para que ShooterCommand reciba una entrada válida.
     var tuningTab = Shuffleboard.getTab("Tuning");
-    m_shooterRpmEntry = tuningTab.add("Shooter RPM", DriveConstants.kShooterMaxRPM * Math.abs(DriveConstants.kShooterSpeed)).withPosition(8, 0).withSize(2, 1).getEntry();
-
-    configureBindings();
-
-    m_driveSubsystem.setDefaultCommand(
-        new DriveCommand(m_driveSubsystem, m_driverController));
+    m_shooterRpmEntry = tuningTab.add("Shooter RPM", ShooterConstants.kShooterMaxRPM * Math.abs(ShooterConstants.kShooterSpeed)).withPosition(8, 0).withSize(2, 1).getEntry();
 
     try {
 
@@ -183,40 +171,32 @@ private GenericEntry m_angTolEntry;
       if (fieldLayout == null) {
         Logger.recordOutput("Telemetry/Errors", "Visión deshabilitada: no hay layout de campo AprilTag disponible.");
       } else {
-      m_visionSubsystem =
-          new VisionSubsystem(fieldLayout, calib.cameraToRobot);
+        m_visionSubsystem =
+            new VisionSubsystem(fieldLayout, calib.cameraToRobot);
 
-      if (calib.resolutionWidth > 0 && calib.resolutionHeight > 0) {
-        m_usbProcessor = new UsbAprilTagProcessor(
-            calib.cameraName,
-            calib.deviceIndex,
-            calib.tagSizeMeters,
-            calib.fx,
-            calib.fy,
-            calib.cx,
-            calib.cy,
-            m_visionSubsystem,
-            calib.resolutionWidth,
-            calib.resolutionHeight);
-      } else {
-        m_usbProcessor = new UsbAprilTagProcessor(
-            calib.cameraName,
-            calib.deviceIndex,
-            calib.tagSizeMeters,
-            calib.fx,
-            calib.fy,
-            calib.cx,
-            calib.cy,
-            m_visionSubsystem);
-      }
-
-  edu.wpi.first.wpilibj.Filesystem.getDeployDirectory();
-  Logger.recordOutput("Telemetry/Log", "Vision successfully initialized (2026 Rebuilt).");
+        try {
+          m_usbProcessor = new UsbAprilTagProcessor(
+              calib.cameraName,
+              calib.deviceIndex,
+              calib.tagSizeMeters,
+              calib.fx,
+              calib.fy,
+              calib.cx,
+              calib.cy,
+              m_visionSubsystem,
+              calib.resolutionWidth,
+              calib.resolutionHeight,
+              calib.fps);
+          Logger.recordOutput("Telemetry/Log", "Vision successfully initialized (2026 Rebuilt).");
+        } catch (UnsatisfiedLinkError | NoClassDefFoundError e) {
+          // Cámara/procesador falló (p. ej. en sim sin cámara); mantener VisionSubsystem para inyección sim.
+          Logger.recordOutput("Telemetry/Errors", "Cámara/procesador visión no disponible (sim?): " + e.toString());
+          m_usbProcessor = null;
+        }
       }
 
       } catch (UnsatisfiedLinkError | NoClassDefFoundError e) {
-        // Fallos al cargar librerías nativas o clases faltantes: en simulación registrar y continuar con visión deshabilitada.
-  Logger.recordOutput("Telemetry/Errors", "Falló la inicialización de visión (nativo/clase faltante): " + e.toString());
+        Logger.recordOutput("Telemetry/Errors", "Falló la inicialización de visión (nativo/clase faltante): " + e.toString());
         m_visionSubsystem = null;
       }
 
@@ -250,49 +230,13 @@ private GenericEntry m_angTolEntry;
     tuningTab.add("Drive KA", DriveConstants.kDriveKA).withPosition(4, 1).withSize(2, 1).getEntry();
     tuningTab.add("Drive Est Max Speed", DriveConstants.kDriveEstMaxSpeed).withPosition(6, 1).withSize(2, 1).getEntry();
 
-    // SysId: mantener Left Bumper + botón de cara para caracterización del tren de rodaje (ver CHARACTERIZATION.md).
-    m_driverController.leftBumper().and(m_driverController.a()).whileTrue(
-        m_driveSubsystem.sysIdQuasistatic(SysIdRoutine.Direction.kForward));
-    m_driverController.leftBumper().and(m_driverController.b()).whileTrue(
-        m_driveSubsystem.sysIdQuasistatic(SysIdRoutine.Direction.kReverse));
-    m_driverController.leftBumper().and(m_driverController.x()).whileTrue(
-        m_driveSubsystem.sysIdDynamic(SysIdRoutine.Direction.kForward));
-    m_driverController.leftBumper().and(m_driverController.y()).whileTrue(
-        m_driveSubsystem.sysIdDynamic(SysIdRoutine.Direction.kReverse));
-
     // Mantener estas entradas en la tabla de red; DriveSubsystem las lee directamente.
     tuningTab.add("Use PathPlanner FF", false).withPosition(2, 0).withSize(2, 1).getEntry();
     tuningTab.add("PP FF Scale", 1.0).withPosition(4, 0).withSize(2, 1).getEntry();
 
-  // El selector legacy basado en cadenas fue eliminado; el selector de PathPlanner es el principal.
-
     autoTab.addBoolean("Alliance Is Red",
         () -> DriverStation.getAlliance()
             .orElse(Alliance.Blue) == Alliance.Red);
-
-    m_driverController.start()
-        .onTrue(new ResetGyroCommand(m_navxSubsystem));
-
-    if (m_visionSubsystem != null) {
-      m_driverController.back()
-          .onTrue(new ResetOdometryToVisionCommand(
-              m_driveSubsystem,
-              m_visionSubsystem,
-              m_navxSubsystem));
-    }
-
-    m_driverController.y()
-        .onTrue(new LogEventCommand(
-            m_telemetrySubsystem,
-            "Manual event: Driver Y pressed"));
-
-    m_operatorController.b()
-        .onTrue(new frc.robot.commands.ToggleOperatorModeCommand(m_operatorSubsystem));
-
-    m_operatorController.y()
-        .onTrue(new LogEventCommand(
-            m_telemetrySubsystem,
-            "Manual event: Operator Y pressed"));
 
     // ================= PATHPLANNER 2026.1.2 CONFIG =================
     try {
@@ -356,29 +300,93 @@ private GenericEntry m_angTolEntry;
     }
     // ================================================================
 
+    configureBindings();
+    m_driveSubsystem.setDefaultCommand(
+        new DriveCommand(m_driveSubsystem, m_driverController));
   }
 
   private void configureBindings() {
+    // SysId: Left Bumper + face buttons para caracterización del tren de rodaje (ver CHARACTERIZATION.md).
+    m_driverController.leftBumper().and(m_driverController.a()).whileTrue(
+        m_driveSubsystem.sysIdQuasistatic(SysIdRoutine.Direction.kForward));
+    m_driverController.leftBumper().and(m_driverController.b()).whileTrue(
+        m_driveSubsystem.sysIdQuasistatic(SysIdRoutine.Direction.kReverse));
+    m_driverController.leftBumper().and(m_driverController.x()).whileTrue(
+        m_driveSubsystem.sysIdDynamic(SysIdRoutine.Direction.kForward));
+    m_driverController.leftBumper().and(m_driverController.y()).whileTrue(
+        m_driveSubsystem.sysIdDynamic(SysIdRoutine.Direction.kReverse));
 
-  // Intake con gatillo izquierdo (sentido configurado; cambiar sentido con el botón más abajo).
-  m_operatorController.leftTrigger()
-    .whileTrue(new IntakeCommand(m_intakeSubsystem));
+    m_driverController.start()
+        .onTrue(new ResetGyroCommand(m_navxSubsystem));
 
-  // Cambiar sentido del intake con botón 'A' (avance/retroceso).
-  m_operatorController.a()
-    .onTrue(new ToggleIntakeDirectionCommand(m_intakeSubsystem));
+    if (m_visionSubsystem != null) {
+      m_driverController.back()
+          .onTrue(new ResetOdometryToVisionCommand(
+              m_driveSubsystem,
+              m_visionSubsystem,
+              m_navxSubsystem));
+    }
 
-  // Shooter gira mientras el operador mantiene el gatillo derecho (RPM ajustable en pestaña Tuning).
-  m_operatorController.rightTrigger()
-    .whileTrue(new ShooterCommand(m_shooterSubsystem, m_shooterRpmEntry));
+    m_driverController.y()
+        .onTrue(new LogEventCommand(
+            m_telemetrySubsystem,
+            "Manual event: Driver Y pressed"));
 
-  // ShootSequenceCommand eliminado (indexer eliminado). Si se desea un comando simple shooter+intake, se puede añadir después.
+    m_operatorController.y()
+        .onTrue(new LogEventCommand(
+            m_telemetrySubsystem,
+            "Manual event: Operator Y pressed"));
 
+    // Detener intake y shooter de inmediato (emergencia / desbloquear).
+    m_operatorController.b()
+        .onTrue(new frc.robot.commands.StopMechanismsCommand(m_intakeSubsystem, m_shooterSubsystem));
+
+    // Intake: gatillo izquierdo (sentido por defecto; A cambia sentido).
+    m_operatorController.leftTrigger()
+        .whileTrue(new IntakeCommand(m_intakeSubsystem));
+
+    m_operatorController.a()
+        .onTrue(new ToggleIntakeDirectionCommand(m_intakeSubsystem));
+
+    // Unjam: un tap = pulso corto de reversa para desatascar (sin mantener).
+    m_operatorController.leftBumper()
+        .onTrue(new frc.robot.commands.UnjamCommand(m_intakeSubsystem));
+
+    // Intake en reversa mientras se mantiene el botón.
+    m_operatorController.rightBumper()
+        .whileTrue(new frc.robot.commands.ReverseIntakeCommand(m_intakeSubsystem));
+
+    // Shooter: gatillo derecho (RPM en pestaña Tuning). X = secuencia shooter+intake.
+    m_operatorController.rightTrigger()
+        .whileTrue(new ShooterCommand(m_shooterSubsystem, m_shooterRpmEntry, m_visionSubsystem));
+
+    m_operatorController.x()
+        .whileTrue(new frc.robot.commands.ShootSequenceCommand(m_shooterSubsystem, m_intakeSubsystem, m_visionSubsystem));
+
+    // Driver X = girar a 90°. B = conducir hasta pose objetivo (valores en pestaña Autonomous).
     m_driverController.x()
         .onTrue(new TurnToAngleCommand(
             m_driveSubsystem,
             m_navxSubsystem,
             90.0));
+
+    m_driverController.b()
+        .onTrue(Commands.runOnce(() -> {
+          double x = m_targetXEntry.getDouble(1.5);
+          double y = m_targetYEntry.getDouble(0.0);
+          double headingDeg = m_targetHeadingEntry.getDouble(0.0);
+          double maxSpeed = m_maxSpeedEntry.getDouble(0.6);
+          double posTol = m_posTolEntry.getDouble(0.1);
+          double angTolDeg = m_angTolEntry.getDouble(5.0);
+          edu.wpi.first.wpilibj2.command.CommandScheduler.getInstance().schedule(
+              new frc.robot.commands.Drv_Commands.DriveToPoseCommand(
+                  m_driveSubsystem,
+                  m_odometrySubsystem,
+                  new Pose2d(x, y, Rotation2d.fromDegrees(headingDeg)),
+                  maxSpeed,
+                  posTol,
+                  angTolDeg));
+        }));
   }
 
   public Command getAutonomousCommand() {
@@ -469,6 +477,17 @@ private GenericEntry m_angTolEntry;
   public void shutdownVision() {
     if (m_usbProcessor != null) {
       m_usbProcessor.stop();
+    }
+  }
+
+  /**
+   * Llamado cada ciclo de simulación. Inyecta pose/distance sintéticos en VisionSubsystem cuando no hay cámara,
+   * para que AdvantageScope muestre Vision/RobotPose y Vision/TargetDistanceMeters y se pueda probar la tubería.
+   */
+  public void simulationPeriodic() {
+    if (edu.wpi.first.wpilibj.RobotBase.isSimulation() && m_visionSubsystem != null) {
+      Pose2d pose = m_odometrySubsystem.getPose();
+      m_visionSubsystem.setSimulationPoseAndDistance(pose, 2.0);
     }
   }
 }

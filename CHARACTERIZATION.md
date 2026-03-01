@@ -11,7 +11,7 @@ Constants are set for the **2026 KitBot** (AM14U6 chassis, 6" HiGrip wheels, Tou
 - **Track width:** ~22 in → `0.5588` m (measure yours if you changed frame config)  
 - **Sim mass / J:** 25 kg, 2.1 kg⋅m² (typical with battery/bumpers)
 
-If your build differs (e.g. different ratio or wheel size), update `Constants.DriveConstants` and the sim in `DriveSubsystem` accordingly.
+If your build differs (e.g. different ratio or wheel size), update `frc.robot.constants.DriveConstants` and the sim in `DriveSubsystem` accordingly.
 
 ## Running characterization
 
@@ -52,7 +52,7 @@ If your build differs (e.g. different ratio or wheel size), update `Constants.Dr
   - **kV:** V⋅s/m  
   - **kA:** V⋅s²/m  
 
-These match the units used in `Constants.DriveConstants` and in `DriveSubsystem` / PathPlanner.
+These match the units used in `frc.robot.constants.DriveConstants` and in `DriveSubsystem` / PathPlanner.
 
 ## References
 
