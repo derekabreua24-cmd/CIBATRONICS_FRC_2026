@@ -162,6 +162,20 @@ The codebase is a well-structured FRC command-based robot with PathPlanner, Adva
 
 ---
 
+## Logic verification (2026 WPILib / PathPlanner)
+
+Verified against WPILib 2026.2.2 and PathPlanner 2026 API:
+
+- **DifferentialDrivePoseEstimator**: `update(gyroAngle, leftMeters, rightMeters)` and `updateWithTime(time, gyroAngle, leftMeters, rightMeters)` take **cumulative** wheel distances in meters. The code uses `rotationsToMeters(getLeftAveragePosition())` (encoder position → meters); correct. `resetPosition(gyroAngle, leftPos, rightPos, pose)` is called with 0, 0 after zeroing encoders; correct.
+- **addVisionMeasurement(pose, timestampSeconds)**: Timestamp must use the same epoch as the pose estimator’s time source. The code now uses `updateWithTime(Timer.getFPGATimestamp(), ...)` in `OdometrySubsystem.periodic()`, and the vision thread uses `Timer.getFPGATimestamp()` when submitting measurements; both use FPGA time, so vision fusion is correct.
+- **PathPlanner AutoBuilder**: Expects pose supplier, reset (single `Pose2d`), robot-relative chassis speeds, and drive output. `OdometrySubsystem::getPose` and `resetOdometry(Pose2d)` match. `getChassisSpeeds()` returns robot-relative (vx, 0, omega); `driveWithSpeeds(ChassisSpeeds, DriveFeedforwards)` is used correctly.
+- **PPLTVController**: Constructor parameter is **dt** (discretization timestep in seconds), not a gain. Fixed: default is 0.02 s (20 ms loop), widget renamed to "PPLTV dt (s)", and value is clamped to (0, 0.1].
+- **ChassisSpeeds / kinematics**: Omega positive = CCW (turn left). `omega = (rightVel - leftVel) / trackWidth` and `leftVel = vx - omega*trackWidth/2`, `rightVel = vx + omega*trackWidth/2` match WPILib differential drive convention.
+- **Vision pose**: `robotPoseField = cameraPoseField.transformBy(cameraToRobot.inverse())` correctly converts camera pose to robot center pose in field frame.
+- **DriveSubsystem**: No longer depends on `NavXSubsystem`; odometry and heading are owned by `OdometrySubsystem`, which calls `updateOdometryWithTime()` with FPGA time and gyro heading.
+
+---
+
 ## Suggested Fix Order (all completed)
 
 1. ~~Remove duplicate `updateOdometry()` from `TelemetrySubsystem.periodic()`.~~

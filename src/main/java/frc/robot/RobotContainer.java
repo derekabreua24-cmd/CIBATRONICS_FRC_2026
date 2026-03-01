@@ -54,7 +54,7 @@ import com.pathplanner.lib.controllers.PPLTVController;
 public class RobotContainer {
 
   private final NavXSubsystem m_navxSubsystem = new NavXSubsystem();
-  private final DriveSubsystem m_driveSubsystem = new DriveSubsystem(m_navxSubsystem);
+  private final DriveSubsystem m_driveSubsystem = new DriveSubsystem();
   private final OdometrySubsystem m_odometrySubsystem =
       new OdometrySubsystem(m_driveSubsystem, m_navxSubsystem);
   private final IntakeSubsystem m_intakeSubsystem = new IntakeSubsystem();
@@ -216,8 +216,8 @@ private GenericEntry m_angTolEntry;
   var resetOdomWidget = autoTab.add("Reset odom to path start", true).withPosition(0, 4).withSize(2, 1);
   m_resetOdomEntry = resetOdomWidget.getEntry();
 
-  // Entradas de afinación (ganancias ajustables en tiempo de ejecución)
-    m_ppltvGainEntry = tuningTab.add("PPLTV Gain", 1.0).withPosition(0, 0).withSize(2, 1).getEntry();
+  // PPLTVController dt (s): discretization timestep, typically 0.02 for 50 Hz loop (PathPlanner 2026 API)
+    m_ppltvGainEntry = tuningTab.add("PPLTV dt (s)", 0.02).withPosition(0, 0).withSize(2, 1).getEntry();
   // Entradas de feedforward de la unidad de tracción (usadas por DriveSubsystem si están habilitadas)
     tuningTab.add("Drive KS", DriveConstants.kDriveKS).withPosition(0, 1).withSize(2, 1).getEntry();
     tuningTab.add("Drive KV", DriveConstants.kDriveKV).withPosition(2, 1).withSize(2, 1).getEntry();
@@ -263,14 +263,16 @@ private GenericEntry m_angTolEntry;
 
   RobotConfig config = RobotConfig.fromGUISettings();
 
-      double ppltvGain = m_ppltvGainEntry.getDouble(1.0);
+      // PPLTVController(dt): dt = discretization timestep in seconds (0.02 = 20 ms FRC loop). See PathPlanner API.
+      double ppltvDt = m_ppltvGainEntry.getDouble(0.02);
+      if (ppltvDt <= 0 || ppltvDt > 0.1) ppltvDt = 0.02;
 
       AutoBuilder.configure(
-    m_odometrySubsystem::getPose,              // ✅ Pose supplier
-    m_odometrySubsystem::resetOdometry,        // ✅ Reset pose
-    m_driveSubsystem::getChassisSpeeds,
+    m_odometrySubsystem::getPose,              // Pose supplier
+    m_odometrySubsystem::resetOdometry,         // Reset pose (PathPlanner calls with Pose2d only)
+    m_driveSubsystem::getChassisSpeeds,         // Robot-relative ChassisSpeeds
     m_driveSubsystem::driveWithSpeeds,
-    new PPLTVController(ppltvGain),
+    new PPLTVController(ppltvDt),
     config,
     () -> DriverStation.getAlliance()
             .orElse(Alliance.Blue) == Alliance.Red,

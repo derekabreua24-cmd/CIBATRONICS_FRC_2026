@@ -4,6 +4,7 @@ import org.littletonrobotics.junction.Logger;
 
 import edu.wpi.first.math.geometry.Pose2d;
 import edu.wpi.first.math.geometry.Rotation2d;
+import edu.wpi.first.wpilibj.Timer;
 import edu.wpi.first.wpilibj2.command.SubsystemBase;
 
 /**
@@ -30,11 +31,11 @@ public class OdometrySubsystem extends SubsystemBase {
 
   @Override
   public void periodic() {
-    // Actualizar el estimador una vez por bucle usando la orientacion actual del giroscopio
+    // Update estimator once per loop; use FPGA time so vision addVisionMeasurement timestamps are consistent (WPILib 2026).
     Rotation2d heading = m_navx.getRotation2d();
-    m_drive.updateOdometry(heading);
+    m_drive.updateOdometryWithTime(Timer.getFPGATimestamp(), heading);
 
-  Logger.recordOutput("Odometry/Update", "[Odometry] Updating odometry. pose=" + getPose());
+    Logger.recordOutput("Odometry/Update", "[Odometry] Updating odometry. pose=" + getPose());
   }
 
   /** Devuelve la pose estimada actual del robot. */

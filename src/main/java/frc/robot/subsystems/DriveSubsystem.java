@@ -91,13 +91,8 @@ public class DriveSubsystem extends SubsystemBase {
 
   private final DifferentialDrivePoseEstimator m_poseEstimator;
 
-  private final NavXSubsystem m_navx;
-
-  public DriveSubsystem(NavXSubsystem navx) {
-    m_navx = navx;
-
-
-  if (RobotBase.isSimulation()) {
+  public DriveSubsystem() {
+    if (RobotBase.isSimulation()) {
 
     m_driveSim = new DifferentialDrivetrainSim(
         DCMotor.getCIM(4),                    
@@ -271,19 +266,7 @@ public class DriveSubsystem extends SubsystemBase {
 
   @Override
   public void periodic() {
-
-    Rotation2d heading;
-
-    if (RobotBase.isSimulation() && m_driveSim != null) {
-      // En simulación usamos la orientación proporcionada por el simulador
-     heading = m_driveSim.getHeading().plus(Rotation2d.fromDegrees(90)); // SimGyro devuelve rotación en sentido antihorario, pero NavX es horario, así que invertimos el signo
-    } else {
-      // En hardware real usamos la lectura del NavX
-      heading = m_navx.getRotation2d();
-    }
-
-    // Actualizar el estimador de pose con la orientación y las distancias de rueda
-
+    // Pose is updated in OdometrySubsystem.periodic() via updateOdometryWithTime(); here we only display it.
     Pose2d pose = m_poseEstimator.getEstimatedPosition();
 
     // Actualizar la visualización del campo y registrar la pose para AdvantageKit
@@ -312,10 +295,21 @@ public class DriveSubsystem extends SubsystemBase {
   return (rps * wheelCirc) / DriveConstants.kDriveGearRatio;
 }
 
+  /** Updates pose from encoders and gyro. Call every robot loop (e.g. from OdometrySubsystem). */
   public void updateOdometry(Rotation2d heading) {
     double leftMeters = rotationsToMeters(getLeftAveragePosition());
     double rightMeters = rotationsToMeters(getRightAveragePosition());
     m_poseEstimator.update(heading, leftMeters, rightMeters);
+  }
+
+  /**
+   * Same as updateOdometry but with explicit timestamp for correct vision measurement latency compensation.
+   * Use this when fusing vision so addVisionMeasurement timestamps align with the same time source.
+   */
+  public void updateOdometryWithTime(double currentTimeSeconds, Rotation2d heading) {
+    double leftMeters = rotationsToMeters(getLeftAveragePosition());
+    double rightMeters = rotationsToMeters(getRightAveragePosition());
+    m_poseEstimator.updateWithTime(currentTimeSeconds, heading, leftMeters, rightMeters);
   }
 
   public void resetOdometry(Pose2d pose, Rotation2d heading) {
