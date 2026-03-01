@@ -67,8 +67,25 @@ public void setSpeed(double speed) {
     m_targetRpm = Math.abs(targetRpm);
   }
 
-  /** Detiene el shooter. */
-public void stop() {
+  /**
+   * Sets shooter RPM from distance to target (e.g. from vision or limelight).
+   * Uses linear model: RPM = base + slope * distance, clamped to min/max. Tune in Constants.ShooterDistanceConstants.
+   */
+  public void setVelocitySetpointFromDistanceMeters(double distanceMeters) {
+    double rpm =
+        frc.robot.Constants.ShooterDistanceConstants.kShooterRpmAt0M
+            + frc.robot.Constants.ShooterDistanceConstants.kShooterRpmPerMeter
+                * Math.max(0.0, distanceMeters);
+    rpm =
+        Math.max(
+            frc.robot.Constants.ShooterDistanceConstants.kShooterRpmMin,
+            Math.min(frc.robot.Constants.ShooterDistanceConstants.kShooterRpmMax, rpm));
+    setVelocitySetpointRpm(rpm);
+  }
+
+  /** Detiene el shooter y limpia el setpoint para que periodic() no vuelva a comandar. */
+  public void stop() {
+    m_targetRpm = 0.0;
     m_shooterGroup.stopMotor();
   }
 
@@ -99,7 +116,7 @@ public void stop() {
       m_pid.setPID(p, i, d);
     }
 
-    // Si hay un RPM objetivo, calcular PID+FF y aplicar la salida
+    // Si hay un RPM objetivo, calcular PID+FF y aplicar la salida; si no, detener motores
     if (m_targetRpm > 1.0) {
       double currentRpm = getAverageVelocity();
       double pidPercent = m_pid.calculate(currentRpm, m_targetRpm);
@@ -109,10 +126,12 @@ public void stop() {
       double ffPercent = ffVolts / 12.0;
 
       double out = pidPercent + ffPercent;
-      // limitar
       out = Math.max(-1.0, Math.min(1.0, out));
       m_shooterGroup.set(out);
       m_lastOutputPercent = out;
+    } else {
+      m_shooterGroup.set(0.0);
+      m_lastOutputPercent = 0.0;
     }
   }
 

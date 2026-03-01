@@ -5,6 +5,7 @@ import org.littletonrobotics.junction.Logger;
 import edu.wpi.first.math.geometry.Pose2d;
 import edu.wpi.first.math.geometry.Rotation2d;
 import edu.wpi.first.wpilibj.Timer;
+import edu.wpi.first.wpilibj.RobotBase;
 import edu.wpi.first.wpilibj2.command.SubsystemBase;
 
 /**
@@ -31,8 +32,11 @@ public class OdometrySubsystem extends SubsystemBase {
 
   @Override
   public void periodic() {
-    // Update estimator once per loop; use FPGA time so vision addVisionMeasurement timestamps are consistent (WPILib 2026).
-    Rotation2d heading = m_navx.getRotation2d();
+    // In simulation, use drivetrain sim heading so pose is correct; on robot use NavX (WPILib 2026).
+    Rotation2d heading =
+        (RobotBase.isSimulation() && m_drive.getSimHeading().isPresent())
+            ? m_drive.getSimHeading().get()
+            : m_navx.getRotation2d();
     m_drive.updateOdometryWithTime(Timer.getFPGATimestamp(), heading);
 
     Logger.recordOutput("Odometry/Update", "[Odometry] Updating odometry. pose=" + getPose());

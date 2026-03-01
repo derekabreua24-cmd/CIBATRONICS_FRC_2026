@@ -4,6 +4,7 @@ import com.revrobotics.spark.SparkMax;
 import com.revrobotics.spark.SparkLowLevel.MotorType;
 import com.revrobotics.RelativeEncoder;
 
+import edu.wpi.first.wpilibj2.command.Command;
 import edu.wpi.first.wpilibj2.command.SubsystemBase;
 import edu.wpi.first.wpilibj.drive.DifferentialDrive;
 import edu.wpi.first.wpilibj.motorcontrol.MotorControllerGroup;
@@ -26,8 +27,11 @@ import edu.wpi.first.math.system.plant.DCMotor;
 import edu.wpi.first.wpilibj.simulation.DifferentialDrivetrainSim;
 import edu.wpi.first.wpilibj.RobotBase;
 
+import edu.wpi.first.units.Units;
+import edu.wpi.first.units.measure.Voltage;
+import edu.wpi.first.wpilibj2.command.sysid.SysIdRoutine;
 
-
+import java.util.Optional;
 import frc.robot.Constants.DriveConstants;
 
 public class DriveSubsystem extends SubsystemBase {
@@ -37,8 +41,11 @@ public class DriveSubsystem extends SubsystemBase {
   private boolean m_loggedFFError = false;
   
   // drive sim variables
-  
   private DifferentialDrivetrainSim m_driveSim;
+
+  // SysId: last voltage applied so log callback can record it
+  private volatile double m_sysIdAppliedVoltage = 0.0;
+  private final SysIdRoutine m_sysIdRoutine;
 
   // ===============================
   // Motores (use kBrushless for NEO/brushless; kBrushed for brushed — see Constants)
@@ -95,10 +102,10 @@ public class DriveSubsystem extends SubsystemBase {
     if (RobotBase.isSimulation()) {
 
     m_driveSim = new DifferentialDrivetrainSim(
-        DCMotor.getCIM(4),                    
+        DCMotor.getCIM(4),
         DriveConstants.kDriveGearRatio,
-        2.1,                                  
-        7.5,                                 
+        DriveConstants.kSimMomentOfInertiaKgM2,
+        DriveConstants.kSimMassKg,
         DriveConstants.kWheelDiameterMeters / 2.0,
         DriveConstants.kTrackwidthMeters,
         null
@@ -128,7 +135,30 @@ public class DriveSubsystem extends SubsystemBase {
   // We keep the SimpleMotorFeedforward here so that runtime code uses the same gains
   // that are documented in Constants.
   // (Note: constants should be replaced with characterization results.)
-    
+
+  // SysId routine for drive characterization: apply same voltage to both sides, log average position/velocity in m, m/s.
+  m_sysIdRoutine =
+      new SysIdRoutine(
+          new SysIdRoutine.Config(),
+          new SysIdRoutine.Mechanism(
+              (Voltage volts) -> {
+                double v = volts.baseUnitMagnitude();
+                m_sysIdAppliedVoltage = v;
+                tankDriveVolts(v, v);
+              },
+              log -> {
+                double leftPosM = rotationsToMeters(getLeftAveragePosition());
+                double rightPosM = rotationsToMeters(getRightAveragePosition());
+                double leftVelMps = rpmToMetersPerSecond(getLeftAverageVelocity());
+                double rightVelMps = rpmToMetersPerSecond(getRightAverageVelocity());
+                log.motor("Drive")
+                    .voltage(Units.Volts.of(m_sysIdAppliedVoltage))
+                    .linearPosition(Units.Meters.of((leftPosM + rightPosM) / 2.0))
+                    .linearVelocity(
+                        Units.MetersPerSecond.of((leftVelMps + rightVelMps) / 2.0));
+              },
+              this,
+              "Drive"));
   }
 
   // ===============================
@@ -327,6 +357,27 @@ public class DriveSubsystem extends SubsystemBase {
     return m_poseEstimator.getEstimatedPosition();
   }
 
+  /**
+   * When in simulation, returns the drivetrain sim heading for use by odometry so pose is correct in sim.
+   * When not in sim or sim is null, returns empty.
+   */
+  public Optional<Rotation2d> getSimHeading() {
+    if (m_driveSim != null) {
+      return Optional.of(m_driveSim.getHeading());
+    }
+    return Optional.empty();
+  }
+
+  /** SysId quasistatic test; bind to a button and hold to run. See CHARACTERIZATION.md. */
+  public Command sysIdQuasistatic(SysIdRoutine.Direction direction) {
+    return m_sysIdRoutine.quasistatic(direction);
+  }
+
+  /** SysId dynamic test; bind to a button and hold to run. See CHARACTERIZATION.md. */
+  public Command sysIdDynamic(SysIdRoutine.Direction direction) {
+    return m_sysIdRoutine.dynamic(direction);
+  }
+
   public void addVisionMeasurement(Pose2d visionPose, double timestampSeconds) {
     m_poseEstimator.addVisionMeasurement(visionPose, timestampSeconds);
   }
@@ -416,35 +467,28 @@ public class DriveSubsystem extends SubsystemBase {
   }
    
   @Override
-    public void simulationPeriodic() {
-
+  public void simulationPeriodic() {
     if (m_driveSim == null) return;
 
-    // Feed motor outputs into sim (convert percent to volts)
+    // setInputs expects volts; get() is percent output [-1,1] so multiply by 12 (WPILib 2026).
     m_driveSim.setInputs(
         m_leftGroup.get() * 12.0,
         m_rightGroup.get() * 12.0
     );
-
     m_driveSim.update(0.02);
 
-    // Get simulated positions in meters
+    // Sim returns wheel distances in meters; convert to motor rotations for SparkMax encoders.
     double leftMeters = m_driveSim.getLeftPositionMeters();
     double rightMeters = m_driveSim.getRightPositionMeters();
-
-    // Convert meters to motor rotations
     double wheelCirc = Math.PI * DriveConstants.kWheelDiameterMeters;
+    double leftRotations = (leftMeters / wheelCirc) * DriveConstants.kDriveGearRatio;
+    double rightRotations = (rightMeters / wheelCirc) * DriveConstants.kDriveGearRatio;
 
-    double leftRotations =
-        (leftMeters / wheelCirc) * DriveConstants.kDriveGearRatio;
-
-    double rightRotations =
-        (rightMeters / wheelCirc) * DriveConstants.kDriveGearRatio;
-
-    // Set SparkMax encoder positions manually
     m_leftFrontEncoder.setPosition(leftRotations);
     m_leftRearEncoder.setPosition(leftRotations);
     m_rightFrontEncoder.setPosition(rightRotations);
     m_rightRearEncoder.setPosition(rightRotations);
-}
+
+    // Sim gyro: OdometrySubsystem uses getSimHeading() in simulation so pose stays correct in sim.
+  }
 }

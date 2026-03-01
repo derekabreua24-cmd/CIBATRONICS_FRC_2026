@@ -50,6 +50,7 @@ import edu.wpi.first.wpilibj.DriverStation.Alliance;
 import com.pathplanner.lib.auto.AutoBuilder;
 import com.pathplanner.lib.config.RobotConfig;
 import com.pathplanner.lib.controllers.PPLTVController;
+import edu.wpi.first.wpilibj2.command.sysid.SysIdRoutine;
 
 public class RobotContainer {
 
@@ -223,6 +224,16 @@ private GenericEntry m_angTolEntry;
     tuningTab.add("Drive KV", DriveConstants.kDriveKV).withPosition(2, 1).withSize(2, 1).getEntry();
     tuningTab.add("Drive KA", DriveConstants.kDriveKA).withPosition(4, 1).withSize(2, 1).getEntry();
     tuningTab.add("Drive Est Max Speed", DriveConstants.kDriveEstMaxSpeed).withPosition(6, 1).withSize(2, 1).getEntry();
+
+    // SysId: hold Left Bumper + face button to run drive characterization (see CHARACTERIZATION.md).
+    m_driverController.leftBumper().and(m_driverController.a()).whileTrue(
+        m_driveSubsystem.sysIdQuasistatic(SysIdRoutine.Direction.kForward));
+    m_driverController.leftBumper().and(m_driverController.b()).whileTrue(
+        m_driveSubsystem.sysIdQuasistatic(SysIdRoutine.Direction.kReverse));
+    m_driverController.leftBumper().and(m_driverController.x()).whileTrue(
+        m_driveSubsystem.sysIdDynamic(SysIdRoutine.Direction.kForward));
+    m_driverController.leftBumper().and(m_driverController.y()).whileTrue(
+        m_driveSubsystem.sysIdDynamic(SysIdRoutine.Direction.kReverse));
 
     // Keep these entries created on the network table; DriveSubsystem will read them directly.
     tuningTab.add("Use PathPlanner FF", false).withPosition(2, 0).withSize(2, 1).getEntry();
