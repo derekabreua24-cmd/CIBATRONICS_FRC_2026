@@ -6,6 +6,7 @@ import frc.robot.Constants.OperatorConstants;
 import frc.robot.Constants.DriveConstants;
 
 import frc.robot.subsystems.IntakeSubsystem;
+import frc.robot.subsystems.GamePieceSimulation;
 import frc.robot.commands.IntakeCommand;
 import frc.robot.subsystems.DriveSubsystem;
 import frc.robot.commands.Drv_Commands.DriveCommand;
@@ -60,6 +61,12 @@ public class RobotContainer {
       new OdometrySubsystem(m_driveSubsystem, m_navxSubsystem);
   private final IntakeSubsystem m_intakeSubsystem = new IntakeSubsystem();
   private final ShooterSubsystem m_shooterSubsystem = new ShooterSubsystem();
+  private final GamePieceSimulation m_gamePieceSimulation =
+      new GamePieceSimulation(m_driveSubsystem, m_intakeSubsystem, m_shooterSubsystem);
+  /** Called from Robot.simulationPeriodic() so ball physics runs even if subsystem is not required by a command. */
+  public void simulationPeriodic() {
+    m_gamePieceSimulation.simulationPeriodic();
+  }
   private final TelemetrySubsystem m_telemetrySubsystem;
   private final frc.robot.subsystems.OperatorSubsystem m_operatorSubsystem =
       new frc.robot.subsystems.OperatorSubsystem();

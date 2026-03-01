@@ -25,9 +25,9 @@ public class DriveCommand extends Command {
 
   @Override
   public void execute() {
-    // Joystick deadbands
+    // Joystick deadbands; negate rot so stick right = robot turns right (WPILib arcadeDrive positive = left).
     double fwd = -MathUtil.applyDeadband(m_controller.getLeftY(), 0.05);
-    double rot =  MathUtil.applyDeadband(m_controller.getRightX(), 0.05);
+    double rot = -MathUtil.applyDeadband(m_controller.getRightX(), 0.05);
 
     // === ADDED ===
     // Squared inputs for finer control sensitivity
