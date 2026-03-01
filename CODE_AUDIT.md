@@ -389,3 +389,42 @@ All commands that use vision receive `m_visionSubsystem` (nullable); they null-c
 | **FRC structure** | Command-based, single pose estimator, AdvantageKit logging, deploy layout — compliant. |
 
 **Conclusion:** The project is audited end-to-end. Logic, wiring, constants, vision, and simulation behavior are consistent and correct. No critical or medium issues found in this final pass.
+
+---
+
+## Logic & dependency verification (latest APIs)
+
+**Date:** 2026-02-28. Checked against WPILib 2026, PathPlanner 2026.1.2, REVLib 2026.0.3, AdvantageKit 26.0.0, Studica 2026.0.0.
+
+### Fix applied: PathPlanner deploy path case
+
+- **Issue:** `getAutonomousCommand()` resolved auto and path files with `resolve("PathPlanner")` (capital P). The deploy folder is `pathplanner` (lowercase). On RoboRIO (Linux) the filesystem is case-sensitive, so the reset-to-path-start logic would not find `deploy/PathPlanner/autos` or `deploy/PathPlanner/paths`.
+- **Fix:** Both paths in `RobotContainer.getAutonomousCommand()` now use `resolve("pathplanner")` so they match `src/main/deploy/pathplanner/autos` and `pathplanner/paths`.
+
+### API and logic checks (all correct)
+
+| Component | Verification |
+|-----------|--------------|
+| **DifferentialDrivePoseEstimator** | `updateWithTime(time, heading, leftM, rightM)` and `resetPosition(heading, 0, 0, pose)` match WPILib 2026 API. Single update in `OdometrySubsystem.periodic()`. |
+| **addVisionMeasurement** | 2-arg and 3-arg (with `Matrix<N3, N1>` std devs) used; timestamps from `Timer.getFPGATimestamp()` for consistency. |
+| **PathPlanner AutoBuilder** | `configure(poseSupplier, resetPose, getChassisSpeeds, driveWithSpeeds, PPLTVController, RobotConfig.fromGUISettings(), shouldFlipPath, drive)` matches PathPlanner 2026 `BiConsumer<ChassisSpeeds, DriveFeedforwards>` output. |
+| **ChassisSpeeds / getChassisSpeeds** | Robot-relative: `vx = (left+right)/2`, `omega = (right-left)/trackWidth` (positive omega = CCW). Correct. |
+| **AprilTag** | `AprilTagFieldLayout.loadField(f)` for enum; 2026 fields `k2026RebuiltAndymark`, `k2026RebuiltWelded`; tag36h11; tag size 0.1651 m. Layout loading and deploy JSON fallback correct. |
+| **REV SparkMax 2026** | `com.revrobotics.spark.SparkMax`, `MotorType.kBrushed`, `getEncoder()`, config API — matches REVLib 2026.0.3. |
+| **SysIdRoutine** | `SysIdRoutine.Mechanism` with `Consumer<Voltage>`, log with `Units.Volts`, `Units.Meters`, `Units.MetersPerSecond`; `volts.baseUnitMagnitude()` — matches WPILib 2026. |
+| **SimpleMotorFeedforward** | `ff.calculate(velocity, acceleration)` used with `@SuppressWarnings("removal")`; 2-arg form still valid in 2026. |
+| **DrivePhysics** | `leftVel = vx - ω×L/2`, `rightVel = vx + ω×L/2`; ±12 V clamp always applied. |
+| **RobotConfig.fromGUISettings()** | Loads from deploy pathplanner settings; PathPlannerLib expects deploy folder; project has `pathplanner/settings.json`. |
+| **Studica NavX** | `com.studica.frc.AHRS`, `NavXComType.kMXP_SPI`; vendordeps Studica 2026.0.0. |
+| **AdvantageKit** | `LoggedRobot`, `Logger.recordOutput()`, `NT4Publisher`; vendordeps AdvantageKit 26.0.0. |
+
+### Dependencies (current)
+
+| Dependency | Version in project | Note |
+|------------|---------------------|------|
+| GradleRIO | 2026.1.1 | build.gradle |
+| REVLib-java | 2026.0.3 | build.gradle + vendordeps/REVLib.json |
+| PathplannerLib | 2026.1.2 | vendordeps/PathplannerLib-2026.1.2.json |
+| AdvantageKit | 26.0.0 | vendordeps/AdvantageKit.json |
+| Studica (NavX) | 2026.0.0 | vendordeps/Studica.json |
+| JUnit Jupiter | 5.10.1 | build.gradle |

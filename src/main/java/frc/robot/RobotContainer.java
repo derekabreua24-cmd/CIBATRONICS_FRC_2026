@@ -412,8 +412,8 @@ public class RobotContainer {
           }
 
                     if (selected != null && !selected.isEmpty()) {
-            // Try common filename patterns for autos in deploy/PathPlanner/autos
-            Path deployAutos = edu.wpi.first.wpilibj.Filesystem.getDeployDirectory().toPath().resolve("PathPlanner").resolve("autos");
+            // Deploy folder is "pathplanner" (lowercase); RoboRIO filesystem is case-sensitive.
+            Path deployAutos = edu.wpi.first.wpilibj.Filesystem.getDeployDirectory().toPath().resolve("pathplanner").resolve("autos");
             Path autoFile = null;
             String[] candidates = new String[] { selected, selected + ".auto", selected + ".auto.json" };
             for (String c : candidates) {
@@ -435,8 +435,7 @@ public class RobotContainer {
                 Matcher m = p.matcher(autoJson);
                 if (m.find()) {
                   String pathName = m.group(1);
-                  // Buscar el archivo de ruta en deploy/PathPlanner/paths
-                  Path pathFile = edu.wpi.first.wpilibj.Filesystem.getDeployDirectory().toPath().resolve("PathPlanner").resolve("paths").resolve(pathName + ".path");
+                  Path pathFile = edu.wpi.first.wpilibj.Filesystem.getDeployDirectory().toPath().resolve("pathplanner").resolve("paths").resolve(pathName + ".path");
                   if (Files.exists(pathFile)) {
                     String pathJson = Files.readString(pathFile, StandardCharsets.UTF_8);
                     // Find the first waypoint anchor x/y

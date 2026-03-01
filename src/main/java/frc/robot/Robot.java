@@ -43,12 +43,12 @@ public class Robot extends LoggedRobot {
       Logger.recordOutput("Robot/Drivetrain/WheelDiameterMeters", frc.robot.constants.DriveConstants.kWheelDiameterMeters);
       Logger.recordOutput("Robot/Drivetrain/GearRatio", frc.robot.constants.DriveConstants.kDriveGearRatio);
       Logger.recordOutput("Robot/Drivetrain/DriveMotors", "SparkMax x4 (left/right pairs)");
-    } catch (Throwable t) {
-      // No es fatal si el Logger no está listo; registrar el error y continuar.
+    } catch (Exception t) {
+      // No es fatal si el Logger falla; registrar el error (mejor que silenciarlo).
       try {
         Logger.recordOutput("Telemetry/Errors", "[robotInit] Error al publicar metadatos del tren de rodaje: " + t.toString());
-      } catch (Throwable ignore) {
-        // Sin más fallback para no saturar la consola.
+      } catch (Exception ignore) {
+        // give up silently to avoid recursive logging
       }
     }
   }

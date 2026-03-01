@@ -19,7 +19,7 @@ Provide project context and coding guidelines that AI should follow when generat
 ## Code Style & Architecture
 - Subsystems: Must use 'Periodic' methods for telemetry.
 - Commands: Prefer 'Command Composition' (using .andThen(), .alongWith(), .until()) instead of complex manual command groups.
-- Hardware: Use 'DataLogManager' for logging instead of simple System.out.println.
+- Hardware: Use the AdvantageKit `Logger` (org.littletonrobotics.junction.Logger) for structured logging instead of simple System.out.println.
 
 ## Verification Step
 - Before suggesting code, verify if the class package has changed in the 2026 WPILib release (e.g., changes in Vision or Odometry packages).
@@ -31,7 +31,7 @@ Provide project context and coding guidelines that AI should follow when generat
 - For any command-based code, ensure to use the new 'CommandScheduler' patterns and avoid deprecated command structures.
 - For any subsystem, ensure to use the new 'SubsystemBase' class and avoid deprecated subsystem patterns.
 - For any sensor integration, ensure to use the new 'SensorBase' classes and methods as per 2026 updates.
-- For any logging, ensure to use the new 'DataLogManager' for structured logging instead of simple print statements.
+- For any logging, prefer AdvantageKit `Logger.recordOutput(...)` for structured telemetry instead of simple print statements.
 - For any configuration, ensure to use the new 'Configurable' interface and avoid hardcoding values in the code.
 - For any autonomous routines, ensure to use the new 'AutoBuilder' patterns and avoid manual command sequencing.
 - For any teleop control, ensure to use the new 'Joystick' and 'XboxController' classes and methods as per 2026 updates.

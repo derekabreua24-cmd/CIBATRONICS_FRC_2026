@@ -283,7 +283,9 @@ public class TelemetrySubsystem extends SubsystemBase {
     String txt = "[Command] init: " + cmd.getClass().getSimpleName();
     try {
       Logger.recordOutput("Telemetry/CommandInit", txt);
-    } catch (Throwable ignore) {}
+    } catch (Exception e) {
+      Logger.recordOutput("Telemetry/Errors", "TelemetrySubsystem: failed to record command init -> " + e.toString());
+    }
     try {
       m_driverEventLogEntry.setString(txt);
     } catch (RuntimeException e) {
@@ -294,7 +296,9 @@ public class TelemetrySubsystem extends SubsystemBase {
     String txt = "[Command] finish: " + cmd.getClass().getSimpleName();
     try {
       Logger.recordOutput("Telemetry/CommandFinish", txt);
-    } catch (Throwable ignore) {}
+    } catch (Exception e) {
+      Logger.recordOutput("Telemetry/Errors", "TelemetrySubsystem: failed to record command finish -> " + e.toString());
+    }
     try {
       m_driverEventLogEntry.setString(txt);
     } catch (RuntimeException e) {
@@ -305,7 +309,9 @@ public class TelemetrySubsystem extends SubsystemBase {
     String txt = "[Command] interrupt: " + cmd.getClass().getSimpleName();
     try {
       Logger.recordOutput("Telemetry/CommandInterrupt", txt);
-    } catch (Throwable ignore) {}
+    } catch (Exception e) {
+      Logger.recordOutput("Telemetry/Errors", "TelemetrySubsystem: failed to record command interrupt -> " + e.toString());
+    }
     try {
       m_driverEventLogEntry.setString(txt);
     } catch (RuntimeException e) {
