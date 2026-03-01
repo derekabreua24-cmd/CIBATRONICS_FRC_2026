@@ -150,7 +150,5 @@ public class Robot extends LoggedRobot {
 
   /** Esta función se llama periódicamente durante la simulación. */
   @Override
-  public void simulationPeriodic() {
-    m_robotContainer.simulationPeriodic();
-  }
+  public void simulationPeriodic() {}
 }

@@ -70,25 +70,6 @@ public final class Constants {
   public static final double kSimMassKg = 25.0;
   public static final double kSimMomentOfInertiaKgM2 = 2.1;
 
-  // Simulation: field boundary (meters). 2026 REBUILT playable 651.2"×317.7" → 16.54 m × 8.07 m; origin center; margin for bumper.
-  public static final double kSimFieldHalfLengthX = 8.2;   // 16.4 m total
-  public static final double kSimFieldHalfWidthY = 4.0;    // 8 m total
-
-  // Simulation: obstacles {minX, maxX, minY, maxY} in meters. Rough tower/outpost footprints (~0.6 m); robot stops on overlap.
-  public static final double[][] kSimObstacles = {
-      {-5.0, -4.4, -0.3, 0.3},   // left-side structure
-      {4.4, 5.0, -0.3, 0.3}      // right-side structure
-  };
-
-  // Simulation: game piece physics — tuned for realistic intake/shooter behavior (note-like pickup, ~12+ m/s launch).
-  public static final double kSimBallPickupRadiusMeters = 0.22;   // note center within ~9" of intake
-  public static final double kSimIntakeOffsetXMeters = 0.28;      // intake center ahead of robot center
-  public static final double kSimShooterLaunchSpeedMetersPerSec = 14.0;  // typical FRC speaker-range launch
-  public static final double kSimShooterOffsetXMeters = 0.32;      // shooter exit ahead of robot center
-  public static final double kSimShooterRpmThreshold = 4000.0;     // "at speed" when near target RPM
-  public static final double kSimShotCooldownSec = 0.32;           // time between launched notes (feeder cycle)
-  public static final double kSimGravityMetersPerSecSq = 9.81;
-
     // Default intake running speed (percent output)
     public static final double kIntakeSpeed = 0.8;
   // Indexer removed from this build - related constants deleted

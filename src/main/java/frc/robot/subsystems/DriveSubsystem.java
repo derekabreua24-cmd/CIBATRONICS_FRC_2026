@@ -17,9 +17,6 @@ import edu.wpi.first.math.geometry.Rotation2d;
 import edu.wpi.first.math.kinematics.DifferentialDriveKinematics;
 import edu.wpi.first.math.estimator.DifferentialDrivePoseEstimator;
 import edu.wpi.first.math.VecBuilder;
-import edu.wpi.first.math.MatBuilder;
-import edu.wpi.first.math.numbers.N1;
-import edu.wpi.first.math.numbers.N7;
 import edu.wpi.first.wpilibj.smartdashboard.Field2d;
 import edu.wpi.first.wpilibj.smartdashboard.SmartDashboard;
 import org.littletonrobotics.junction.Logger;
@@ -479,37 +476,6 @@ public class DriveSubsystem extends SubsystemBase {
         m_rightGroup.get() * 12.0
     );
     m_driveSim.update(0.02);
-
-    // Field-boundary and obstacle collision: clamp pose, zero velocity so robot stops at walls (AdvantageScope).
-    Pose2d simPose = m_driveSim.getPose();
-    double x = Math.max(-DriveConstants.kSimFieldHalfLengthX,
-        Math.min(DriveConstants.kSimFieldHalfLengthX, simPose.getX()));
-    double y = Math.max(-DriveConstants.kSimFieldHalfWidthY,
-        Math.min(DriveConstants.kSimFieldHalfWidthY, simPose.getY()));
-    // Obstacles: push pose out of any obstacle box (min/max X/Y per obstacle).
-    for (int i = 0; i < DriveConstants.kSimObstacles.length; i++) {
-      double[] ob = DriveConstants.kSimObstacles[i];
-      double oxMin = ob[0], oxMax = ob[1], oyMin = ob[2], oyMax = ob[3];
-      if (x >= oxMin && x <= oxMax && y >= oyMin && y <= oyMax) {
-        double dxMin = x - oxMin, dxMax = oxMax - x, dyMin = y - oyMin, dyMax = oyMax - y;
-        double minDist = Math.min(Math.min(dxMin, dxMax), Math.min(dyMin, dyMax));
-        if (minDist == dxMin) x = oxMin;
-        else if (minDist == dxMax) x = oxMax;
-        else if (minDist == dyMin) y = oyMin;
-        else y = oyMax;
-      }
-    }
-    boolean clamped = (x != simPose.getX() || y != simPose.getY());
-    if (clamped) {
-      Pose2d clampedPose = new Pose2d(x, y, simPose.getRotation());
-      double leftM = m_driveSim.getLeftPositionMeters();
-      double rightM = m_driveSim.getRightPositionMeters();
-      // Zero velocities so robot doesn't slide; state = [x, y, theta, velL, velR, distL, distR].
-      var state = MatBuilder.fill(N7.instance, N1.instance,
-          x, y, clampedPose.getRotation().getRadians(), 0.0, 0.0, leftM, rightM);
-      m_driveSim.setState(state);
-      m_poseEstimator.resetPosition(clampedPose.getRotation(), leftM, rightM, clampedPose);
-    }
 
     // Sim returns wheel distances in meters; convert to motor rotations for SparkMax encoders.
     double leftMeters = m_driveSim.getLeftPositionMeters();
