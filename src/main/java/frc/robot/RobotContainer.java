@@ -40,7 +40,6 @@ import edu.wpi.first.wpilibj2.command.Command;
 import edu.wpi.first.wpilibj2.command.Commands;
 // using fully-qualified SendableChooser reference below; keep import removed to avoid unused-import warnings
 import edu.wpi.first.wpilibj.shuffleboard.Shuffleboard;
-import edu.wpi.first.networktables.GenericEntry;
 import edu.wpi.first.wpilibj2.command.button.CommandXboxController;
 
 // DriverStation
@@ -92,6 +91,10 @@ private GenericEntry m_angTolEntry;
   private GenericEntry m_shooterRpmEntry;
 
   public RobotContainer() {
+
+    // Create Tuning tab and shooter RPM entry before configureBindings() so ShooterCommand receives a valid entry.
+    var tuningTab = Shuffleboard.getTab("Tuning");
+    m_shooterRpmEntry = tuningTab.add("Shooter RPM", DriveConstants.kShooterMaxRPM * Math.abs(DriveConstants.kShooterSpeed)).withPosition(8, 0).withSize(2, 1).getEntry();
 
     configureBindings();
 
@@ -145,9 +148,7 @@ private GenericEntry m_angTolEntry;
           Logger.recordOutput("Telemetry/Log", "Using built-in AprilTagFieldLayout (default)");
         }
         else {
-          // If we successfully loaded a built-in layout (e.g., 2026), but no deploy
-          // JSON was present, serialize the layout to deploy so users can inspect or
-          // ship it to robot. This is non-fatal and best-effort.
+          // We loaded from deploy; optionally export the layout to deploy for inspection/shipping.
           try {
             java.nio.file.Path exportPath = edu.wpi.first.wpilibj.Filesystem.getDeployDirectory().toPath().resolve("apriltagfield_2026.json");
             if (!java.nio.file.Files.exists(exportPath)) {
@@ -201,13 +202,7 @@ private GenericEntry m_angTolEntry;
     m_navxSubsystem,
     m_visionSubsystem);
 
-  // (m_shooterRpmEntry is created below once tuningTab is available)
-
     var autoTab = Shuffleboard.getTab("Autonomous");
-    var tuningTab = Shuffleboard.getTab("Tuning");
-
-  // Add a tuning entry for shooter RPM on the Tuning tab (runtime-adjustable)
-  m_shooterRpmEntry = tuningTab.add("Shooter RPM", DriveConstants.kShooterMaxRPM * Math.abs(DriveConstants.kShooterSpeed)).withPosition(8, 0).withSize(2, 1).getEntry();
 
   m_targetXEntry = autoTab.add("Target X (m)", 1.5).getEntry();
     m_targetYEntry = autoTab.add("Target Y (m)", 0.0).getEntry();

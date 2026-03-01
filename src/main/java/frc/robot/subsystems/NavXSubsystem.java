@@ -16,9 +16,9 @@ public class NavXSubsystem extends SubsystemBase {
     try {
       // For NavX2 on RoboRIO MXP port
       tmp = new AHRS(AHRS.NavXComType.kMXP_SPI);
-  Logger.recordOutput("NavX/Status", "NavX initialized on MXP SPI.");
+      Logger.recordOutput("NavX/Status", "NavX initialized on MXP SPI.");
     } catch (RuntimeException e) {
-  Logger.recordOutput("NavX/Errors", "NavX failed to initialize: " + e.toString());
+      Logger.recordOutput("NavX/Errors", "NavX failed to initialize: " + e.toString());
       tmp = null;
     }
     m_ahrs = tmp;
@@ -56,24 +56,24 @@ public class NavXSubsystem extends SubsystemBase {
   }
 
   public void reset() {
-  if (m_ahrs != null) {
-    m_ahrs.reset();
+    if (m_ahrs != null) {
+      m_ahrs.reset();
+    }
   }
-}
 
-public double getPitch() {
-  if (m_ahrs == null) {
-    return 0.0;
+  public double getPitch() {
+    if (m_ahrs == null) {
+      return 0.0;
+    }
+    return m_ahrs.getPitch();
   }
-  return m_ahrs.getPitch();
-}
 
-public double getRoll() {
-  if (m_ahrs == null) {
-    return 0.0;
+  public double getRoll() {
+    if (m_ahrs == null) {
+      return 0.0;
+    }
+    return m_ahrs.getRoll();
   }
-  return m_ahrs.getRoll();
-}
 
   @Override
   public void periodic() {

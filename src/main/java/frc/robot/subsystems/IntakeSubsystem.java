@@ -5,16 +5,18 @@ import com.revrobotics.spark.SparkLowLevel.MotorType;
 import edu.wpi.first.wpilibj2.command.SubsystemBase;
 import frc.robot.Constants.DriveConstants;
 
-/** Subsistema sencillo de intake usando un único SparkMax (brushed). */
+/** Subsistema sencillo de intake usando un único SparkMax. Use kBrushless para NEO; kBrushed para brushed (ver Constants). */
 public class IntakeSubsystem extends SubsystemBase {
   private final SparkMax m_intake = new SparkMax(DriveConstants.kIntakeMotorPort, MotorType.kBrushed);
   // When true, intake motor direction is inverted (so run(...) will flip sign)
   private boolean m_reversed = false;
 
+  /** REV SparkMax setInverted() is deprecated in favor of config-based inversion; suppress until migrated. */
   @SuppressWarnings("deprecation")
   public IntakeSubsystem() {
     // Configurar inversión si es necesario
-    m_intake.setInverted(false); }
+    m_intake.setInverted(false);
+  }
 
   /** Ejecuta el motor del intake haciendo uso de la constante "Velocidad del Intake". */
   public void run(double kIntakeSpeed) {

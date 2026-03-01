@@ -23,7 +23,8 @@ public final class Constants {
   // CAN IDs for the drivetrain motor controllers. This robot uses a
   // 6-wheel drivetrain mechanically (6 wheels) driven by 4 motors
   // (two motors per side). Update these arrays if your wiring differs.
-  // Current layout: left motors at CAN IDs {1,2}, right motors at {3,4}.
+  // Current layout: right motors at CAN IDs {1,2}, left motors at {3,4}.
+  // Motor type: use MotorType.kBrushless for NEO/brushless; kBrushed for brushed. Update DriveSubsystem/IntakeSubsystem to match hardware.
     public static final int kRightFrontMotorPort = 1;
     public static final int kRightRearMotorPort = 2;
     public static final int kLeftFrontMotorPort = 3;
@@ -31,7 +32,7 @@ public final class Constants {
     public static final int[] kLeftMotorPorts = {kLeftFrontMotorPort, kLeftRearMotorPort};
     public static final int[] kRightMotorPorts = {kRightFrontMotorPort, kRightRearMotorPort};
 
-    // CAN ID for the brushless intake motor
+    // CAN ID for the intake motor (type must match IntakeSubsystem: kBrushed or kBrushless)
     public static final int kIntakeMotorPort = 5;
 
   // Shooter ports (front/rear) - update if your CAN IDs differ

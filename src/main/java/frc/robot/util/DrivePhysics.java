@@ -43,14 +43,10 @@ public final class DrivePhysics {
     @SuppressWarnings("removal")
     double rightVolts = ff.calculate(rightVel, 0.0);
 
-    // Fallback safety clamp (avoid commanding beyond battery rail)
+    // Always clamp to battery rail for safety (avoid commanding beyond ±12 V)
     double clampMax = 12.0;
-    // If estimated max speed is available, scale small additional voltage component
-    // to help with smoothing (this preserves the feedforward semantics primarily).
-    if (estMaxSpeed > 0.0) {
-      leftVolts = Math.max(-clampMax, Math.min(clampMax, leftVolts));
-      rightVolts = Math.max(-clampMax, Math.min(clampMax, rightVolts));
-    }
+    leftVolts = Math.max(-clampMax, Math.min(clampMax, leftVolts));
+    rightVolts = Math.max(-clampMax, Math.min(clampMax, rightVolts));
 
     return new double[] {leftVolts, rightVolts};
   }

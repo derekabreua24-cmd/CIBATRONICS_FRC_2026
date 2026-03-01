@@ -109,6 +109,15 @@ public class TelemetrySubsystem extends SubsystemBase {
   private final GenericEntry m_intakeReversedEntry;
   private final GenericEntry m_visionEnabledEntry;
 
+  // Shooter and feed tuning entries (synced to Tuning table in periodic() for runtime tuning)
+  private final GenericEntry m_shooterSetEntry;
+  private final GenericEntry m_shooterPEntry;
+  private final GenericEntry m_shooterIEntry;
+  private final GenericEntry m_shooterDEntry;
+  private final GenericEntry m_feedPulseEntry;
+  private final GenericEntry m_feedPauseEntry;
+  private final GenericEntry m_feedContinuousEntry;
+
   public TelemetrySubsystem(DriveSubsystem drive, IntakeSubsystem intake, ShooterSubsystem shooter, CommandXboxController controller, CommandXboxController operatorController, NavXSubsystem navx, VisionSubsystem vision) {
     m_drive = drive;
     m_intake = intake;
@@ -228,13 +237,13 @@ public class TelemetrySubsystem extends SubsystemBase {
 
   // Afinacion del shooter (expuesta para ajuste en vivo)
   var shooterTuningLayout = tab.getLayout("Shooter Tuning", BuiltInLayouts.kList).withSize(3, 2);
-  var shooterSetEntry = shooterTuningLayout.add("Shooter Setpoint RPM", 4500.0).getEntry();
-  var shooterP = shooterTuningLayout.add("Shooter P", 0.0002).getEntry();
-  var shooterI = shooterTuningLayout.add("Shooter I", 0.0).getEntry();
-  var shooterD = shooterTuningLayout.add("Shooter D", 0.0).getEntry();
-  var feedPulse = shooterTuningLayout.add("Feed Pulse Sec", 0.5).getEntry();
-  var feedPause = shooterTuningLayout.add("Feed Pause Sec", 0.2).getEntry();
-  var feedContinuous = shooterTuningLayout.add("Feed Continuous", true).getEntry();
+  m_shooterSetEntry = shooterTuningLayout.add("Shooter Setpoint RPM", 4500.0).getEntry();
+  m_shooterPEntry = shooterTuningLayout.add("Shooter P", 0.0002).getEntry();
+  m_shooterIEntry = shooterTuningLayout.add("Shooter I", 0.0).getEntry();
+  m_shooterDEntry = shooterTuningLayout.add("Shooter D", 0.0).getEntry();
+  m_feedPulseEntry = shooterTuningLayout.add("Feed Pulse Sec", 0.5).getEntry();
+  m_feedPauseEntry = shooterTuningLayout.add("Feed Pause Sec", 0.2).getEntry();
+  m_feedContinuousEntry = shooterTuningLayout.add("Feed Continuous", true).getEntry();
 
   // Registro de eventos (el ultimo evento se muestra en Shuffleboard y se escribe en DataLog)
   m_eventLogEntry = tab.add("EventLog", "").withSize(3, 1).getEntry();
@@ -248,14 +257,14 @@ public class TelemetrySubsystem extends SubsystemBase {
   tuningTable.getEntry("EstStateX").setDouble(m_estStateXEntry.getDouble(0.05));
   tuningTable.getEntry("EstVisionX").setDouble(m_estVisionXEntry.getDouble(0.5));
 
-  // Reflejar la afinacion del shooter en la tabla Tuning para que los subsistemas la lean
-  tuningTable.getEntry("ShooterSetpointRPM").setDouble(shooterSetEntry.getDouble(4500.0));
-  tuningTable.getEntry("ShooterP").setDouble(shooterP.getDouble(0.0002));
-  tuningTable.getEntry("ShooterI").setDouble(shooterI.getDouble(0.0));
-  tuningTable.getEntry("ShooterD").setDouble(shooterD.getDouble(0.0));
-  tuningTable.getEntry("FeedPulseSec").setDouble(feedPulse.getDouble(0.5));
-  tuningTable.getEntry("FeedPauseSec").setDouble(feedPause.getDouble(0.2));
-  tuningTable.getEntry("FeedContinuous").setBoolean(feedContinuous.getBoolean(true));
+  // Initial sync to Tuning table (periodic() keeps it updated for runtime tuning)
+  tuningTable.getEntry("ShooterSetpointRPM").setDouble(m_shooterSetEntry.getDouble(4500.0));
+  tuningTable.getEntry("ShooterP").setDouble(m_shooterPEntry.getDouble(0.0002));
+  tuningTable.getEntry("ShooterI").setDouble(m_shooterIEntry.getDouble(0.0));
+  tuningTable.getEntry("ShooterD").setDouble(m_shooterDEntry.getDouble(0.0));
+  tuningTable.getEntry("FeedPulseSec").setDouble(m_feedPulseEntry.getDouble(0.5));
+  tuningTable.getEntry("FeedPauseSec").setDouble(m_feedPauseEntry.getDouble(0.2));
+  tuningTable.getEntry("FeedContinuous").setBoolean(m_feedContinuousEntry.getBoolean(true));
 
   // Diseno de controles
   var controls = tab.getLayout("Controls", BuiltInLayouts.kList).withSize(2, 2).withPosition(0, 4);
@@ -318,8 +327,23 @@ public class TelemetrySubsystem extends SubsystemBase {
 
   @Override
   public void periodic() {
-  // Actualizar la odometria desde NavX primero (mantener la odometria actualizada)
-    m_drive.updateOdometry(m_navx.getRotation2d());
+  // Odometry is updated only in OdometrySubsystem.periodic() to avoid double-updating the pose estimator.
+
+  // Sync Shuffleboard tuning entries to Tuning table so ShooterSubsystem and ShootSequenceCommand see runtime changes
+  NetworkTable tuningTable = NetworkTableInstance.getDefault().getTable("Tuning");
+  tuningTable.getEntry("TurnP").setDouble(m_turnPEntry.getDouble(0.02));
+  tuningTable.getEntry("TurnI").setDouble(m_turnIEntry.getDouble(0.0));
+  tuningTable.getEntry("TurnD").setDouble(m_turnDEntry.getDouble(0.001));
+  tuningTable.getEntry("TurnTolDeg").setDouble(m_turnToleranceEntry.getDouble(2.0));
+  tuningTable.getEntry("EstStateX").setDouble(m_estStateXEntry.getDouble(0.05));
+  tuningTable.getEntry("EstVisionX").setDouble(m_estVisionXEntry.getDouble(0.5));
+  tuningTable.getEntry("ShooterSetpointRPM").setDouble(m_shooterSetEntry.getDouble(4500.0));
+  tuningTable.getEntry("ShooterP").setDouble(m_shooterPEntry.getDouble(0.0002));
+  tuningTable.getEntry("ShooterI").setDouble(m_shooterIEntry.getDouble(0.0));
+  tuningTable.getEntry("ShooterD").setDouble(m_shooterDEntry.getDouble(0.0));
+  tuningTable.getEntry("FeedPulseSec").setDouble(m_feedPulseEntry.getDouble(0.5));
+  tuningTable.getEntry("FeedPauseSec").setDouble(m_feedPauseEntry.getDouble(0.2));
+  tuningTable.getEntry("FeedContinuous").setBoolean(m_feedContinuousEntry.getBoolean(true));
 
   // Si la vision tiene una pose reciente, pasarla al estimador para fusion con marca de tiempo
     if (m_vision != null) {

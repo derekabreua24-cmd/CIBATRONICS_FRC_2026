@@ -56,7 +56,6 @@ public class Robot extends LoggedRobot {
   }
 
   /**
-  /**
    * Esta función se llama cada 20 ms, sin importar el modo. Úsela para diagnósticos u otras
    * tareas que desee ejecutar en disabled, autonomous, teleoperated y test.
    *

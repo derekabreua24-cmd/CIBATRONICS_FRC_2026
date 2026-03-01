@@ -41,7 +41,7 @@ public class DriveSubsystem extends SubsystemBase {
   private DifferentialDrivetrainSim m_driveSim;
 
   // ===============================
-  // Motores
+  // Motores (use kBrushless for NEO/brushless; kBrushed for brushed — see Constants)
   // ===============================
 
   private final SparkMax m_leftFront =
@@ -276,7 +276,7 @@ public class DriveSubsystem extends SubsystemBase {
 
     if (RobotBase.isSimulation() && m_driveSim != null) {
       // En simulación usamos la orientación proporcionada por el simulador
-      heading = m_driveSim.getHeading().times(-1.0); // SimGyro devuelve rotación en sentido antihorario, pero NavX es horario, así que invertimos el signo
+     heading = m_driveSim.getHeading().plus(Rotation2d.fromDegrees(90)); // SimGyro devuelve rotación en sentido antihorario, pero NavX es horario, así que invertimos el signo
     } else {
       // En hardware real usamos la lectura del NavX
       heading = m_navx.getRotation2d();
@@ -295,6 +295,7 @@ public class DriveSubsystem extends SubsystemBase {
     SmartDashboard.putNumber("Robot Y", pose.getY());
     SmartDashboard.putNumber("Robot Heading", pose.getRotation().getDegrees());
   }
+
 
   // ===============================
   // Odometría
