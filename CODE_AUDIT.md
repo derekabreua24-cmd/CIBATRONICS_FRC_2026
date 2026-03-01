@@ -296,3 +296,96 @@ Re-verified after constants split and encoding fix. All of the below are consist
 | **Shooter** | setpoint RPM, PID+FF in periodic(), output clamped ±1; distance-based RPM via ShooterDistanceConstants. | OK |
 | **Intake** | run(speed) uses `m_reversed` to flip sign; toggleReverse() flips `m_reversed`; IntakeCommand/ReverseIntakeCommand/UnjamCommand use IntakeConstants. | OK |
 | **Reset to vision** | Back button: vision pose (x,y) + NavX heading for reset (vision for position, gyro for theta). | OK |
+
+---
+
+## Final audit — entire project (one last time)
+
+**Date:** 2026-02-28. **Scope:** All Java sources, deploy config, build, and docs.
+
+### 1. Entry points and lifecycle
+
+| Item | Status |
+|------|--------|
+| **Main.java** | Calls `RobotBase.startRobot(Robot::new)`; no static state. |
+| **Robot.java** | Extends `LoggedRobot`; `robotInit()` starts Logger + NT4; `robotPeriodic()` runs CommandScheduler only; `disabledInit()` calls `shutdownVision()`; `simulationInit()` runs autonomous smoke test and logs; `simulationPeriodic()` delegates to `RobotContainer.simulationPeriodic()`. |
+| **RobotContainer** | Built after all subsystems; Tuning tab and `m_shooterRpmEntry` created before `configureBindings()`; PathPlanner and vision init in constructor; `configureBindings()` and default command set at end. |
+
+### 2. Subsystems and wiring
+
+| Subsystem | Dependencies | Notes |
+|-----------|--------------|------|
+| **NavXSubsystem** | None | AHRS on MXP SPI; null-safe getters when init fails. |
+| **DriveSubsystem** | None | SparkMax x4, kinematics, pose estimator, SysId, sim (`DifferentialDrivetrainSim`). No duplicate odometry update. |
+| **OdometrySubsystem** | Drive, NavX | Single source of odometry update; uses sim heading in sim, NavX on robot; `resetOdometry(pose)` uses `pose.getRotation()`. |
+| **IntakeSubsystem** | None | Single SparkMax; `m_reversed` toggled by operator; run/stop/toggleReverse. |
+| **ShooterSubsystem** | None | Two SparkMax, MotorControllerGroup, PID+FF; reads ShooterP/I/D from NetworkTable `Tuning` (synced by TelemetrySubsystem). |
+| **VisionSubsystem** | Layout, cameraToRobot | processDetections, getLastPose/Timestamp/StdDevs/TargetDistanceMeters; `setSimulationPoseAndDistance()` for sim injection. |
+| **UsbAprilTagProcessor** | VisionSubsystem | Daemon thread, tag36h11, configurable resolution/FPS; on init failure RobotContainer keeps VisionSubsystem, nulls processor only. |
+| **TelemetrySubsystem** | Drive, Intake, Shooter, both controllers, NavX, Vision | Syncs Shuffleboard → `Tuning` table in periodic(); vision fusion only when vision non-null, enabled, and !teleop; null-checks vision everywhere. |
+
+### 3. Commands and bindings
+
+| Binding | Command | Requirements |
+|---------|---------|--------------|
+| Driver default | **DriveCommand** | Drive |
+| Driver LB+A/B/X/Y | SysId quasistatic/dynamic fwd/rev | Drive |
+| Driver Start | **ResetGyroCommand** | NavX |
+| Driver Back | **ResetOdometryToVisionCommand** | Drive, Vision (only if vision != null) |
+| Driver Y | **LogEventCommand** | Telemetry |
+| Driver X | **TurnToAngleCommand** (90°) | Drive, NavX |
+| Driver B | **DriveToPoseCommand** (from Autonomous tab entries) | Drive, Odometry |
+| Operator B | **StopMechanismsCommand** | Intake, Shooter |
+| Operator left trigger | **IntakeCommand** | Intake |
+| Operator A | **ToggleIntakeDirectionCommand** | Intake |
+| Operator left bumper | **UnjamCommand** | Intake |
+| Operator right bumper | **ReverseIntakeCommand** (while held) | Intake |
+| Operator right trigger | **ShooterCommand** (RPM from Tuning or vision distance) | Shooter |
+| Operator X | **ShootSequenceCommand** (shooter + intake, vision RPM when available) | Shooter, Intake |
+| Operator Y | **LogEventCommand** | Telemetry |
+
+All commands that use vision receive `m_visionSubsystem` (nullable); they null-check before using vision.
+
+### 4. Constants and configuration
+
+| Package | Files | Usage |
+|---------|-------|--------|
+| **frc.robot.constants** | OperatorConstants, DriveConstants, IntakeConstants, ShooterConstants (+ ShooterDistanceConstants), VisionConstants, AutoConstants | Referenced from subsystems and commands; no single Constants class. |
+| **deploy/camera/** | camera_calib.properties | fx, fy, cx, cy, tagSizeMeters, resolution, fps, cameraToRobot; loaded by CameraCalibrationLoader. |
+| **deploy/** | apriltagfield_2026.json, pathplanner/* | AprilTag layout fallback; PathPlanner autos/paths/settings. |
+
+### 5. Vision and simulation
+
+| Item | Status |
+|------|--------|
+| **AprilTag** | tag36h11; 2026 layout preferred (built-in or deploy JSON); tag size 0.1651 m. |
+| **Vision in sim** | If camera/processor fails, VisionSubsystem is kept; `RobotContainer.simulationPeriodic()` injects synthetic pose + distance (2 m) via `setSimulationPoseAndDistance()` so AdvantageScope shows Vision/RobotPose and Vision/TargetDistanceMeters. |
+| **Shutdown** | `disabledInit()` → `shutdownVision()` → processor.stop(); vision thread and Mats cleaned up. |
+
+### 6. Build and deploy
+
+| Item | Status |
+|------|--------|
+| **build.gradle** | GradleRIO 2026.1.1; Java 17; UTF-8 encoding for compile; source sets exclude `com/**`; Main = frc.robot.Main. |
+| **Deploy** | Static files from `src/main/deploy` to `/home/lvuser/deploy`; camera and PathPlanner files included. |
+| **Compile** | Project compiles when JAVA_HOME is set (e.g. WPILib VS Code / Gradle environment). |
+
+### 7. Minor notes (no change required)
+
+- **ShootSequenceCommand:** Feed pulse/pause state (FeedPulseSec, FeedPauseSec, FeedContinuous) is read from Tuning; the intake runs continuously once started; pulse/pause logic does not currently throttle the intake motor — acceptable for “hold to shoot” flow.
+- **DriveSubsystem** reads drive tuning from full paths `/Shuffleboard/Tuning/Drive KS` etc.; **ShooterSubsystem** reads from table `Tuning` (keys ShooterP, ShooterI, ShooterD). TelemetrySubsystem writes to table `Tuning` with those key names — consistent.
+- **ResetOdometryToVisionCommand** passes (drive, vision, navx); resets to vision pose position but uses **NavX** for heading (by design: vision for xy, gyro for theta).
+
+### 8. Final summary
+
+| Category | Result |
+|----------|--------|
+| **Entry points / lifecycle** | Correct; no duplicate odometry; vision shutdown and sim injection in place. |
+| **Subsystems** | All wired; null-safe for optional vision/NavX; single odometry update in OdometrySubsystem. |
+| **Commands / bindings** | All bindings in `configureBindings()`; default command set; vision passed where needed; Driver B runs DriveToPoseCommand with Autonomous tab values. |
+| **Constants** | Split into dedicated files; used consistently; no stray magic numbers. |
+| **Vision / AprilTag** | Layout, processor, fusion, std devs, distance-based shooter RPM, sim injection, and shutdown verified. |
+| **PathPlanner** | AutoBuilder, reset odometry to path start, logging callbacks, auto chooser — correct. |
+| **FRC structure** | Command-based, single pose estimator, AdvantageKit logging, deploy layout — compliant. |
+
+**Conclusion:** The project is audited end-to-end. Logic, wiring, constants, vision, and simulation behavior are consistent and correct. No critical or medium issues found in this final pass.
