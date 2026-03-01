@@ -18,7 +18,7 @@ public class ReverseIntakeCommand extends Command {
 
   @Override
   public void execute() {
-    m_intake.run(-IntakeConstants.kIntakeSpeed);
+    m_intake.run(-IntakeConstants.kDefaultSpeed);
   }
 
   @Override

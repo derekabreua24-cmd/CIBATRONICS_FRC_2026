@@ -8,12 +8,15 @@ import edu.wpi.first.wpilibj2.command.button.CommandXboxController;
 import edu.wpi.first.wpilibj.RobotController;
 import edu.wpi.first.wpilibj.DriverStation;
 import edu.wpi.first.wpilibj.Timer;
+import edu.wpi.first.util.sendable.SendableRegistry;
 import edu.wpi.first.wpilibj2.command.Command;
 import edu.wpi.first.wpilibj2.command.CommandScheduler;
 import edu.wpi.first.math.geometry.Pose2d;
 import edu.wpi.first.math.geometry.Transform2d;
 import edu.wpi.first.math.geometry.Translation2d;
 import edu.wpi.first.math.geometry.Rotation2d;
+import frc.robot.constants.AutoConstants;
+import frc.robot.constants.ShooterConstants;
 import frc.robot.util.GeometryUtils;
 import org.littletonrobotics.junction.Logger;
 import edu.wpi.first.networktables.NetworkTable;
@@ -125,7 +128,7 @@ public class TelemetrySubsystem extends SubsystemBase {
     m_controller = controller;
     m_operatorController = operatorController;
     m_navx = navx;
-  m_vision = vision;
+    m_vision = vision;
 
     var driverTab = Shuffleboard.getTab("Telemetry Driver");
     var devTab = Shuffleboard.getTab("Telemetry Dev");
@@ -139,11 +142,11 @@ public class TelemetrySubsystem extends SubsystemBase {
     driverTab.add("Field", m_field2dDriver).withSize(6, 4).withPosition(6, 0);
 
     // Inicializar entradas compactas para la pestaña Driver
-  m_driverLeftAvgEntry = driverTab.add("Drive Left Avg", 0.0).getEntry();
-  m_driverShooterVelEntry = driverTab.add("Shooter Vel", 0.0).getEntry();
-  m_driverNavXYawEntry = driverTab.add("NavX Yaw", 0.0).getEntry();
-  m_driverMatchTimeEntry = driverTab.add("Match Time", 0.0).getEntry();
-  m_driverEventLogEntry = driverTab.add("EventLog", "").withSize(3, 1).getEntry();
+    m_driverLeftAvgEntry = driverTab.add("Drive Left Avg", 0.0).getEntry();
+    m_driverShooterVelEntry = driverTab.add("Shooter Vel", 0.0).getEntry();
+    m_driverNavXYawEntry = driverTab.add("NavX Yaw", 0.0).getEntry();
+    m_driverMatchTimeEntry = driverTab.add("Match Time", 0.0).getEntry();
+    m_driverEventLogEntry = driverTab.add("EventLog", "").withSize(3, 1).getEntry();
 
     // Si tenemos layout de AprilTags, dibujar todas las etiquetas conocidas en el Field2d
     if (m_vision != null) {
@@ -225,10 +228,10 @@ public class TelemetrySubsystem extends SubsystemBase {
 
   // Diseno de afinacion
   var tuningLayout = tab.getLayout("Tuning", BuiltInLayouts.kList).withSize(3, 3);
-  m_turnPEntry = tuningLayout.add("Turn P", 0.02).getEntry();
-  m_turnIEntry = tuningLayout.add("Turn I", 0.0).getEntry();
-  m_turnDEntry = tuningLayout.add("Turn D", 0.001).getEntry();
-  m_turnToleranceEntry = tuningLayout.add("Turn Tol Deg", 2.0).getEntry();
+  m_turnPEntry = tuningLayout.add("Turn P", AutoConstants.kTurnP).getEntry();
+  m_turnIEntry = tuningLayout.add("Turn I", AutoConstants.kTurnI).getEntry();
+  m_turnDEntry = tuningLayout.add("Turn D", AutoConstants.kTurnD).getEntry();
+  m_turnToleranceEntry = tuningLayout.add("Turn Tol Deg", AutoConstants.kTurnToleranceDeg).getEntry();
   // Alternancia de fusión de visión (pruebas A/B en tiempo de ejecución)
   m_visionEnabledEntry = tuningLayout.add("Vision Fusion Enabled", true).getEntry();
 
@@ -238,9 +241,9 @@ public class TelemetrySubsystem extends SubsystemBase {
   // Afinacion del shooter (expuesta para ajuste en vivo)
   var shooterTuningLayout = tab.getLayout("Shooter Tuning", BuiltInLayouts.kList).withSize(3, 2);
   m_shooterSetEntry = shooterTuningLayout.add("Shooter Setpoint RPM", 4500.0).getEntry();
-  m_shooterPEntry = shooterTuningLayout.add("Shooter P", 0.0002).getEntry();
-  m_shooterIEntry = shooterTuningLayout.add("Shooter I", 0.0).getEntry();
-  m_shooterDEntry = shooterTuningLayout.add("Shooter D", 0.0).getEntry();
+  m_shooterPEntry = shooterTuningLayout.add("Shooter P", ShooterConstants.kShooterP).getEntry();
+  m_shooterIEntry = shooterTuningLayout.add("Shooter I", ShooterConstants.kShooterI).getEntry();
+  m_shooterDEntry = shooterTuningLayout.add("Shooter D", ShooterConstants.kShooterD).getEntry();
   m_feedPulseEntry = shooterTuningLayout.add("Feed Pulse Sec", 0.5).getEntry();
   m_feedPauseEntry = shooterTuningLayout.add("Feed Pause Sec", 0.2).getEntry();
   m_feedContinuousEntry = shooterTuningLayout.add("Feed Continuous", true).getEntry();
@@ -250,18 +253,18 @@ public class TelemetrySubsystem extends SubsystemBase {
 
   // Reflejar valores de afinacion en una NetworkTable simple para que los comandos los lean directamente.
   NetworkTable tuningTable = NetworkTableInstance.getDefault().getTable("Tuning");
-  tuningTable.getEntry("TurnP").setDouble(m_turnPEntry.getDouble(0.02));
-  tuningTable.getEntry("TurnI").setDouble(m_turnIEntry.getDouble(0.0));
-  tuningTable.getEntry("TurnD").setDouble(m_turnDEntry.getDouble(0.001));
-  tuningTable.getEntry("TurnTolDeg").setDouble(m_turnToleranceEntry.getDouble(2.0));
+  tuningTable.getEntry("TurnP").setDouble(m_turnPEntry.getDouble(AutoConstants.kTurnP));
+  tuningTable.getEntry("TurnI").setDouble(m_turnIEntry.getDouble(AutoConstants.kTurnI));
+  tuningTable.getEntry("TurnD").setDouble(m_turnDEntry.getDouble(AutoConstants.kTurnD));
+  tuningTable.getEntry("TurnTolDeg").setDouble(m_turnToleranceEntry.getDouble(AutoConstants.kTurnToleranceDeg));
   tuningTable.getEntry("EstStateX").setDouble(m_estStateXEntry.getDouble(0.05));
   tuningTable.getEntry("EstVisionX").setDouble(m_estVisionXEntry.getDouble(0.5));
 
   // Sincronización inicial con la tabla Tuning (periodic() la mantiene actualizada para afinación en vivo)
   tuningTable.getEntry("ShooterSetpointRPM").setDouble(m_shooterSetEntry.getDouble(4500.0));
-  tuningTable.getEntry("ShooterP").setDouble(m_shooterPEntry.getDouble(0.0002));
-  tuningTable.getEntry("ShooterI").setDouble(m_shooterIEntry.getDouble(0.0));
-  tuningTable.getEntry("ShooterD").setDouble(m_shooterDEntry.getDouble(0.0));
+  tuningTable.getEntry("ShooterP").setDouble(m_shooterPEntry.getDouble(ShooterConstants.kShooterP));
+  tuningTable.getEntry("ShooterI").setDouble(m_shooterIEntry.getDouble(ShooterConstants.kShooterI));
+  tuningTable.getEntry("ShooterD").setDouble(m_shooterDEntry.getDouble(ShooterConstants.kShooterD));
   tuningTable.getEntry("FeedPulseSec").setDouble(m_feedPulseEntry.getDouble(0.5));
   tuningTable.getEntry("FeedPauseSec").setDouble(m_feedPauseEntry.getDouble(0.2));
   tuningTable.getEntry("FeedContinuous").setBoolean(m_feedContinuousEntry.getBoolean(true));
@@ -280,7 +283,7 @@ public class TelemetrySubsystem extends SubsystemBase {
   m_driverModeEntry = displayLayout.add("Driver Mode", false).getEntry();
   // Registrar eventos del ciclo de vida de comandos para trazabilidad
   CommandScheduler.getInstance().onCommandInitialize(cmd -> {
-    String txt = "[Command] init: " + cmd.getClass().getSimpleName();
+    String txt = "[Command] init: " + SendableRegistry.getName(cmd);
     try {
       Logger.recordOutput("Telemetry/CommandInit", txt);
     } catch (Exception e) {
@@ -293,7 +296,7 @@ public class TelemetrySubsystem extends SubsystemBase {
     }
   });
   CommandScheduler.getInstance().onCommandFinish(cmd -> {
-    String txt = "[Command] finish: " + cmd.getClass().getSimpleName();
+    String txt = "[Command] finish: " + SendableRegistry.getName(cmd);
     try {
       Logger.recordOutput("Telemetry/CommandFinish", txt);
     } catch (Exception e) {
@@ -306,7 +309,7 @@ public class TelemetrySubsystem extends SubsystemBase {
     }
   });
   CommandScheduler.getInstance().onCommandInterrupt(cmd -> {
-    String txt = "[Command] interrupt: " + cmd.getClass().getSimpleName();
+    String txt = "[Command] interrupt: " + SendableRegistry.getName(cmd);
     try {
       Logger.recordOutput("Telemetry/CommandInterrupt", txt);
     } catch (Exception e) {
@@ -335,18 +338,18 @@ public class TelemetrySubsystem extends SubsystemBase {
   public void periodic() {
   // La odometría se actualiza solo en OdometrySubsystem.periodic() para no actualizar dos veces el estimador de pose.
 
-  // Sincronizar entradas de afinación de Shuffleboard a la tabla Tuning para que ShooterSubsystem y ShootSequenceCommand vean cambios en vivo
+  // Sincronizar entradas de afinación de Shuffleboard a la tabla Tuning para que ShooterSubsystem vea cambios en vivo
   NetworkTable tuningTable = NetworkTableInstance.getDefault().getTable("Tuning");
-  tuningTable.getEntry("TurnP").setDouble(m_turnPEntry.getDouble(0.02));
-  tuningTable.getEntry("TurnI").setDouble(m_turnIEntry.getDouble(0.0));
-  tuningTable.getEntry("TurnD").setDouble(m_turnDEntry.getDouble(0.001));
-  tuningTable.getEntry("TurnTolDeg").setDouble(m_turnToleranceEntry.getDouble(2.0));
+  tuningTable.getEntry("TurnP").setDouble(m_turnPEntry.getDouble(AutoConstants.kTurnP));
+  tuningTable.getEntry("TurnI").setDouble(m_turnIEntry.getDouble(AutoConstants.kTurnI));
+  tuningTable.getEntry("TurnD").setDouble(m_turnDEntry.getDouble(AutoConstants.kTurnD));
+  tuningTable.getEntry("TurnTolDeg").setDouble(m_turnToleranceEntry.getDouble(AutoConstants.kTurnToleranceDeg));
   tuningTable.getEntry("EstStateX").setDouble(m_estStateXEntry.getDouble(0.05));
   tuningTable.getEntry("EstVisionX").setDouble(m_estVisionXEntry.getDouble(0.5));
   tuningTable.getEntry("ShooterSetpointRPM").setDouble(m_shooterSetEntry.getDouble(4500.0));
-  tuningTable.getEntry("ShooterP").setDouble(m_shooterPEntry.getDouble(0.0002));
-  tuningTable.getEntry("ShooterI").setDouble(m_shooterIEntry.getDouble(0.0));
-  tuningTable.getEntry("ShooterD").setDouble(m_shooterDEntry.getDouble(0.0));
+  tuningTable.getEntry("ShooterP").setDouble(m_shooterPEntry.getDouble(ShooterConstants.kShooterP));
+  tuningTable.getEntry("ShooterI").setDouble(m_shooterIEntry.getDouble(ShooterConstants.kShooterI));
+  tuningTable.getEntry("ShooterD").setDouble(m_shooterDEntry.getDouble(ShooterConstants.kShooterD));
   tuningTable.getEntry("FeedPulseSec").setDouble(m_feedPulseEntry.getDouble(0.5));
   tuningTable.getEntry("FeedPauseSec").setDouble(m_feedPauseEntry.getDouble(0.2));
   tuningTable.getEntry("FeedContinuous").setBoolean(m_feedContinuousEntry.getBoolean(true));
@@ -470,11 +473,11 @@ public class TelemetrySubsystem extends SubsystemBase {
 
   // Nombres de comandos activos por subsistema
     Command dcmd = m_drive.getCurrentCommand();
-    m_driveActiveCommandEntry.setString(dcmd == null ? "None" : dcmd.getClass().getSimpleName());
+    m_driveActiveCommandEntry.setString(dcmd == null ? "None" : SendableRegistry.getName(dcmd));
     Command icmd = m_intake.getCurrentCommand();
-    m_intakeActiveCommandEntry.setString(icmd == null ? "None" : icmd.getClass().getSimpleName());
+    m_intakeActiveCommandEntry.setString(icmd == null ? "None" : SendableRegistry.getName(icmd));
     Command scmd = m_shooter.getCurrentCommand();
-    m_shooterActiveCommandEntry.setString(scmd == null ? "None" : scmd.getClass().getSimpleName());
+    m_shooterActiveCommandEntry.setString(scmd == null ? "None" : SendableRegistry.getName(scmd));
 
     // Registro de instantánea completa limitado (estilo CSV).
     // Permitir ajustar la tasa de instantáneas en tiempo de ejecución.
@@ -600,9 +603,9 @@ public class TelemetrySubsystem extends SubsystemBase {
       parts.add(m_operatorController == null ? "" : String.format("%.3f", m_operatorController.getLeftY()));
       parts.add(m_operatorController == null ? "" : String.format("%.3f", m_operatorController.getRightX()));
 
-      parts.add(dcmd == null ? "None" : dcmd.getClass().getSimpleName());
-      parts.add(icmd == null ? "None" : icmd.getClass().getSimpleName());
-      parts.add(scmd == null ? "None" : scmd.getClass().getSimpleName());
+      parts.add(dcmd == null ? "None" : SendableRegistry.getName(dcmd));
+      parts.add(icmd == null ? "None" : SendableRegistry.getName(icmd));
+      parts.add(scmd == null ? "None" : SendableRegistry.getName(scmd));
 
       String csv = String.join(",", parts);
   Logger.recordOutput("Telemetry/Snapshot", csv);

@@ -4,14 +4,24 @@
 
 package frc.robot.constants;
 
-/** Constantes del intake (motor, velocidad, unjam). */
+/**
+ * Intake motor port, default speed, and unjam pulse duration.
+ * Used by IntakeSubsystem and UnjamCommand.
+ */
 public final class IntakeConstants {
   private IntakeConstants() {}
 
-  /** ID CAN del motor del intake. kBrushed/kBrushless según IntakeSubsystem. */
+  /** CAN ID for the intake motor (match motor type in IntakeSubsystem: kBrushed/kBrushless). */
   public static final int kIntakeMotorPort = 5;
-  /** Velocidad por defecto (porcentaje de salida). */
-  public static final double kIntakeSpeed = 0.8;
-  /** Duración (s) del pulso de reversa para desatascar (UnjamCommand). */
-  public static final double kUnjamReverseDurationSec = 0.6;
+
+  /** Default intake output magnitude (0..1). Used by IntakeCommand, UnjamCommand. */
+  public static final double kDefaultSpeed = 0.8;
+
+  /** Unjam (reverse pulse) configuration. */
+  public static final class Unjam {
+    private Unjam() {}
+
+    /** Duration in seconds of reverse pulse for unjam (UnjamCommand). */
+    public static final double kReverseDurationSec = 0.6;
+  }
 }

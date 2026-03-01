@@ -16,6 +16,7 @@ import frc.robot.subsystems.TelemetrySubsystem;
 import frc.robot.subsystems.NavXSubsystem;
 import frc.robot.subsystems.VisionSubsystem;
 import frc.robot.subsystems.OdometrySubsystem;
+import edu.wpi.first.apriltag.AprilTagFieldLayout;
 import edu.wpi.first.math.geometry.Pose2d;
 import java.io.IOException;
 import edu.wpi.first.math.geometry.Rotation2d;
@@ -54,8 +55,13 @@ import com.pathplanner.lib.controllers.PPLTVController;
 import com.pathplanner.lib.util.PathPlannerLogging;
 import edu.wpi.first.wpilibj2.command.sysid.SysIdRoutine;
 
+/**
+ * Wires subsystems, vision, PathPlanner, and all driver/operator bindings.
+ * Single place to see which button runs which command. See JUDGES_README.md for a map.
+ */
 public class RobotContainer {
 
+  // ----- Subsystems -----
   private final NavXSubsystem m_navxSubsystem = new NavXSubsystem();
   private final DriveSubsystem m_driveSubsystem = new DriveSubsystem();
   private final OdometrySubsystem m_odometrySubsystem =
@@ -67,104 +73,52 @@ public class RobotContainer {
   private VisionSubsystem m_visionSubsystem = null;
   private UsbAprilTagProcessor m_usbProcessor = null;
 
-    private edu.wpi.first.wpilibj.smartdashboard.SendableChooser<Command> m_ppAutoChooser = null;
+  // ----- Controllers -----
+  private final CommandXboxController m_driverController =
+      new CommandXboxController(OperatorConstants.kDriverControllerPort);
+  private final CommandXboxController m_operatorController =
+      new CommandXboxController(OperatorConstants.kOperatorControllerPort);
 
+  // ----- Shuffleboard / PathPlanner -----
+  private edu.wpi.first.wpilibj.smartdashboard.SendableChooser<Command> m_ppAutoChooser = null;
   private GenericEntry m_targetXEntry;
   private GenericEntry m_targetYEntry;
   private GenericEntry m_targetHeadingEntry;
   private GenericEntry m_maxSpeedEntry;
   private GenericEntry m_posTolEntry;
   private GenericEntry m_angTolEntry;
-    private GenericEntry m_ppltvGainEntry;
-    private GenericEntry m_resetOdomEntry;
-
-  private final CommandXboxController m_driverController =
-      new CommandXboxController(OperatorConstants.kDriverControllerPort);
-  private final CommandXboxController m_operatorController =
-      new CommandXboxController(OperatorConstants.kOperatorControllerPort);
-  // Entrada de ajuste de RPM del shooter (modificable en tiempo de ejecución).
+  private GenericEntry m_ppltvGainEntry;
+  private GenericEntry m_resetOdomEntry;
   private GenericEntry m_shooterRpmEntry;
 
   public RobotContainer() {
-
-    // Crear pestaña Tuning y entrada de RPM del shooter antes de configureBindings() para que ShooterCommand reciba una entrada válida.
+    // Tuning tab and Shooter RPM entry (used by ShooterCommand) must exist before configureBindings().
     var tuningTab = Shuffleboard.getTab("Tuning");
     m_shooterRpmEntry = tuningTab.add("Shooter RPM", ShooterConstants.kShooterMaxRPM * Math.abs(ShooterConstants.kShooterSpeed)).withPosition(8, 0).withSize(2, 1).getEntry();
 
+    // ----- Vision: load AprilTag layout from JSON (no reflection), then start camera processor -----
     try {
-
       Calibration calib =
-          CameraCalibrationLoader.loadFromProperties(
-              "camera/camera_calib.properties");
+          CameraCalibrationLoader.loadFromProperties("camera/camera_calib.properties");
 
-      // 1) Preferir layouts 2026 incorporados si existen (WPILib 2026.2+: k2026RebuiltAndymark, k2026RebuiltWelded). loadField() es la API actual (sustituye loadAprilTagLayoutField obsoleta).
-      edu.wpi.first.apriltag.AprilTagFieldLayout fieldLayout = null;
-      for (edu.wpi.first.apriltag.AprilTagFields f : edu.wpi.first.apriltag.AprilTagFields.values()) {
-        if (f.name().toLowerCase().contains("2026")) {
+      // Load layout from deploy JSON (AprilTagFieldLayout(Path) is the only API used).
+      AprilTagFieldLayout fieldLayout = null;
+      java.nio.file.Path deploy = edu.wpi.first.wpilibj.Filesystem.getDeployDirectory().toPath();
+      java.nio.file.Path[] jsonCandidates = new java.nio.file.Path[] {
+        deploy.resolve("apriltagfield_2026.json"),
+        deploy.resolve("edu/wpi/first/apriltag/2026-rebuilt-andymark.json"),
+        deploy.resolve("apriltagfield.json"),
+        deploy.resolve("apriltag_field_2026.json")
+      };
+      for (java.nio.file.Path path : jsonCandidates) {
+        if (java.nio.file.Files.exists(path)) {
           try {
-            fieldLayout = edu.wpi.first.apriltag.AprilTagFieldLayout.loadField(f);
-            Logger.recordOutput("Telemetry/Log", "Using built-in AprilTagFieldLayout: " + f.name());
+            fieldLayout = new AprilTagFieldLayout(path);
+            Logger.recordOutput("Telemetry/Log", "AprilTagFieldLayout loaded from JSON: " + path.getFileName());
             break;
-          } catch (Throwable t) {
-            Logger.recordOutput("Telemetry/Errors", "AprilTagFieldLayout.loadField(" + f.name() + ") failed: " + t.toString());
-          }
-        }
-      }
-
-      try {
-        if (fieldLayout == null) {
-        java.nio.file.Path deploy = edu.wpi.first.wpilibj.Filesystem.getDeployDirectory().toPath();
-        java.nio.file.Path[] candidates = new java.nio.file.Path[] {
-          deploy.resolve("apriltagfield_2026.json"),
-          deploy.resolve("apriltagfield.json"),
-          deploy.resolve("apriltag_field_2026.json")
-        };
-
-        java.nio.file.Path found = null;
-        for (java.nio.file.Path p : candidates) {
-          if (java.nio.file.Files.exists(p)) {
-            found = p;
-            break;
-          }
-        }
-
-        if (found != null) {
-          // API actual: el constructor AprilTagFieldLayout(Path) carga desde JSON (sin reflexión).
-          try {
-            fieldLayout = new edu.wpi.first.apriltag.AprilTagFieldLayout(found);
-            Logger.recordOutput("Telemetry/Log", "Layout de campo AprilTag cargado desde deploy: " + found.toString());
           } catch (java.io.IOException e) {
-            Logger.recordOutput("Telemetry/Errors", "Error al cargar AprilTagFieldLayout desde archivo: " + e.toString());
+            Logger.recordOutput("Telemetry/Errors", "AprilTagFieldLayout failed to load " + path + ": " + e.getMessage());
           }
-        }
-
-        if (fieldLayout == null) {
-          // Respaldo: recurso incorporado (puede ser de versión anterior).
-          fieldLayout = edu.wpi.first.apriltag.AprilTagFieldLayout.loadField(
-              edu.wpi.first.apriltag.AprilTagFields.kDefaultField);
-          Logger.recordOutput("Telemetry/Log", "Usando AprilTagFieldLayout incorporado (predeterminado)");
-        }
-        else {
-          // Se cargó desde deploy; opcionalmente exportar el layout a deploy para inspección/distribución.
-          try {
-            java.nio.file.Path exportPath = edu.wpi.first.wpilibj.Filesystem.getDeployDirectory().toPath().resolve("apriltagfield_2026.json");
-            if (!java.nio.file.Files.exists(exportPath)) {
-              fieldLayout.serialize(exportPath);
-              Logger.recordOutput("Telemetry/Log", "Exported AprilTagFieldLayout to deploy: " + exportPath.toString());
-            }
-          } catch (Throwable t) {
-            Logger.recordOutput("Telemetry/Errors", "Failed to export AprilTagFieldLayout to deploy: " + t.toString());
-          }
-        }
-        }
-      } catch (Throwable t) {
-        // Respaldo defensivo: si algo falla, intentar cargar el layout de campo predeterminado.
-        try {
-          fieldLayout = edu.wpi.first.apriltag.AprilTagFieldLayout.loadField(
-              edu.wpi.first.apriltag.AprilTagFields.kDefaultField);
-        } catch (Throwable t2) {
-          Logger.recordOutput("Telemetry/Errors", "Failed to initialize AprilTagFieldLayout: " + t2.toString());
-          fieldLayout = null;
         }
       }
 
@@ -200,31 +154,26 @@ public class RobotContainer {
         m_visionSubsystem = null;
       }
 
-  m_telemetrySubsystem = new TelemetrySubsystem(
-    m_driveSubsystem,
-    m_intakeSubsystem,
-    m_shooterSubsystem,
-    m_driverController,
-    m_operatorController,
-    m_navxSubsystem,
-    m_visionSubsystem);
+    m_telemetrySubsystem = new TelemetrySubsystem(
+        m_driveSubsystem,
+        m_intakeSubsystem,
+        m_shooterSubsystem,
+        m_driverController,
+        m_operatorController,
+        m_navxSubsystem,
+        m_visionSubsystem);
 
     var autoTab = Shuffleboard.getTab("Autonomous");
-
-  m_targetXEntry = autoTab.add("Target X (m)", 1.5).getEntry();
+    m_targetXEntry = autoTab.add("Target X (m)", 1.5).getEntry();
     m_targetYEntry = autoTab.add("Target Y (m)", 0.0).getEntry();
     m_targetHeadingEntry = autoTab.add("Target Heading (deg)", 0.0).getEntry();
     m_maxSpeedEntry = autoTab.add("Max Speed (m/s)", 0.6).getEntry();
     m_posTolEntry = autoTab.add("Pos Tol (m)", 0.1).getEntry();
     m_angTolEntry = autoTab.add("Ang Tol (deg)", 5.0).getEntry();
+    var resetOdomWidget = autoTab.add("Reiniciar odom al inicio de ruta", true).withPosition(0, 4).withSize(2, 1);
+    m_resetOdomEntry = resetOdomWidget.getEntry();
 
-  // Opción para reiniciar la odometría al inicio del auto seleccionado (cuando el .auto tiene resetOdom=true).
-  var resetOdomWidget = autoTab.add("Reiniciar odom al inicio de ruta", true).withPosition(0, 4).withSize(2, 1);
-  m_resetOdomEntry = resetOdomWidget.getEntry();
-
-  // PPLTVController dt (s): paso de discretización, típicamente 0.02 para bucle 50 Hz (API PathPlanner 2026).
     m_ppltvGainEntry = tuningTab.add("PPLTV dt (s)", 0.02).withPosition(0, 0).withSize(2, 1).getEntry();
-  // Entradas de feedforward de la unidad de tracción (usadas por DriveSubsystem si están habilitadas)
     tuningTab.add("Drive KS", DriveConstants.kDriveKS).withPosition(0, 1).withSize(2, 1).getEntry();
     tuningTab.add("Drive KV", DriveConstants.kDriveKV).withPosition(2, 1).withSize(2, 1).getEntry();
     tuningTab.add("Drive KA", DriveConstants.kDriveKA).withPosition(4, 1).withSize(2, 1).getEntry();
@@ -238,27 +187,24 @@ public class RobotContainer {
         () -> DriverStation.getAlliance()
             .orElse(Alliance.Blue) == Alliance.Red);
 
-    // ================= PATHPLANNER 2026.1.2 CONFIG =================
+    // ----- PathPlanner: AutoBuilder, logging callbacks, auto chooser on Shuffleboard -----
     try {
-
-  RobotConfig config = RobotConfig.fromGUISettings();
+      RobotConfig config = RobotConfig.fromGUISettings();
 
       // PPLTVController(dt): dt = paso de discretización en segundos (0.02 = bucle FRC 20 ms). Ver API PathPlanner.
       double ppltvDt = m_ppltvGainEntry.getDouble(0.02);
       if (ppltvDt <= 0 || ppltvDt > 0.1) ppltvDt = 0.02;
 
       AutoBuilder.configure(
-    m_odometrySubsystem::getPose,              // Proveedor de pose
-    m_odometrySubsystem::resetOdometry,         // Reinicio de pose (PathPlanner llama solo con Pose2d)
-    m_driveSubsystem::getChassisSpeeds,         // ChassisSpeeds relativos al robot
-    m_driveSubsystem::driveWithSpeeds,
-    new PPLTVController(ppltvDt),
-    config,
-    () -> DriverStation.getAlliance()
-            .orElse(Alliance.Blue) == Alliance.Red,
-    m_driveSubsystem
-);
-  Logger.recordOutput("Telemetry/Log", "PathPlanner 2026 fully configured.");
+          m_odometrySubsystem::getPose,
+          m_odometrySubsystem::resetOdometry,
+          m_driveSubsystem::getChassisSpeeds,
+          m_driveSubsystem::driveWithSpeeds,
+          new PPLTVController(ppltvDt),
+          config,
+          () -> DriverStation.getAlliance().orElse(Alliance.Blue) == Alliance.Red,
+          m_driveSubsystem);
+      Logger.recordOutput("Telemetry/Log", "PathPlanner 2026 fully configured.");
 
       // Registrar ruta/objetivo en AdvantageKit para que AdvantageScope los muestre en la sección Poses del campo 2D/3D.
       PathPlannerLogging.setLogCurrentPoseCallback(
@@ -269,44 +215,30 @@ public class RobotContainer {
           poses -> Logger.recordOutput("PathPlanner/ActivePath",
               poses.toArray(new edu.wpi.first.math.geometry.Pose2d[0])));
 
-            // Construir el selector de autos de PathPlanner y mostrarlo en Shuffleboard
-            try {
-                m_ppAutoChooser = AutoBuilder.buildAutoChooser();
-                        autoTab.add("PathPlanner Autos", m_ppAutoChooser).withPosition(4, 3).withSize(3, 2);
-
-                        // Añadir un ejemplo programático simple al selector de PathPlanner para
-                        // asegurar que siempre haya al menos una opción seleccionable para pruebas
-                        // rápidas (smoke tests). Lo establecemos como predeterminado para que el
-                        // simulador/Driver Station lo elija automáticamente si no se selecciona
-                        // otra opción en la GUI.
-                        try {
-                            Command exampleCmd = Commands.run(() -> m_driveSubsystem.arcadeDrive(0.4, 0.0), m_driveSubsystem)
-                                    .withTimeout(1.5)
-                                    .finallyDo(() -> m_driveSubsystem.arcadeDrive(0, 0));
-
-                            // Hacer que sea la opción predeterminada en el selector.
-                            m_ppAutoChooser.setDefaultOption("Ejemplo: recto (programático)", exampleCmd);
-            } catch (RuntimeException e) {
-              Logger.recordOutput("Telemetry/Errors", "PathPlanner chooser: failed to add example option -> " + e.toString());
-            }
+      try {
+        m_ppAutoChooser = AutoBuilder.buildAutoChooser();
+        autoTab.add("PathPlanner Autos", m_ppAutoChooser).withPosition(4, 3).withSize(3, 2);
+        Command exampleCmd = Commands.run(() -> m_driveSubsystem.arcadeDrive(0.4, 0.0), m_driveSubsystem)
+            .withTimeout(1.5)
+            .finallyDo(() -> m_driveSubsystem.arcadeDrive(0, 0));
+        m_ppAutoChooser.setDefaultOption("Ejemplo: recto (programático)", exampleCmd);
       } catch (RuntimeException e) {
-  Logger.recordOutput("Telemetry/Errors", "Failed to build PathPlanner auto chooser: " + e.getMessage());
+        Logger.recordOutput("Telemetry/Errors", "PathPlanner chooser failed: " + e.getMessage());
       }
 
     } catch (Exception e) {
-      // RobotConfig.fromGUISettings puede lanzar excepciones de parseo del cargador de config PathPlanner;
-      // captura amplia para no bloquear la inicialización del robot y registrar la causa.
-  Logger.recordOutput("Telemetry/Errors", "Falló la configuración de PathPlanner: " + e.getMessage());
+      Logger.recordOutput("Telemetry/Errors", "PathPlanner config failed: " + e.getMessage());
     }
-    // ================================================================
 
+    // ----- Default command and button bindings -----
     configureBindings();
     m_driveSubsystem.setDefaultCommand(
         new DriveCommand(m_driveSubsystem, m_driverController));
   }
 
   private void configureBindings() {
-    // SysId: Left Bumper + face buttons para caracterización del tren de rodaje (ver CHARACTERIZATION.md).
+    // ----- Driver: SysId (LB + A/B/X/Y), gyro reset (Start), vision reset (Back), log (Y), turn 90° (X), drive-to-pose (B) -----
+    // SysId: Left Bumper + A/B/X/Y for drivetrain characterization (see CHARACTERIZATION.md).
     m_driverController.leftBumper().and(m_driverController.a()).whileTrue(
         m_driveSubsystem.sysIdQuasistatic(SysIdRoutine.Direction.kForward));
     m_driverController.leftBumper().and(m_driverController.b()).whileTrue(
@@ -337,7 +269,7 @@ public class RobotContainer {
             m_telemetrySubsystem,
             "Manual event: Operator Y pressed"));
 
-    // Detener intake y shooter de inmediato (emergencia / desbloquear).
+    // ----- Operator: stop (B), intake (LT), toggle direction (A), unjam (LB), reverse intake (RB), shooter (RT), log (Y) -----
     m_operatorController.b()
         .onTrue(new frc.robot.commands.StopMechanismsCommand(m_intakeSubsystem, m_shooterSubsystem));
 
@@ -356,12 +288,9 @@ public class RobotContainer {
     m_operatorController.rightBumper()
         .whileTrue(new frc.robot.commands.ReverseIntakeCommand(m_intakeSubsystem));
 
-    // Shooter: gatillo derecho (RPM en pestaña Tuning). X = secuencia shooter+intake.
+    // Shooter: gatillo derecho (RPM en pestaña Tuning).
     m_operatorController.rightTrigger()
         .whileTrue(new ShooterCommand(m_shooterSubsystem, m_shooterRpmEntry, m_visionSubsystem));
-
-    m_operatorController.x()
-        .whileTrue(new frc.robot.commands.ShootSequenceCommand(m_shooterSubsystem, m_intakeSubsystem, m_visionSubsystem));
 
     // Driver X = girar a 90°. B = conducir hasta pose objetivo (valores en pestaña Autonomous).
     m_driverController.x()
@@ -390,87 +319,66 @@ public class RobotContainer {
   }
 
   public Command getAutonomousCommand() {
+    if (m_ppAutoChooser == null) {
+      return Commands.none();
+    }
+    Command ppCmd = m_ppAutoChooser.getSelected();
+    if (ppCmd == null) {
+      return Commands.none();
+    }
 
-    
-        // Si el selector de PathPlanner está disponible y tiene un comando seleccionado, usarlo.
-        if (m_ppAutoChooser != null) {
-            Command ppCmd = m_ppAutoChooser.getSelected();
-            if (ppCmd != null) {
-                // Reiniciar sensores/odometría antes de ejecutar el auto seleccionado.
-                m_navxSubsystem.reset();
-        // Intentar leer el nombre seleccionado en el selector desde NetworkTables de Shuffleboard.
-                try {
-          var table = NetworkTableInstance.getDefault()
-            .getTable("Shuffleboard")
-            .getSubTable("Autonomous")
-            .getSubTable("PathPlanner Autos");
-
-          String selected = table.getEntry("selected").getString("");
-          if (selected == null || selected.isEmpty()) {
-            // Algunas variantes de SendableChooser añaden prefijo; probar entrada por defecto.
-            selected = table.getEntry("default").getString("");
+    m_navxSubsystem.reset();
+    try {
+      var table = NetworkTableInstance.getDefault()
+          .getTable("Shuffleboard").getSubTable("Autonomous").getSubTable("PathPlanner Autos");
+      String selected = table.getEntry("selected").getString("");
+      if (selected == null || selected.isEmpty()) {
+        selected = table.getEntry("default").getString("");
+      }
+      if (selected != null && !selected.isEmpty()) {
+        Path deployAutos = edu.wpi.first.wpilibj.Filesystem.getDeployDirectory().toPath()
+            .resolve("pathplanner").resolve("autos");
+        Path autoFile = null;
+        for (String c : new String[] { selected, selected + ".auto", selected + ".auto.json" }) {
+          Path p = deployAutos.resolve(c);
+          if (Files.exists(p)) {
+            autoFile = p;
+            break;
           }
-
-                    if (selected != null && !selected.isEmpty()) {
-            // Deploy folder is "pathplanner" (lowercase); RoboRIO filesystem is case-sensitive.
-            Path deployAutos = edu.wpi.first.wpilibj.Filesystem.getDeployDirectory().toPath().resolve("pathplanner").resolve("autos");
-            Path autoFile = null;
-            String[] candidates = new String[] { selected, selected + ".auto", selected + ".auto.json" };
-            for (String c : candidates) {
-              Path p = deployAutos.resolve(c);
-              if (Files.exists(p)) {
-                autoFile = p;
-                break;
-              }
-            }
-
-            if (autoFile != null) {
-              String autoJson = Files.readString(autoFile, StandardCharsets.UTF_8);
-              boolean resetOdom = autoJson.contains("\"resetOdom\": true") || autoJson.contains("\"resetOdom\":true");
-              // Solo hacer el reinicio automático de odometría si el usuario activó el toggle en Shuffleboard.
-              boolean userRequested = m_resetOdomEntry.getBoolean(true);
-              if (resetOdom && userRequested) {
-                // Extract pathName value from the auto JSON
-                Pattern p = Pattern.compile("\"pathName\"\\s*:\\s*\"([^\"]+)\"");
-                Matcher m = p.matcher(autoJson);
-                if (m.find()) {
-                  String pathName = m.group(1);
-                  Path pathFile = edu.wpi.first.wpilibj.Filesystem.getDeployDirectory().toPath().resolve("pathplanner").resolve("paths").resolve(pathName + ".path");
-                  if (Files.exists(pathFile)) {
-                    String pathJson = Files.readString(pathFile, StandardCharsets.UTF_8);
-                    // Find the first waypoint anchor x/y
-                    Pattern wp = Pattern.compile("\"waypoints\"\\s*:\\s*\\[([\\s\\S]*?)\\]", Pattern.MULTILINE);
-                    Matcher wpm = wp.matcher(pathJson);
-                    if (wpm.find()) {
-                      String waypointsArray = wpm.group(1);
-                      Pattern anchor = Pattern.compile("\"anchor\"\\s*:\\s*\\{[^}]*?\"x\"\\s*:\\s*([0-9.+\\-Eed]+)\\s*,[^}]*?\"y\"\\s*:\\s*([0-9.+\\-Eed]+)");
-                      Matcher am = anchor.matcher(waypointsArray);
-                      if (am.find()) {
-                        double x = Double.parseDouble(am.group(1));
-                        double y = Double.parseDouble(am.group(2));
-                        // Usar 0 rad como rumbo por defecto; PathPlanner puede codificar rotaciones en otro sitio.
-                        Pose2d startPose = new Pose2d(x, y, new Rotation2d(0.0));
-                        m_odometrySubsystem.resetOdometry(startPose);
-                        Logger.recordOutput("Telemetry/Log", "[AutoChooser] Reset odometry to path start: " + startPose);
-                      }
-                    }
+        }
+        if (autoFile != null && m_resetOdomEntry.getBoolean(true)) {
+          String autoJson = Files.readString(autoFile, StandardCharsets.UTF_8);
+          if (autoJson.contains("\"resetOdom\": true") || autoJson.contains("\"resetOdom\":true")) {
+            Pattern pathNamePattern = Pattern.compile("\"pathName\"\\s*:\\s*\"([^\"]+)\"");
+            Matcher pathMatcher = pathNamePattern.matcher(autoJson);
+            if (pathMatcher.find()) {
+              String pathName = pathMatcher.group(1);
+              Path pathFile = edu.wpi.first.wpilibj.Filesystem.getDeployDirectory().toPath()
+                  .resolve("pathplanner").resolve("paths").resolve(pathName + ".path");
+              if (Files.exists(pathFile)) {
+                String pathJson = Files.readString(pathFile, StandardCharsets.UTF_8);
+                Pattern wpPattern = Pattern.compile("\"waypoints\"\\s*:\\s*\\[([\\s\\S]*?)\\]", Pattern.MULTILINE);
+                Matcher wpMatcher = wpPattern.matcher(pathJson);
+                if (wpMatcher.find()) {
+                  Pattern anchorPattern = Pattern.compile("\"anchor\"\\s*:\\s*\\{[^}]*?\"x\"\\s*:\\s*([0-9.+\\-Eed]+)\\s*,[^}]*?\"y\"\\s*:\\s*([0-9.+\\-Eed]+)");
+                  Matcher anchorMatcher = anchorPattern.matcher(wpMatcher.group(1));
+                  if (anchorMatcher.find()) {
+                    double x = Double.parseDouble(anchorMatcher.group(1));
+                    double y = Double.parseDouble(anchorMatcher.group(2));
+                    m_odometrySubsystem.resetOdometry(new Pose2d(x, y, new Rotation2d(0.0)));
+                    Logger.recordOutput("Telemetry/Log", "[AutoChooser] Reset odometry to path start: " + x + ", " + y);
                   }
                 }
               }
             }
           }
-                } catch (IOException | RuntimeException e) {
-                  // No fatal: registrar y usar reinicio al origen.
-                  Logger.recordOutput("Telemetry/Errors", "[AutoChooser] Error al parsear el auto seleccionado para reinicio de odometría: " + e.toString());
-                  m_odometrySubsystem.resetOdometry(new Pose2d());
-                }
-
-        return ppCmd;
+        }
       }
+    } catch (IOException | RuntimeException e) {
+      Logger.recordOutput("Telemetry/Errors", "[AutoChooser] Reset-odom parse error: " + e.getMessage());
+      m_odometrySubsystem.resetOdometry(new Pose2d());
     }
-
-    // No hay auto de PathPlanner seleccionado; devolver comando nulo.
-    return Commands.none();
+    return ppCmd;
   }
 
   public void shutdownVision() {

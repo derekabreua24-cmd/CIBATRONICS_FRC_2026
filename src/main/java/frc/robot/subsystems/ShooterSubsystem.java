@@ -38,8 +38,11 @@ public ShooterSubsystem() {
     ShooterConstants.kShooterKA);
 
   m_shooterGroup = new MotorControllerGroup(m_shooterFront, m_shooterRear);
-  // Controlador PID (salida en porcentaje). Las ganancias se leeran desde la tabla "Tuning".
-  m_pid = new PIDController(0.0, 0.0, 0.0);
+  // Controlador PID (salida en porcentaje). Valores por defecto en ShooterConstants; Tuning table permite afinación en vivo.
+  m_pid = new PIDController(
+      ShooterConstants.kShooterP,
+      ShooterConstants.kShooterI,
+      ShooterConstants.kShooterD);
   // Si el cableado requiere invertir un motor, usar setInverted en el grupo o configurar inversiones por motor.
   // Ejemplo: m_shooterGroup.setInverted(true);
   // Configuración segura para los motores del shooter.
@@ -108,9 +111,9 @@ public void setSpeed(double speed) {
   public void periodic() {
     // Leer valores de afinacion desde la tabla Tuning y actualizar ganancias PID
     NetworkTable tuning = NetworkTableInstance.getDefault().getTable("Tuning");
-    double p = tuning.getEntry("ShooterP").getDouble(m_pid.getP());
-    double i = tuning.getEntry("ShooterI").getDouble(m_pid.getI());
-    double d = tuning.getEntry("ShooterD").getDouble(m_pid.getD());
+    double p = tuning.getEntry("ShooterP").getDouble(ShooterConstants.kShooterP);
+    double i = tuning.getEntry("ShooterI").getDouble(ShooterConstants.kShooterI);
+    double d = tuning.getEntry("ShooterD").getDouble(ShooterConstants.kShooterD);
     if (p != m_pid.getP() || i != m_pid.getI() || d != m_pid.getD()) {
       m_pid.setPID(p, i, d);
     }

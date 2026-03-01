@@ -12,9 +12,9 @@ import org.littletonrobotics.junction.Logger;
 import org.littletonrobotics.junction.networktables.NT4Publisher;
 
 /**
- * Los métodos en esta clase son llamados automáticamente según el modo (Disabled/Auton/Teleop),
- * como se describe en la documentación de TimedRobot. Si cambia el nombre de esta clase o el
- * paquete después de crear el proyecto, también debe actualizar el archivo Main.java.
+ * Main robot class. WPILib calls these methods by mode (Disabled, Autonomous, Teleop, Test).
+ * Runs the command scheduler every cycle; initializes and shuts down vision in disabled.
+ * If you rename this class or package, update Main.java.
  */
 public class Robot extends LoggedRobot {
   private Command m_autonomousCommand;
@@ -125,8 +125,8 @@ public class Robot extends LoggedRobot {
    */
   @Override
   public void simulationInit() {
-    // Iniciar el autónomo seleccionado para pruebas rápidas (smoke test).
-  Logger.recordOutput("Telemetry/Log", "simulationInit: iniciando autónomo para smoke test.");
+    // Start selected auto for quick smoke test.
+    Logger.recordOutput("Telemetry/Log", "simulationInit: starting auto for smoke test.");
     autonomousInit();
 
     // Publicar señal mínima de AdvantageKit/Logger para verificación en AdvantageScope.

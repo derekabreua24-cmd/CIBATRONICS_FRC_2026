@@ -4,11 +4,16 @@
 
 package frc.robot.constants;
 
-/** Puertos de los controladores (driver y operador). */
+/**
+ * Controller port IDs for driver and operator.
+ * Used by RobotContainer when constructing CommandXboxController instances.
+ */
 public final class OperatorConstants {
   private OperatorConstants() {}
 
+  /** USB port for driver controller (drive, gyro reset, vision reset, drive-to-pose). */
   public static final int kDriverControllerPort = 0;
-  /** Puerto del controlador del operador (intake/shooter). */
+
+  /** USB port for operator controller (intake, shooter, unjam, stop mechanisms). */
   public static final int kOperatorControllerPort = 1;
 }

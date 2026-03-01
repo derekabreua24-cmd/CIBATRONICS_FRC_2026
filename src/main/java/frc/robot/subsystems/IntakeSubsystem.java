@@ -18,9 +18,9 @@ public class IntakeSubsystem extends SubsystemBase {
     m_intake.setInverted(false);
   }
 
-  /** Ejecuta el motor del intake haciendo uso de la constante "Velocidad del Intake". */
-  public void run(double kIntakeSpeed) {
-    m_intake.set(m_reversed ? -kIntakeSpeed : kIntakeSpeed);
+  /** Runs the intake motor at the given output magnitude (use IntakeConstants.kDefaultSpeed). */
+  public void run(double speed) {
+    m_intake.set(m_reversed ? -speed : speed);
   }
 
   /** Alterna el sentido del intake; las llamadas a run() posteriores se invertirán cuando esté en reversa. */

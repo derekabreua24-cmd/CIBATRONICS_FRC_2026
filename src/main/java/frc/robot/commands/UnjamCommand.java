@@ -7,7 +7,7 @@ import frc.robot.subsystems.IntakeSubsystem;
 
 /**
  * Pulso corto de intake en reversa para desatascar bolas (un tap, sin mantener el botón).
- * Duración configurable en IntakeConstants.kUnjamReverseDurationSec.
+ * Duración configurable en IntakeConstants.Unjam.kReverseDurationSec.
  */
 public class UnjamCommand extends Command {
   private final IntakeSubsystem m_intake;
@@ -21,7 +21,7 @@ public class UnjamCommand extends Command {
   @Override
   public void initialize() {
     m_timer.restart();
-    m_intake.run(-IntakeConstants.kIntakeSpeed);
+    m_intake.run(-IntakeConstants.kDefaultSpeed);
   }
 
   @Override
@@ -36,6 +36,6 @@ public class UnjamCommand extends Command {
 
   @Override
   public boolean isFinished() {
-    return m_timer.hasElapsed(IntakeConstants.kUnjamReverseDurationSec);
+    return m_timer.hasElapsed(IntakeConstants.Unjam.kReverseDurationSec);
   }
 }

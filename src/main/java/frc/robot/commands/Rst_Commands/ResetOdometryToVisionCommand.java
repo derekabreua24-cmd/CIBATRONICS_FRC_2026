@@ -17,7 +17,8 @@ public class ResetOdometryToVisionCommand extends InstantCommand {
 
       vision.getLastPose().ifPresentOrElse(
             pose -> {
-            drive.resetOdometry(pose, navx.getRotation2d());
+            // Use vision pose's rotation so the full pose (position + heading) comes from vision.
+            drive.resetOdometry(pose, pose.getRotation());
             Logger.recordOutput("Commands/Reset", "[Vision] Odometry reset to vision pose: " + pose);
           },
           () -> Logger.recordOutput("Commands/Reset", "[Vision] No vision pose available - odometry not reset.")

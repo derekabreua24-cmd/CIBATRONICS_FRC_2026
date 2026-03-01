@@ -19,8 +19,8 @@ public class IntakeCommand extends Command {
 
   @Override
   public void execute() {
-  m_intake.run(IntakeConstants.kIntakeSpeed);
-  Logger.recordOutput("Intake/Events", "[IntakeCommand] Executing intake at speed=" + IntakeConstants.kIntakeSpeed);
+  m_intake.run(IntakeConstants.kDefaultSpeed);
+  Logger.recordOutput("Intake/Events", "[IntakeCommand] Executing intake at speed=" + IntakeConstants.kDefaultSpeed);
   }
 
   @Override

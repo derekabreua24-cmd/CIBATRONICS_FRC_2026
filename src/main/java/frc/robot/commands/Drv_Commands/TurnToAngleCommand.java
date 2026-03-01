@@ -4,6 +4,7 @@ import edu.wpi.first.math.controller.PIDController;
 import edu.wpi.first.networktables.NetworkTable;
 import edu.wpi.first.networktables.NetworkTableInstance;
 import edu.wpi.first.wpilibj2.command.Command;
+import frc.robot.constants.AutoConstants;
 import frc.robot.subsystems.DriveSubsystem;
 import frc.robot.subsystems.NavXSubsystem;
 
@@ -24,9 +25,12 @@ public class TurnToAngleCommand extends Command {
     m_drive = drive;
     m_navx = navx;
     m_targetDeg = targetDegrees;
-    m_pid = new PIDController(0.0, 0.0, 0.0); // ganancias desde NetworkTables
+    m_pid = new PIDController(
+        AutoConstants.kTurnP,
+        AutoConstants.kTurnI,
+        AutoConstants.kTurnD);
     m_pid.enableContinuousInput(-180.0, 180.0);
-    m_pid.setTolerance(2.0);
+    m_pid.setTolerance(AutoConstants.kTurnToleranceDeg);
     addRequirements(drive);
   }
 
@@ -38,17 +42,10 @@ public class TurnToAngleCommand extends Command {
 
   @Override
   public void execute() {
-
-    // Leer ganancias de afinacion desde NetworkTable
-    double p = m_tuningTable.getEntry("TurnP").getDouble(0.02);
-    double i = m_tuningTable.getEntry("TurnI").getDouble(0.0);
-    double d = m_tuningTable.getEntry("TurnD").getDouble(0.001);
-    double tol = m_tuningTable.getEntry("TurnTolDeg").getDouble(2.0);
-
-    m_pid.setP(p);
-    m_pid.setI(i);
-    m_pid.setD(d);
-    m_pid.setTolerance(tol);
+    m_pid.setP(m_tuningTable.getEntry("TurnP").getDouble(AutoConstants.kTurnP));
+    m_pid.setI(m_tuningTable.getEntry("TurnI").getDouble(AutoConstants.kTurnI));
+    m_pid.setD(m_tuningTable.getEntry("TurnD").getDouble(AutoConstants.kTurnD));
+    m_pid.setTolerance(m_tuningTable.getEntry("TurnTolDeg").getDouble(AutoConstants.kTurnToleranceDeg));
 
     double currentDeg = m_navx.getRotation2d().getDegrees();
     double output = m_pid.calculate(currentDeg, m_targetDeg);

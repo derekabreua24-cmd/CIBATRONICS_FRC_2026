@@ -14,8 +14,8 @@ public class ResetOdometryCommand extends InstantCommand {
 
     super(() -> {
       Pose2d origin = new Pose2d();
-  odometry.resetOdometry(origin);
-  Logger.recordOutput("Commands/Reset", "[Command] Odometry reset to origin.");
+      odometry.resetOdometry(origin);
+      Logger.recordOutput("Commands/Reset", "[Command] Odometry reset to origin.");
     }, odometry);
 
   }

@@ -7,16 +7,14 @@ package frc.robot;
 import edu.wpi.first.wpilibj.RobotBase;
 
 /**
- * NO añada variables estáticas a esta clase, ni inicializaciones aquí. A menos que sepa lo que
- * hace, no modifique este archivo salvo para cambiar la clase pasado a startRobot.
+ * Application entry point. Do not add static state or initialization here.
+ * Only change the class passed to startRobot if you use a different robot class.
  */
 public final class Main {
   private Main() {}
 
   /**
-   * Función principal de inicialización. No realice inicializaciones aquí.
-   *
-   * <p>Si cambia la clase principal del robot, actualice el tipo de parámetro.
+   * Starts the robot. All initialization happens in Robot.robotInit() and RobotContainer.
    */
   public static void main(String... args) {
     RobotBase.startRobot(Robot::new);
