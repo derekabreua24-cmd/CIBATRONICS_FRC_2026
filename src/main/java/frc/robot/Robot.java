@@ -26,19 +26,17 @@ public class Robot extends LoggedRobot {
    * cualquier código de inicialización.
    */
   public Robot() {
-    // Instantiate our RobotContainer.  This will perform all our button bindings, and put our
-    // autonomous chooser on the dashboard.
+    // Instanciar RobotContainer: enlaces de botones y selector de autónomo en el dashboard.
     m_robotContainer = new RobotContainer();
   }
 
   /** Llamado una vez cuando el robot se inicia; inicia la telemetría (AdvantageKit/NT4). */
   @Override
   public void robotInit() {
-    // AdvantageKit Logger is initialized below and publishes to NT4 for AdvantageScope.
+    // El Logger de AdvantageKit se inicializa y publica en NT4 para AdvantageScope.
     Logger.addDataReceiver(new NT4Publisher());
     Logger.start();
-    // Publish drivetrain metadata for AdvantageKit / AdvantageScope so tools can
-    // identify this robot's drive type and basic physical parameters.
+    // Publicar metadatos del tren de rodaje para AdvantageKit/AdvantageScope.
     try {
       Logger.recordOutput("Robot/Drivetrain/Type", "DifferentialDrive");
       Logger.recordOutput("Robot/Drivetrain/TrackwidthMeters", Constants.DriveConstants.kTrackwidthMeters);
@@ -46,11 +44,11 @@ public class Robot extends LoggedRobot {
       Logger.recordOutput("Robot/Drivetrain/GearRatio", Constants.DriveConstants.kDriveGearRatio);
       Logger.recordOutput("Robot/Drivetrain/DriveMotors", "SparkMax x4 (left/right pairs)");
     } catch (Throwable t) {
-      // Not fatal if Logger isn't ready; attempt to record the error and otherwise continue silently.
+      // No es fatal si el Logger no está listo; registrar el error y continuar.
       try {
-        Logger.recordOutput("Telemetry/Errors", "[robotInit] Failed to publish drivetrain metadata to Logger: " + t.toString());
+        Logger.recordOutput("Telemetry/Errors", "[robotInit] Error al publicar metadatos del tren de rodaje: " + t.toString());
       } catch (Throwable ignore) {
-        // intentionally no further fallback to avoid terminal spam
+        // Sin más fallback para no saturar la consola.
       }
     }
   }
@@ -64,17 +62,15 @@ public class Robot extends LoggedRobot {
    */
   @Override
   public void robotPeriodic() {
-    // Runs the Scheduler.  This is responsible for polling buttons, adding newly-scheduled
-    // commands, running already-scheduled commands, removing finished or interrupted commands,
-    // and running subsystem periodic() methods.  This must be called from the robot's periodic
-    // block in order for anything in the Command-based framework to work.
+    // Ejecuta el planificador: sondeo de botones, comandos nuevos y ya programados,
+    // eliminación de comandos terminados/interrumpidos y periodic() de subsistemas.
     CommandScheduler.getInstance().run();
   }
 
   /** Esta función se llama una vez cada vez que el robot entra en modo Disabled. */
   @Override
   public void disabledInit() {
-    // Ensure vision processors are stopped immediately when disabled
+    // Detener de inmediato los procesadores de visión al deshabilitar.
     m_robotContainer.shutdownVision();
   }
 
@@ -86,7 +82,7 @@ public class Robot extends LoggedRobot {
   public void autonomousInit() {
     m_autonomousCommand = m_robotContainer.getAutonomousCommand();
 
-    // schedule the autonomous command (example)
+    // Programar el comando autónomo seleccionado.
     if (m_autonomousCommand != null) {
       CommandScheduler.getInstance().schedule(m_autonomousCommand);
     }
@@ -98,10 +94,8 @@ public class Robot extends LoggedRobot {
 
   @Override
   public void teleopInit() {
-    // This makes sure that the autonomous stops running when
-    // teleop starts running. If you want the autonomous to
-    // continue until interrupted by another command, remove
-    // this line or comment it out.
+    // Asegura que el autónomo deje de ejecutarse al iniciar teleop.
+    // Para que el autónomo continúe hasta ser interrumpido, quite esta línea.
     if (m_autonomousCommand != null) {
       m_autonomousCommand.cancel();
     }
@@ -113,11 +107,11 @@ public class Robot extends LoggedRobot {
 
   @Override
   public void testInit() {
-    // Cancels all running commands at the start of test mode.
+    // Cancelar todos los comandos al iniciar el modo de prueba.
     CommandScheduler.getInstance().cancelAll();
   }
 
-  /** This function is called periodically during test mode. */
+  /** Esta función se llama periódicamente durante el modo de prueba. */
   @Override
   public void testPeriodic() {}
 
@@ -131,11 +125,11 @@ public class Robot extends LoggedRobot {
    */
   @Override
   public void simulationInit() {
-    // Iniciar el autónomo seleccionado para pruebas rápidas del AutoBuilder/chooser
-  Logger.recordOutput("Telemetry/Log", "simulationInit: auto-starting autonomous for smoke test.");
+    // Iniciar el autónomo seleccionado para pruebas rápidas (smoke test).
+  Logger.recordOutput("Telemetry/Log", "simulationInit: iniciando autónomo para smoke test.");
     autonomousInit();
 
-    // Publicar una señal simple de AdvantageKit/Logger para verificación en AdvantageScope
+    // Publicar señal mínima de AdvantageKit/Logger para verificación en AdvantageScope.
     try {
       Logger.recordOutput("Smoke/AdvantageKit/Alive", 1);
       Logger.recordOutput("Smoke/AdvantageKit/Message", "simInit");
@@ -143,7 +137,7 @@ public class Robot extends LoggedRobot {
       try {
         Logger.recordOutput("Telemetry/Errors", "[simulationInit] Logger smoke-test failed: " + t.toString());
       } catch (Throwable ignore) {
-        // swallow
+        // Ignorar.
       }
     }
   }

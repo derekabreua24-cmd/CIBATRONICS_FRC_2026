@@ -16,7 +16,7 @@ public class TurnToAngleCommand extends Command {
 
   // === ADDED ===
   private static final double kMaxTurnOutput = 0.8;  // limitar velocidad de giro
-  private static final double kMinTurnOutput = 0.05; // superar friccion estatica
+  private static final double kMinTurnOutput = 0.05; // superar fricción estática
   private final NetworkTable m_tuningTable =
       NetworkTableInstance.getDefault().getTable("Tuning");
 
@@ -24,7 +24,7 @@ public class TurnToAngleCommand extends Command {
     m_drive = drive;
     m_navx = navx;
     m_targetDeg = targetDegrees;
-    m_pid = new PIDController(0.0, 0.0, 0.0); // gains from NetworkTables
+    m_pid = new PIDController(0.0, 0.0, 0.0); // ganancias desde NetworkTables
     m_pid.enableContinuousInput(-180.0, 180.0);
     m_pid.setTolerance(2.0);
     addRequirements(drive);
@@ -33,7 +33,7 @@ public class TurnToAngleCommand extends Command {
   @Override
   public void initialize() {
     // === ADDED ===
-    m_pid.reset(); // reset internal integral/derivative state
+    m_pid.reset(); // reiniciar estado interno integral/derivativo
   }
 
   @Override

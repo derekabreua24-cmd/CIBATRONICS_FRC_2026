@@ -3,22 +3,22 @@ package frc.robot.util;
 import edu.wpi.first.math.controller.SimpleMotorFeedforward;
 
 /**
- * Small physics helper used to compute wheel voltages from desired chassis speeds.
- * This class is kept small and pure so it can be unit tested without hardware.
+ * Utilidad de física para calcular tensiones de ruedas a partir de las velocidades deseadas del chasis.
+ * Se mantiene pequeña y pura para poder probarla con unit tests sin hardware.
  */
 public final class DrivePhysics {
 
   private DrivePhysics() {}
 
   /**
-   * Compute left/right voltages for a differential drive.
-   * @param vx forward velocity (m/s)
-   * @param omega angular velocity (rad/s)
-   * @param ks static feedforward (V)
-   * @param kv velocity feedforward (V per m/s)
-   * @param ka acceleration feedforward (V per m/s^2)
-   * @param trackwidthMeters track width in meters
-   * @param estMaxSpeed estimated max linear speed (m/s) used for clamping
+   * Calcula las tensiones izquierda/derecha para un tren diferencial.
+   * @param vx velocidad hacia adelante (m/s)
+   * @param omega velocidad angular (rad/s)
+   * @param ks feedforward estático (V)
+   * @param kv feedforward de velocidad (V por m/s)
+   * @param ka feedforward de aceleración (V por m/s²)
+   * @param trackwidthMeters vía en metros
+   * @param estMaxSpeed velocidad lineal máxima estimada (m/s) para limitar
    * @return double[2] {leftVolts, rightVolts}
    */
   public static double[] computeTankVoltages(
@@ -30,20 +30,20 @@ public final class DrivePhysics {
       double trackwidthMeters,
       double estMaxSpeed) {
 
-    // Wheel linear speeds (m/s)
+    // Velocidades lineales de las ruedas (m/s).
     double leftVel = vx - omega * trackwidthMeters / 2.0;
     double rightVel = vx + omega * trackwidthMeters / 2.0;
 
-    // Use SimpleMotorFeedforward for a clean, testable feedforward calc.
+    // Usar SimpleMotorFeedforward para un cálculo de feedforward limpio y testeable.
     SimpleMotorFeedforward ff = new SimpleMotorFeedforward(ks, kv, ka);
 
-    // For now we don't have per-step acceleration information; we pass 0 for acceleration.
+    // Por ahora no hay información de aceleración por paso; se pasa 0.
     @SuppressWarnings("removal")
     double leftVolts = ff.calculate(leftVel, 0.0);
     @SuppressWarnings("removal")
     double rightVolts = ff.calculate(rightVel, 0.0);
 
-    // Always clamp to battery rail for safety (avoid commanding beyond ±12 V)
+    // Limitar siempre a la tensión de batería por seguridad (evitar ordenar más de ±12 V).
     double clampMax = 12.0;
     leftVolts = Math.max(-clampMax, Math.min(clampMax, leftVolts));
     rightVolts = Math.max(-clampMax, Math.min(clampMax, rightVolts));

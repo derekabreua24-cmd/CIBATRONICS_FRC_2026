@@ -2,24 +2,24 @@ package frc.robot.Camera_Calibration;
 
 import java.io.FileInputStream;
 import java.io.IOException;
-import java.io.File; // --- ADDED ---
+import java.io.File;
 import java.util.Properties;
 
 import edu.wpi.first.math.geometry.Translation3d;
 import edu.wpi.first.math.geometry.Rotation3d;
 import edu.wpi.first.math.geometry.Transform3d;
-import edu.wpi.first.wpilibj.Filesystem; // --- ADDED ---
+import edu.wpi.first.wpilibj.Filesystem;
 import org.littletonrobotics.junction.Logger;
 
 /**
- * Simple loader for camera calibration stored as a Java properties file in deploy.
- * Keys:
+ * Cargador sencillo de calibración de cámara desde un archivo properties en deploy.
+ * Claves:
  *  - cameraName (string)
  *  - deviceIndex (int)
- *  - fx, fy, cx, cy (doubles)
+ *  - fx, fy, cx, cy (double)
  *  - tagSizeMeters (double)
- *  - optional cameraTx, cameraTy, cameraTz (doubles, meters)
- *  - optional cameraRotDegX, cameraRotDegY, cameraRotDegZ (doubles, degrees)
+ *  - opcionales: cameraTx, cameraTy, cameraTz (double, metros)
+ *  - opcionales: cameraRotDegX, cameraRotDegY, cameraRotDegZ (double, grados)
  */
 public final class CameraCalibrationLoader {
   private CameraCalibrationLoader() {}
@@ -30,6 +30,9 @@ public final class CameraCalibrationLoader {
     public final double fx, fy, cx, cy;
     public final double tagSizeMeters;
     public final Transform3d cameraToRobot;
+    /** Optional resolution (width, height). If both > 0, UsbAprilTagProcessor uses them; else 640x480. */
+    public final int resolutionWidth;
+    public final int resolutionHeight;
 
     public Calibration(
         String cameraName,
@@ -40,6 +43,20 @@ public final class CameraCalibrationLoader {
         double cy,
         double tagSizeMeters,
         Transform3d cameraToRobot) {
+      this(cameraName, deviceIndex, fx, fy, cx, cy, tagSizeMeters, cameraToRobot, 0, 0);
+    }
+
+    public Calibration(
+        String cameraName,
+        int deviceIndex,
+        double fx,
+        double fy,
+        double cx,
+        double cy,
+        double tagSizeMeters,
+        Transform3d cameraToRobot,
+        int resolutionWidth,
+        int resolutionHeight) {
       this.cameraName = cameraName;
       this.deviceIndex = deviceIndex;
       this.fx = fx;
@@ -48,6 +65,8 @@ public final class CameraCalibrationLoader {
       this.cy = cy;
       this.tagSizeMeters = tagSizeMeters;
       this.cameraToRobot = cameraToRobot;
+      this.resolutionWidth = resolutionWidth;
+      this.resolutionHeight = resolutionHeight;
     }
   }
 
@@ -55,7 +74,7 @@ public final class CameraCalibrationLoader {
     Properties p = new Properties();
 
     try {
-      // --- ADDED: Proper RoboRIO deploy path handling ---
+      // Ruta correcta de deploy en RoboRIO.
       File deployDir = Filesystem.getDeployDirectory();
       File file = new File(deployDir, path);
 
@@ -64,17 +83,18 @@ public final class CameraCalibrationLoader {
       }
 
     } catch (IOException e) {
-      throw new IllegalStateException("Failed to load camera calibration from deploy/" + path, e);
+      throw new IllegalStateException("Error al cargar la calibración de cámara desde deploy/" + path, e);
     }
 
     String cameraName = p.getProperty("cameraName", "usbCam0");
     int deviceIndex = Integer.parseInt(p.getProperty("deviceIndex", "0"));
 
-    double fx = Double.parseDouble(p.getProperty("fx", "800.0"));
-    double fy = Double.parseDouble(p.getProperty("fy", "800.0"));
+    double fx = Double.parseDouble(p.getProperty("fx", "320.0"));
+    double fy = Double.parseDouble(p.getProperty("fy", "320.0"));
+    // cx, cy = centro de la imagen en píxeles (por defecto 320, 240 para 640x480).
     double cx = Double.parseDouble(p.getProperty("cx", "320.0"));
     double cy = Double.parseDouble(p.getProperty("cy", "240.0"));
-    double tagSize = Double.parseDouble(p.getProperty("tagSizeMeters", "0.1651")); // --- UPDATED DEFAULT FOR 2026 ---
+    double tagSize = Double.parseDouble(p.getProperty("tagSizeMeters", "0.1651")); // 2026 REBUILT 6.5 in
 
     double tx = Double.parseDouble(p.getProperty("cameraTx", "0.0"));
     double ty = Double.parseDouble(p.getProperty("cameraTy", "0.0"));
@@ -84,13 +104,23 @@ public final class CameraCalibrationLoader {
     double rotY = Double.parseDouble(p.getProperty("cameraRotDegY", "0.0"));
     double rotZ = Double.parseDouble(p.getProperty("cameraRotDegZ", "0.0"));
 
-    // --- ADDED: Basic sanity validation ---
+    // Validación básica de coherencia.
     if (fx <= 0 || fy <= 0) {
-      throw new IllegalArgumentException("Invalid camera focal lengths (fx/fy must be > 0)");
+      throw new IllegalArgumentException("Distancias focales de cámara inválidas (fx/fy deben ser > 0)");
     }
 
     if (tagSize <= 0) {
-      throw new IllegalArgumentException("Invalid tagSizeMeters (must be > 0)");
+      throw new IllegalArgumentException("tagSizeMeters inválido (debe ser > 0)");
+    }
+
+    int resW = 0;
+    int resH = 0;
+    if (p.getProperty("width") != null && p.getProperty("height") != null) {
+      resW = Integer.parseInt(p.getProperty("width").trim());
+      resH = Integer.parseInt(p.getProperty("height").trim());
+      if (resW < 160 || resH < 120) {
+        throw new IllegalArgumentException("width/height deben ser >= 160, 120 para AprilTag");
+      }
     }
 
     Transform3d cameraToRobot = new Transform3d(
@@ -100,9 +130,9 @@ public final class CameraCalibrationLoader {
             Math.toRadians(rotY),
             Math.toRadians(rotZ)));
 
-  // --- ADDED: Debug print for verification (use DataLogManager) ---
-  Logger.recordOutput("Camera/Calibration", String.format("Loaded Camera Calibration: name=%s device=%d fx=%.1f fy=%.1f cx=%.1f cy=%.1f tagSize=%.4f cameraToRobot=%s", cameraName, deviceIndex, fx, fy, cx, cy, tagSize, cameraToRobot.toString()));
+  // Registro de depuración para verificación.
+  Logger.recordOutput("Camera/Calibration", String.format("Calibración de cámara cargada: name=%s device=%d fx=%.1f fy=%.1f cx=%.1f cy=%.1f tagSize=%.4f cameraToRobot=%s", cameraName, deviceIndex, fx, fy, cx, cy, tagSize, cameraToRobot.toString()));
 
-    return new Calibration(cameraName, deviceIndex, fx, fy, cx, cy, tagSize, cameraToRobot);
+    return new Calibration(cameraName, deviceIndex, fx, fy, cx, cy, tagSize, cameraToRobot, resW, resH);
   }
 }

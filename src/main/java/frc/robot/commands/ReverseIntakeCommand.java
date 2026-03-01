@@ -4,7 +4,7 @@ import edu.wpi.first.wpilibj2.command.Command;
 import frc.robot.subsystems.IntakeSubsystem;
 import frc.robot.Constants.DriveConstants;
 
-/** Runs the intake in reverse while held. */
+/** Ejecuta el intake en reversa mientras se mantiene el botón. */
 public class ReverseIntakeCommand extends Command {
   private final IntakeSubsystem m_intake;
 

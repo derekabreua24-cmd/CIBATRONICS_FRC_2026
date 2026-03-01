@@ -14,7 +14,7 @@ public class NavXSubsystem extends SubsystemBase {
   public NavXSubsystem() {
     AHRS tmp;
     try {
-      // For NavX2 on RoboRIO MXP port
+      // Para NavX2 en el puerto MXP del RoboRIO.
       tmp = new AHRS(AHRS.NavXComType.kMXP_SPI);
       Logger.recordOutput("NavX/Status", "NavX initialized on MXP SPI.");
     } catch (RuntimeException e) {

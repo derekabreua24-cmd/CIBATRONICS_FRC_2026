@@ -22,13 +22,13 @@ import frc.robot.Constants.VisionConstants;
 
 public class VisionSubsystem extends SubsystemBase {
 
-  /** One detection from the camera: tag ID and tag-to-camera transform. */
+  /** Una detección de la cámara: ID del tag y transformada tag-a-cámara. */
   public static record VisionDetection(int tagId, Transform3d tagToCamera) {}
 
   private final AprilTagFieldLayout m_layout;
   private final Transform3d m_cameraToRobot;
 
-  // Thread-safe storage
+  // Almacenamiento seguro para hilos
   private final AtomicReference<Pose2d> m_lastPose = new AtomicReference<>();
   private final AtomicReference<Pose2d[]> m_lastCandidates = new AtomicReference<>();
   private final AtomicReference<Matrix<N3, N1>> m_lastStdDevs = new AtomicReference<>();
@@ -43,10 +43,10 @@ public class VisionSubsystem extends SubsystemBase {
     m_cameraToRobot = cameraToRobot;
   }
 
-  /** Construct with a camera->robot transform and let the caller pick/load the layout. */
+  /** Constructor con transformada cámara->robot; el llamador debe proporcionar/cargar el layout. */
   public VisionSubsystem(Transform3d cameraToRobot) {
-    // Deprecated: caller should provide a layout via the other constructor.
-    throw new IllegalStateException("VisionSubsystem: please construct with an AprilTagFieldLayout and a camera->robot Transform3d");
+    // Obsoleto: usar el otro constructor con AprilTagFieldLayout.
+    throw new IllegalStateException("VisionSubsystem: construir con AprilTagFieldLayout y Transform3d cámara->robot");
   }
 
   /** Devuelve el AprilTagFieldLayout asociado, si existe. */
@@ -59,8 +59,8 @@ public class VisionSubsystem extends SubsystemBase {
   // ----------------------------------------------------
 
   /**
-   * Process multiple tag detections from one frame, fuse into a single pose and std devs.
-   * Uses frame capture timestamp (e.g. at start of vision loop) for better time alignment.
+   * Procesa varias detecciones de tags de un frame y las fusiona en una sola pose y desviaciones típicas.
+   * Usa el timestamp de captura del frame (p. ej. al inicio del bucle de visión) para mejor alineación temporal.
    */
   public Optional<Pose2d> processDetections(List<VisionDetection> detections, double timestampSeconds) {
     if (detections == null || detections.isEmpty()) {
@@ -80,7 +80,7 @@ public class VisionSubsystem extends SubsystemBase {
       return Optional.empty();
     }
 
-    // Fuse: average x, y; average rotation (angle)
+    // Fusionar: promedios de x, y y de la rotación (ángulo).
     double sumX = 0, sumY = 0, sumAngle = 0;
     for (Pose2d p : validPoses) {
       sumX += p.getX();
@@ -93,7 +93,7 @@ public class VisionSubsystem extends SubsystemBase {
     double avgAngle = sumAngle / n;
     Pose2d fusedPose = new Pose2d(avgX, avgY, new Rotation2d(avgAngle));
 
-    // Std devs: trust more when multiple tags and closer
+    // Desv. tip.: confiar más cuando hay varios tags y están más cerca.
     double avgDist = distances.stream().mapToDouble(Double::doubleValue).average().orElse(0);
     boolean multiTag = n >= 2;
     double stdXY = multiTag ? VisionConstants.kVisionStdDevXYMultiTagClose : VisionConstants.kVisionStdDevXYSingleOrFar;
@@ -138,7 +138,7 @@ public class VisionSubsystem extends SubsystemBase {
     return Optional.of(fusedPose);
   }
 
-  /** Single-tag path; delegates to processDetections for consistency. */
+  /** Ruta de un solo tag; delega en processDetections para consistencia. */
   public Optional<Pose2d> processDetection(
       int tagId,
       Transform3d tagToCamera,
@@ -200,14 +200,13 @@ public class VisionSubsystem extends SubsystemBase {
     return OptionalDouble.empty();
   }
 
-  /** Std devs (x, y, theta) for the last fused vision pose; use with addVisionMeasurement(pose, time, stdDevs). */
+  /** Desv. tip. (x, y, theta) de la última pose de visión fusionada; usar con addVisionMeasurement(pose, tiempo, stdDevs). */
   public Optional<Matrix<N3, N1>> getLastVisionStdDevs() {
     return Optional.ofNullable(m_lastStdDevs.get());
   }
 
   @Override
   public void periodic() {
-    // Intencionalmente vacio.
-    // Las actualizaciones de vision se realizan desde un hilo de procesamiento externo.
+    // Intencionalmente vacío; las actualizaciones de visión se hacen desde un hilo externo.
   }
 }

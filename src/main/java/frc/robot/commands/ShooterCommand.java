@@ -28,7 +28,7 @@ public class ShooterCommand extends Command {
 
   @Override
   public void execute() {
-    // Allow runtime tuning: read the desired RPM from the tuning entry each execute
+    // Permitir afinación en vivo: leer la RPM deseada de la entrada de afinación en cada execute
     if (m_shooterRpmEntry != null) {
       double rpm = m_shooterRpmEntry.getDouble(m_shooter.getTargetRpm());
       m_shooter.setVelocitySetpointRpm(rpm);

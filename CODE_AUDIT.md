@@ -215,3 +215,21 @@ Verified against WPILib 2026.2.2 and PathPlanner 2026 API:
 3. **Frame capture timestamp** — Vision loop takes `Timer.getFPGATimestamp()` at the start of each iteration (before `grabFrame`), so the same timestamp is used for all detections in that frame and is closer to capture time.
 4. **2026 built-in field** — `RobotContainer` first iterates `AprilTagFields.values()` for any name containing `"2026"` and uses `loadField(f)` if present; then tries deploy JSON via `new AprilTagFieldLayout(found)` (modern constructor; no reflection); then falls back to `kDefaultField`.
 5. **Log vision pose to AdvantageKit** — `VisionSubsystem` logs `Vision/RobotPose` (Pose2d) in `processDetections`; add this key to AdvantageScope Poses to view the vision pose on the field.
+
+---
+
+## Final logic verification (one fix applied)
+
+| Area | Verification | Result |
+|------|--------------|--------|
+| **Odometry update** | Only `OdometrySubsystem.periodic()` calls `updateOdometryWithTime()`; `TelemetrySubsystem` does not. | OK |
+| **Encoder → meters** | `rotationsToMeters`: distance = rotations × π×D / gearRatio. `rpmToMetersPerSecond`: same relation for velocity. | OK |
+| **ChassisSpeeds** | `vx = (leftVel + rightVel)/2`, `omega = (rightVel - leftVel)/trackWidth` (positive omega = CCW). | OK |
+| **DrivePhysics** | `leftVel = vx − ω×L/2`, `rightVel = vx + ω×L/2`; feedforward and ±12 V clamp. | OK |
+| **Vision pose** | `cameraPoseField = tagPoseField.transformBy(tagToCamera)`; `robotPoseField = cameraPoseField.transformBy(cameraToRobot.inverse())`. Properties store camera-in-robot-frame, so inverse gives robot from camera. | OK |
+| **Vision fusion** | Applied only when `!isTeleop()` and vision enabled; timestamp and optional std devs passed through. | OK |
+| **DriveCommand** | `rot` negated so stick right → robot turns right (WPILib arcadeDrive positive = left). | OK |
+| **PathPlanner** | AutoBuilder: pose supplier, reset, chassis speeds, driveWithSpeeds; `resetOdometry(Pose2d)` used as callback. | OK |
+| **Reset odometry** | **Fix:** `OdometrySubsystem.resetOdometry(pose)` now uses `pose.getRotation()` so PathPlanner’s reset pose (including heading) is applied. Previously it used `m_navx.getRotation2d()`, which ignored the path’s intended starting rotation. | Fixed |
+| **Shooter** | PID(measurement, setpoint); FF from target rad/s; output clamped to ±1; `m_targetRpm > 1.0` gate. | OK |
+| **Reset to vision** | `ResetOdometryToVisionCommand` uses vision pose position + NavX heading (intentional: vision for xy, gyro for theta). | OK |

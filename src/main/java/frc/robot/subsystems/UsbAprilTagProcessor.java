@@ -42,24 +42,44 @@ public class UsbAprilTagProcessor extends SubsystemBase {
       double cx,
       double cy,
       VisionSubsystem vision) {
+    this(cameraName, deviceIndex, tagSizeMeters, fx, fy, cx, cy, vision, 640, 480);
+  }
+
+  /**
+   * Constructor con resolución configurable para cámaras USB genéricas.
+   * @param resolutionWidth  ancho en píxeles (p. ej. 320 o 640). Debe coincidir con cx (centro ≈ width/2).
+   * @param resolutionHeight alto en píxeles (p. ej. 240 o 480). Debe coincidir con cy (centro ≈ height/2).
+   */
+  public UsbAprilTagProcessor(
+      String cameraName,
+      int deviceIndex,
+      double tagSizeMeters,
+      double fx,
+      double fy,
+      double cx,
+      double cy,
+      VisionSubsystem vision,
+      int resolutionWidth,
+      int resolutionHeight) {
 
     m_camera = CameraServer.startAutomaticCapture(cameraName, deviceIndex);
 
-  // IMPORTANTE: reducir resolucion para mejorar el rendimiento
-    m_camera.setResolution(320, 240);
+    int w = (resolutionWidth > 0 && resolutionHeight > 0) ? resolutionWidth : 640;
+    int h = (resolutionWidth > 0 && resolutionHeight > 0) ? resolutionHeight : 480;
+    m_camera.setResolution(w, h);
     m_camera.setFPS(20);
 
     m_sink = new CvSink("UsbCvSink-" + cameraName);
     m_sink.setSource(m_camera);
 
     m_detector = new AprilTagDetector();
-    // FRC 2026 REBUILT uses 36h11 (not 16h5)
+    // FRC 2026 REBUILT usa 36h11 (no 16h5).
     m_detector.addFamily("tag36h11");
 
-  // Ajustes opcionales (valores seguros por defecto para roboRIO 2)
+  // Ajustes opcionales (valores seguros por defecto para roboRIO 2).
     AprilTagDetector.Config detectorConfig = m_detector.getConfig();
-    detectorConfig.numThreads = 2;       // use 2 threads
-    detectorConfig.quadDecimate = 2.0f;  // downscale image internally
+    detectorConfig.numThreads = 2;       // usar 2 hilos
+    detectorConfig.quadDecimate = 2.0f;  // reducir resolución internamente
     detectorConfig.quadSigma = 0.0f;
     m_detector.setConfig(detectorConfig);
 
@@ -70,7 +90,7 @@ public class UsbAprilTagProcessor extends SubsystemBase {
 
     m_vision = vision;
 
-  // Ejecutar vision en un hilo separado (no bloquea el bucle del robot)
+  // Ejecutar visión en un hilo separado (no bloquea el bucle del robot).
     m_visionThread = new Thread(this::visionLoop);
     m_visionThread.setDaemon(true);
     m_visionThread.start();
@@ -78,13 +98,17 @@ public class UsbAprilTagProcessor extends SubsystemBase {
 
   private void visionLoop() {
     while (m_running && !Thread.interrupted()) {
-      // Timestamp at start of iteration (closest to frame capture for addVisionMeasurement).
+      // Timestamp al inicio de la iteración (más próximo a la captura del frame para addVisionMeasurement).
       double frameTimestamp = Timer.getFPGATimestamp();
 
       long time = m_sink.grabFrame(m_frame);
 
       if (time == 0L) {
-        continue; // omitir frame invalido
+        continue; // omitir frame inválido (cámara no lista o error de USB)
+      }
+      // Cámaras USB genéricas pueden devolver frames vacíos al inicio; omitir hasta tener imagen válida.
+      if (m_frame.empty() || m_frame.cols() < 100 || m_frame.rows() < 100) {
+        continue;
       }
 
       Imgproc.cvtColor(m_frame, m_gray, Imgproc.COLOR_BGR2GRAY);
@@ -120,7 +144,6 @@ public class UsbAprilTagProcessor extends SubsystemBase {
 
   @Override
   public void periodic() {
-    // Intencionalmente vacio.
-    // La vision se ejecuta en un hilo separado para evitar bloquear el bucle del robot.
+    // Intencionalmente vacío; la visión se ejecuta en un hilo separado.
   }
 }

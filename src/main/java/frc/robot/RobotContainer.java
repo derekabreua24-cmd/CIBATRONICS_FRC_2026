@@ -10,7 +10,7 @@ import frc.robot.commands.IntakeCommand;
 import frc.robot.subsystems.DriveSubsystem;
 import frc.robot.commands.Drv_Commands.DriveCommand;
 import frc.robot.commands.Drv_Commands.TurnToAngleCommand;
-// IndexerSubsystem removed — all indexer functionality trimmed from project
+// IndexerSubsystem eliminado; toda la funcionalidad del indexer fue recortada del proyecto.
 import frc.robot.subsystems.TelemetrySubsystem;
 import frc.robot.subsystems.NavXSubsystem;
 import frc.robot.subsystems.VisionSubsystem;
@@ -38,7 +38,7 @@ import frc.robot.subsystems.ShooterSubsystem;
 
 import edu.wpi.first.wpilibj2.command.Command;
 import edu.wpi.first.wpilibj2.command.Commands;
-// using fully-qualified SendableChooser reference below; keep import removed to avoid unused-import warnings
+// Se usa referencia completa a SendableChooser más abajo; no importar para evitar avisos de import no usado.
 import edu.wpi.first.wpilibj.shuffleboard.Shuffleboard;
 import edu.wpi.first.wpilibj2.command.button.CommandXboxController;
 
@@ -89,12 +89,12 @@ private GenericEntry m_angTolEntry;
       new CommandXboxController(OperatorConstants.kDriverControllerPort);
   private final CommandXboxController m_operatorController =
       new CommandXboxController(OperatorConstants.kOperatorControllerPort);
-  // Shooter RPM tuning entry (adjustable at runtime)
+  // Entrada de ajuste de RPM del shooter (modificable en tiempo de ejecución).
   private GenericEntry m_shooterRpmEntry;
 
   public RobotContainer() {
 
-    // Create Tuning tab and shooter RPM entry before configureBindings() so ShooterCommand receives a valid entry.
+    // Crear pestaña Tuning y entrada de RPM del shooter antes de configureBindings() para que ShooterCommand reciba una entrada válida.
     var tuningTab = Shuffleboard.getTab("Tuning");
     m_shooterRpmEntry = tuningTab.add("Shooter RPM", DriveConstants.kShooterMaxRPM * Math.abs(DriveConstants.kShooterSpeed)).withPosition(8, 0).withSize(2, 1).getEntry();
 
@@ -109,7 +109,7 @@ private GenericEntry m_angTolEntry;
           CameraCalibrationLoader.loadFromProperties(
               "camera/camera_calib.properties");
 
-      // 1) Prefer built-in 2026 layouts when available (WPILib 2026.2+: k2026RebuiltAndymark, k2026RebuiltWelded). loadField() is the modern API (replaces deprecated loadAprilTagLayoutField).
+      // 1) Preferir layouts 2026 incorporados si existen (WPILib 2026.2+: k2026RebuiltAndymark, k2026RebuiltWelded). loadField() es la API actual (sustituye loadAprilTagLayoutField obsoleta).
       edu.wpi.first.apriltag.AprilTagFieldLayout fieldLayout = null;
       for (edu.wpi.first.apriltag.AprilTagFields f : edu.wpi.first.apriltag.AprilTagFields.values()) {
         if (f.name().toLowerCase().contains("2026")) {
@@ -141,23 +141,23 @@ private GenericEntry m_angTolEntry;
         }
 
         if (found != null) {
-          // Modern API: constructor AprilTagFieldLayout(Path) loads from JSON (no reflection).
+          // API actual: el constructor AprilTagFieldLayout(Path) carga desde JSON (sin reflexión).
           try {
             fieldLayout = new edu.wpi.first.apriltag.AprilTagFieldLayout(found);
-            Logger.recordOutput("Telemetry/Log", "Loaded AprilTag field layout from deploy: " + found.toString());
+            Logger.recordOutput("Telemetry/Log", "Layout de campo AprilTag cargado desde deploy: " + found.toString());
           } catch (java.io.IOException e) {
-            Logger.recordOutput("Telemetry/Errors", "AprilTagFieldLayout from file failed: " + e.toString());
+            Logger.recordOutput("Telemetry/Errors", "Error al cargar AprilTagFieldLayout desde archivo: " + e.toString());
           }
         }
 
         if (fieldLayout == null) {
-          // Fallback to built-in resource (may be older). Keep existing behavior.
+          // Respaldo: recurso incorporado (puede ser de versión anterior).
           fieldLayout = edu.wpi.first.apriltag.AprilTagFieldLayout.loadField(
               edu.wpi.first.apriltag.AprilTagFields.kDefaultField);
-          Logger.recordOutput("Telemetry/Log", "Using built-in AprilTagFieldLayout (default)");
+          Logger.recordOutput("Telemetry/Log", "Usando AprilTagFieldLayout incorporado (predeterminado)");
         }
         else {
-          // We loaded from deploy; optionally export the layout to deploy for inspection/shipping.
+          // Se cargó desde deploy; opcionalmente exportar el layout a deploy para inspección/distribución.
           try {
             java.nio.file.Path exportPath = edu.wpi.first.wpilibj.Filesystem.getDeployDirectory().toPath().resolve("apriltagfield_2026.json");
             if (!java.nio.file.Files.exists(exportPath)) {
@@ -170,7 +170,7 @@ private GenericEntry m_angTolEntry;
         }
         }
       } catch (Throwable t) {
-        // Defensive fallback: if anything goes wrong, try to load the default field layout
+        // Respaldo defensivo: si algo falla, intentar cargar el layout de campo predeterminado.
         try {
           fieldLayout = edu.wpi.first.apriltag.AprilTagFieldLayout.loadField(
               edu.wpi.first.apriltag.AprilTagFields.kDefaultField);
@@ -181,29 +181,42 @@ private GenericEntry m_angTolEntry;
       }
 
       if (fieldLayout == null) {
-        Logger.recordOutput("Telemetry/Errors", "Vision disabled: no AprilTag field layout available.");
+        Logger.recordOutput("Telemetry/Errors", "Visión deshabilitada: no hay layout de campo AprilTag disponible.");
       } else {
       m_visionSubsystem =
           new VisionSubsystem(fieldLayout, calib.cameraToRobot);
 
-      m_usbProcessor = new UsbAprilTagProcessor(
-          calib.cameraName,
-          calib.deviceIndex,
-          calib.tagSizeMeters,
-          calib.fx,
-          calib.fy,
-          calib.cx,
-          calib.cy,
-          m_visionSubsystem);
+      if (calib.resolutionWidth > 0 && calib.resolutionHeight > 0) {
+        m_usbProcessor = new UsbAprilTagProcessor(
+            calib.cameraName,
+            calib.deviceIndex,
+            calib.tagSizeMeters,
+            calib.fx,
+            calib.fy,
+            calib.cx,
+            calib.cy,
+            m_visionSubsystem,
+            calib.resolutionWidth,
+            calib.resolutionHeight);
+      } else {
+        m_usbProcessor = new UsbAprilTagProcessor(
+            calib.cameraName,
+            calib.deviceIndex,
+            calib.tagSizeMeters,
+            calib.fx,
+            calib.fy,
+            calib.cx,
+            calib.cy,
+            m_visionSubsystem);
+      }
 
   edu.wpi.first.wpilibj.Filesystem.getDeployDirectory();
   Logger.recordOutput("Telemetry/Log", "Vision successfully initialized (2026 Rebuilt).");
       }
 
       } catch (UnsatisfiedLinkError | NoClassDefFoundError e) {
-        // Native library load failures (UnsatisfiedLinkError) or missing classes should
-        // be handled gracefully in simulation; log and continue with vision disabled.
-  Logger.recordOutput("Telemetry/Errors", "Vision failed to initialize (native/missing class): " + e.toString());
+        // Fallos al cargar librerías nativas o clases faltantes: en simulación registrar y continuar con visión deshabilitada.
+  Logger.recordOutput("Telemetry/Errors", "Falló la inicialización de visión (nativo/clase faltante): " + e.toString());
         m_visionSubsystem = null;
       }
 
@@ -225,12 +238,11 @@ private GenericEntry m_angTolEntry;
     m_posTolEntry = autoTab.add("Pos Tol (m)", 0.1).getEntry();
     m_angTolEntry = autoTab.add("Ang Tol (deg)", 5.0).getEntry();
 
-  // Opción para controlar si queremos que el robot reinicie la odometría al inicio
-  // del auto seleccionado (cuando el archivo .auto tiene resetOdom=true).
-  var resetOdomWidget = autoTab.add("Reset odom to path start", true).withPosition(0, 4).withSize(2, 1);
+  // Opción para reiniciar la odometría al inicio del auto seleccionado (cuando el .auto tiene resetOdom=true).
+  var resetOdomWidget = autoTab.add("Reiniciar odom al inicio de ruta", true).withPosition(0, 4).withSize(2, 1);
   m_resetOdomEntry = resetOdomWidget.getEntry();
 
-  // PPLTVController dt (s): discretization timestep, typically 0.02 for 50 Hz loop (PathPlanner 2026 API)
+  // PPLTVController dt (s): paso de discretización, típicamente 0.02 para bucle 50 Hz (API PathPlanner 2026).
     m_ppltvGainEntry = tuningTab.add("PPLTV dt (s)", 0.02).withPosition(0, 0).withSize(2, 1).getEntry();
   // Entradas de feedforward de la unidad de tracción (usadas por DriveSubsystem si están habilitadas)
     tuningTab.add("Drive KS", DriveConstants.kDriveKS).withPosition(0, 1).withSize(2, 1).getEntry();
@@ -238,7 +250,7 @@ private GenericEntry m_angTolEntry;
     tuningTab.add("Drive KA", DriveConstants.kDriveKA).withPosition(4, 1).withSize(2, 1).getEntry();
     tuningTab.add("Drive Est Max Speed", DriveConstants.kDriveEstMaxSpeed).withPosition(6, 1).withSize(2, 1).getEntry();
 
-    // SysId: hold Left Bumper + face button to run drive characterization (see CHARACTERIZATION.md).
+    // SysId: mantener Left Bumper + botón de cara para caracterización del tren de rodaje (ver CHARACTERIZATION.md).
     m_driverController.leftBumper().and(m_driverController.a()).whileTrue(
         m_driveSubsystem.sysIdQuasistatic(SysIdRoutine.Direction.kForward));
     m_driverController.leftBumper().and(m_driverController.b()).whileTrue(
@@ -248,11 +260,11 @@ private GenericEntry m_angTolEntry;
     m_driverController.leftBumper().and(m_driverController.y()).whileTrue(
         m_driveSubsystem.sysIdDynamic(SysIdRoutine.Direction.kReverse));
 
-    // Keep these entries created on the network table; DriveSubsystem will read them directly.
+    // Mantener estas entradas en la tabla de red; DriveSubsystem las lee directamente.
     tuningTab.add("Use PathPlanner FF", false).withPosition(2, 0).withSize(2, 1).getEntry();
     tuningTab.add("PP FF Scale", 1.0).withPosition(4, 0).withSize(2, 1).getEntry();
 
-  // El selector legacy basado en cadenas fue removido; el selector de PathPlanner es el principal.
+  // El selector legacy basado en cadenas fue eliminado; el selector de PathPlanner es el principal.
 
     autoTab.addBoolean("Alliance Is Red",
         () -> DriverStation.getAlliance()
@@ -287,14 +299,14 @@ private GenericEntry m_angTolEntry;
 
   RobotConfig config = RobotConfig.fromGUISettings();
 
-      // PPLTVController(dt): dt = discretization timestep in seconds (0.02 = 20 ms FRC loop). See PathPlanner API.
+      // PPLTVController(dt): dt = paso de discretización en segundos (0.02 = bucle FRC 20 ms). Ver API PathPlanner.
       double ppltvDt = m_ppltvGainEntry.getDouble(0.02);
       if (ppltvDt <= 0 || ppltvDt > 0.1) ppltvDt = 0.02;
 
       AutoBuilder.configure(
-    m_odometrySubsystem::getPose,              // Pose supplier
-    m_odometrySubsystem::resetOdometry,         // Reset pose (PathPlanner calls with Pose2d only)
-    m_driveSubsystem::getChassisSpeeds,         // Robot-relative ChassisSpeeds
+    m_odometrySubsystem::getPose,              // Proveedor de pose
+    m_odometrySubsystem::resetOdometry,         // Reinicio de pose (PathPlanner llama solo con Pose2d)
+    m_driveSubsystem::getChassisSpeeds,         // ChassisSpeeds relativos al robot
     m_driveSubsystem::driveWithSpeeds,
     new PPLTVController(ppltvDt),
     config,
@@ -304,7 +316,7 @@ private GenericEntry m_angTolEntry;
 );
   Logger.recordOutput("Telemetry/Log", "PathPlanner 2026 fully configured.");
 
-      // Log path/target to AdvantageKit so AdvantageScope can show them in the 2D/3D Field Poses section.
+      // Registrar ruta/objetivo en AdvantageKit para que AdvantageScope los muestre en la sección Poses del campo 2D/3D.
       PathPlannerLogging.setLogCurrentPoseCallback(
           pose -> Logger.recordOutput("PathPlanner/CurrentPose", pose));
       PathPlannerLogging.setLogTargetPoseCallback(
@@ -328,8 +340,8 @@ private GenericEntry m_angTolEntry;
                                     .withTimeout(1.5)
                                     .finallyDo(() -> m_driveSubsystem.arcadeDrive(0, 0));
 
-                            // Make this the default option so it is selected by default in the chooser
-                            m_ppAutoChooser.setDefaultOption("Example: Straight (programmatic)", exampleCmd);
+                            // Hacer que sea la opción predeterminada en el selector.
+                            m_ppAutoChooser.setDefaultOption("Ejemplo: recto (programático)", exampleCmd);
             } catch (RuntimeException e) {
               Logger.recordOutput("Telemetry/Errors", "PathPlanner chooser: failed to add example option -> " + e.toString());
             }
@@ -338,10 +350,9 @@ private GenericEntry m_angTolEntry;
       }
 
     } catch (Exception e) {
-      // RobotConfig.fromGUISettings may throw checked parsing exceptions from
-      // the PathPlanner config loader; keep a broad catch here to avoid
-      // crashing robot initialization while logging the root cause.
-  Logger.recordOutput("Telemetry/Errors", "PathPlanner configuration failed: " + e.getMessage());
+      // RobotConfig.fromGUISettings puede lanzar excepciones de parseo del cargador de config PathPlanner;
+      // captura amplia para no bloquear la inicialización del robot y registrar la causa.
+  Logger.recordOutput("Telemetry/Errors", "Falló la configuración de PathPlanner: " + e.getMessage());
     }
     // ================================================================
 
@@ -349,20 +360,19 @@ private GenericEntry m_angTolEntry;
 
   private void configureBindings() {
 
-  // Intake on left trigger (runs in configured direction; toggle direction below)
+  // Intake con gatillo izquierdo (sentido configurado; cambiar sentido con el botón más abajo).
   m_operatorController.leftTrigger()
     .whileTrue(new IntakeCommand(m_intakeSubsystem));
 
-  // Toggle intake direction on 'A' button (press to flip forward/back)
+  // Cambiar sentido del intake con botón 'A' (avance/retroceso).
   m_operatorController.a()
     .onTrue(new ToggleIntakeDirectionCommand(m_intakeSubsystem));
 
-  // Shooter spin while operator holds right trigger (RPM adjustable via Tuning tab)
+  // Shooter gira mientras el operador mantiene el gatillo derecho (RPM ajustable en pestaña Tuning).
   m_operatorController.rightTrigger()
     .whileTrue(new ShooterCommand(m_shooterSubsystem, m_shooterRpmEntry));
 
-  // ShootSequenceCommand removed (indexer removed). If you want a simple shooter+intake
-  // hold command, we can add it here later.
+  // ShootSequenceCommand eliminado (indexer eliminado). Si se desea un comando simple shooter+intake, se puede añadir después.
 
     m_driverController.x()
         .onTrue(new TurnToAngleCommand(
@@ -374,13 +384,13 @@ private GenericEntry m_angTolEntry;
   public Command getAutonomousCommand() {
 
     
-        // If PathPlanner chooser is available and has a selected command, use it.
+        // Si el selector de PathPlanner está disponible y tiene un comando seleccionado, usarlo.
         if (m_ppAutoChooser != null) {
             Command ppCmd = m_ppAutoChooser.getSelected();
             if (ppCmd != null) {
-                // reiniciar sensores/odometría antes de ejecutar el auto seleccionado
+                // Reiniciar sensores/odometría antes de ejecutar el auto seleccionado.
                 m_navxSubsystem.reset();
-        // Attempt to read the chooser's selected name from Shuffleboard's NetworkTables
+        // Intentar leer el nombre seleccionado en el selector desde NetworkTables de Shuffleboard.
                 try {
           var table = NetworkTableInstance.getDefault()
             .getTable("Shuffleboard")
@@ -389,7 +399,7 @@ private GenericEntry m_angTolEntry;
 
           String selected = table.getEntry("selected").getString("");
           if (selected == null || selected.isEmpty()) {
-            // Some SendableChooser variants prefix with the title; try a fallback
+            // Algunas variantes de SendableChooser añaden prefijo; probar entrada por defecto.
             selected = table.getEntry("default").getString("");
           }
 
@@ -409,8 +419,7 @@ private GenericEntry m_angTolEntry;
             if (autoFile != null) {
               String autoJson = Files.readString(autoFile, StandardCharsets.UTF_8);
               boolean resetOdom = autoJson.contains("\"resetOdom\": true") || autoJson.contains("\"resetOdom\":true");
-              // Only perform the automatic odometry reset if the user enabled
-              // the Shuffleboard toggle for it.
+              // Solo hacer el reinicio automático de odometría si el usuario activó el toggle en Shuffleboard.
               boolean userRequested = m_resetOdomEntry.getBoolean(true);
               if (resetOdom && userRequested) {
                 // Extract pathName value from the auto JSON
@@ -418,7 +427,7 @@ private GenericEntry m_angTolEntry;
                 Matcher m = p.matcher(autoJson);
                 if (m.find()) {
                   String pathName = m.group(1);
-                  // Locate the path file in deploy/PathPlanner/paths
+                  // Buscar el archivo de ruta en deploy/PathPlanner/paths
                   Path pathFile = edu.wpi.first.wpilibj.Filesystem.getDeployDirectory().toPath().resolve("PathPlanner").resolve("paths").resolve(pathName + ".path");
                   if (Files.exists(pathFile)) {
                     String pathJson = Files.readString(pathFile, StandardCharsets.UTF_8);
@@ -432,7 +441,7 @@ private GenericEntry m_angTolEntry;
                       if (am.find()) {
                         double x = Double.parseDouble(am.group(1));
                         double y = Double.parseDouble(am.group(2));
-                        // Use 0 radians as a sensible default heading; PathPlanner may encode rotations elsewhere
+                        // Usar 0 rad como rumbo por defecto; PathPlanner puede codificar rotaciones en otro sitio.
                         Pose2d startPose = new Pose2d(x, y, new Rotation2d(0.0));
                         m_odometrySubsystem.resetOdometry(startPose);
                         Logger.recordOutput("Telemetry/Log", "[AutoChooser] Reset odometry to path start: " + startPose);
@@ -444,8 +453,8 @@ private GenericEntry m_angTolEntry;
             }
           }
                 } catch (IOException | RuntimeException e) {
-                  // Non-fatal: log and fall back to origin reset
-                  Logger.recordOutput("Telemetry/Errors", "[AutoChooser] Failed to parse selected auto for odometry reset: " + e.toString());
+                  // No fatal: registrar y usar reinicio al origen.
+                  Logger.recordOutput("Telemetry/Errors", "[AutoChooser] Error al parsear el auto seleccionado para reinicio de odometría: " + e.toString());
                   m_odometrySubsystem.resetOdometry(new Pose2d());
                 }
 
@@ -453,7 +462,7 @@ private GenericEntry m_angTolEntry;
       }
     }
 
-    // No PathPlanner auto selected; return no-op
+    // No hay auto de PathPlanner seleccionado; devolver comando nulo.
     return Commands.none();
   }
 

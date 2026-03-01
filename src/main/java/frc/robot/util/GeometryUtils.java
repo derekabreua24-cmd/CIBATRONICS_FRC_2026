@@ -9,12 +9,12 @@ import edu.wpi.first.wpilibj.smartdashboard.Field2d;
 import java.util.stream.IntStream;
 
 /**
- * Small geometry helpers used by the robot for Transform2d and array utilities.
+ * Utilidades de geometría para Transform2d y arrays usadas por el robot.
  */
 public final class GeometryUtils {
   private GeometryUtils() {}
 
-  /** Convert an array of Pose3d to Pose2d by dropping the Z/3D rotation components. */
+  /** Convierte un array de Pose3d a Pose2d eliminando la componente Z y la rotación 3D. */
   public static Pose2d[] pose3dArrayToPose2dArray(Pose3d[] in) {
     if (in == null) return new Pose2d[0];
     Pose2d[] out = new Pose2d[in.length];
@@ -24,7 +24,7 @@ public final class GeometryUtils {
     return out;
   }
 
-  /** Apply a Transform2d to every Pose2d in an array and return a new array. */
+  /** Aplica una Transform2d a cada Pose2d del array y devuelve un array nuevo. */
   public static Pose2d[] applyTransform2dToArray(Pose2d[] poses, Transform2d transform) {
     if (poses == null) return new Pose2d[0];
     Pose2d[] out = new Pose2d[poses.length];
@@ -34,19 +34,19 @@ public final class GeometryUtils {
     return out;
   }
 
-  /** Create a simple Transform2d from x,y (meters) offset and yaw degrees. */
+  /** Crea una Transform2d sencilla a partir del desplazamiento x,y (metros) y el yaw en grados. */
   public static Transform2d createTransform2d(double xMeters, double yMeters, double yawDegrees) {
     return new Transform2d(new Translation2d(xMeters, yMeters), new Rotation2d(Math.toRadians(yawDegrees)));
   }
 
-  /** Publish a Pose2d[] to a Field2d by creating objects named baseName_index. */
+  /** Publica un Pose2d[] en un Field2d creando objetos con nombre baseName_índice. */
   public static void publishPose2dArrayToField2d(Field2d field, String baseName, Pose2d[] poses) {
     if (field == null || poses == null) return;
     IntStream.range(0, poses.length).forEach(i -> {
       try {
         field.getObject(baseName + "_" + i).setPose(poses[i]);
       } catch (RuntimeException e) {
-        // Ignore per-publish errors; Field2d may throw if used concurrently in some setups.
+        // Ignorar errores por publicación; Field2d puede lanzar si se usa en concurrencia en algunos entornos.
       }
     });
   }

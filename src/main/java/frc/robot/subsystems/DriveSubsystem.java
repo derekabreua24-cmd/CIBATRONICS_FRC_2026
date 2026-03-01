@@ -39,19 +39,19 @@ import frc.robot.Constants.DriveConstants;
 
 public class DriveSubsystem extends SubsystemBase {
 
-  // Flags to avoid spamming logs from frequently-called driveWithSpeeds when networktables or ff fails
+  // Banderas para no saturar logs cuando driveWithSpeeds falla por NetworkTables o feedforward.
   private boolean m_loggedNetworkTableError = false;
   private boolean m_loggedFFError = false;
   
-  // drive sim variables
+  // Variables de simulación del tren de rodaje.
   private DifferentialDrivetrainSim m_driveSim;
 
-  // SysId: last voltage applied so log callback can record it
+  // SysId: última tensión aplicada para que el callback de log la registre.
   private volatile double m_sysIdAppliedVoltage = 0.0;
   private final SysIdRoutine m_sysIdRoutine;
 
   // ===============================
-  // Motores (use kBrushless for NEO/brushless; kBrushed for brushed — see Constants)
+  // Motores (kBrushless para NEO/brushless; kBrushed para brushed — ver Constants)
   // ===============================
 
   private final SparkMax m_leftFront =
@@ -69,7 +69,7 @@ public class DriveSubsystem extends SubsystemBase {
   private final Field2d m_field = new Field2d();
 
   // ===============================
-  // Encoders
+  // Codificadores
   // ===============================
 
   private final RelativeEncoder m_leftFrontEncoder = m_leftFront.getEncoder();
@@ -133,13 +133,12 @@ public class DriveSubsystem extends SubsystemBase {
             VecBuilder.fill(0.05, 0.05, 0.1),
             VecBuilder.fill(0.5, 0.5, 0.5));
   
-  // Instantiate a motor feedforward using constants (placeholder values in Constants)
-  // This is primarily used by driveWithSpeeds to compute safe voltages.
-  // We keep the SimpleMotorFeedforward here so that runtime code uses the same gains
-  // that are documented in Constants.
-  // (Note: constants should be replaced with characterization results.)
+  // Instanciar feedforward de motor con constantes (valores provisionales en Constants).
+  // driveWithSpeeds lo usa para calcular tensiones seguras.
+  // Mantenemos SimpleMotorFeedforward aquí para que el código use las mismas ganancias que en Constants.
+  // Sustituir constantes por resultados de caracterización.
 
-  // SysId routine for drive characterization: apply same voltage to both sides, log average position/velocity in m, m/s.
+  // Rutina SysId para caracterización del tren de rodaje: misma tensión a ambos lados, registrar posición/velocidad media en m, m/s.
   m_sysIdRoutine =
       new SysIdRoutine(
           new SysIdRoutine.Config(),
@@ -224,7 +223,7 @@ public class DriveSubsystem extends SubsystemBase {
   }
 
   // ===============================
-  // Per-motor accessors (útiles para telemetría más detallada)
+  // Accesores por motor (útiles para telemetría más detallada)
   // ===============================
 
   public double getLeftFrontCurrent() {
@@ -299,7 +298,7 @@ public class DriveSubsystem extends SubsystemBase {
 
   @Override
   public void periodic() {
-    // Pose is updated in OdometrySubsystem.periodic() via updateOdometryWithTime(); here we only display it.
+    // La pose se actualiza en OdometrySubsystem.periodic() con updateOdometryWithTime(); aquí solo se muestra.
     Pose2d pose = m_poseEstimator.getEstimatedPosition();
 
     // Actualizar la visualización del campo y registrar la pose para AdvantageKit
@@ -328,7 +327,7 @@ public class DriveSubsystem extends SubsystemBase {
   return (rps * wheelCirc) / DriveConstants.kDriveGearRatio;
 }
 
-  /** Updates pose from encoders and gyro. Call every robot loop (e.g. from OdometrySubsystem). */
+  /** Actualiza la pose con encoders y giro. Llamar en cada ciclo del robot (p. ej. desde OdometrySubsystem). */
   public void updateOdometry(Rotation2d heading) {
     double leftMeters = rotationsToMeters(getLeftAveragePosition());
     double rightMeters = rotationsToMeters(getRightAveragePosition());
@@ -336,8 +335,8 @@ public class DriveSubsystem extends SubsystemBase {
   }
 
   /**
-   * Same as updateOdometry but with explicit timestamp for correct vision measurement latency compensation.
-   * Use this when fusing vision so addVisionMeasurement timestamps align with the same time source.
+   * Igual que updateOdometry pero con timestamp explícito para compensar latencia de medidas de visión.
+   * Usar al fusionar visión para que los timestamps de addVisionMeasurement usen la misma fuente de tiempo.
    */
   public void updateOdometryWithTime(double currentTimeSeconds, Rotation2d heading) {
     double leftMeters = rotationsToMeters(getLeftAveragePosition());
@@ -361,8 +360,8 @@ public class DriveSubsystem extends SubsystemBase {
   }
 
   /**
-   * When in simulation, returns the drivetrain sim heading for use by odometry so pose is correct in sim.
-   * When not in sim or sim is null, returns empty.
+   * En simulación, devuelve el rumbo del sim del tren de rodaje para que la odometría sea correcta.
+   * Si no hay sim o es null, devuelve vacío.
    */
   public Optional<Rotation2d> getSimHeading() {
     if (m_driveSim != null) {
@@ -371,12 +370,12 @@ public class DriveSubsystem extends SubsystemBase {
     return Optional.empty();
   }
 
-  /** SysId quasistatic test; bind to a button and hold to run. See CHARACTERIZATION.md. */
+  /** Prueba SysId cuasiestática; asignar a un botón y mantener. Ver CHARACTERIZATION.md. */
   public Command sysIdQuasistatic(SysIdRoutine.Direction direction) {
     return m_sysIdRoutine.quasistatic(direction);
   }
 
-  /** SysId dynamic test; bind to a button and hold to run. See CHARACTERIZATION.md. */
+  /** Prueba SysId dinámica; asignar a un botón y mantener. Ver CHARACTERIZATION.md. */
   public Command sysIdDynamic(SysIdRoutine.Direction direction) {
     return m_sysIdRoutine.dynamic(direction);
   }
@@ -385,14 +384,14 @@ public class DriveSubsystem extends SubsystemBase {
     m_poseEstimator.addVisionMeasurement(visionPose, timestampSeconds);
   }
 
-  /** Adds a vision measurement with per-measurement standard deviations (m, m, rad). */
+  /** Añade una medida de visión con desviaciones típicas por medida (m, m, rad). */
   public void addVisionMeasurement(Pose2d visionPose, double timestampSeconds, Matrix<N3, N1> visionMeasurementStdDevs) {
     m_poseEstimator.addVisionMeasurement(visionPose, timestampSeconds, visionMeasurementStdDevs);
   }
 
   public ChassisSpeeds getChassisSpeeds() {
 
-  // Convert SparkMax RPM to meters per second
+  // Convertir RPM de SparkMax a metros por segundo.
   double leftVel = rpmToMetersPerSecond(getLeftAverageVelocity());
   double rightVel = rpmToMetersPerSecond(getRightAverageVelocity());
 
@@ -403,11 +402,11 @@ public class DriveSubsystem extends SubsystemBase {
 }
 
   /**
-   * BiConsumer target for PathPlanner's AutoBuilder: accept desired chassis speeds
-   * and optional DriveFeedforwards (ignored here) and command voltages to the motors.
+   * Destino BiConsumer del AutoBuilder de PathPlanner: acepta velocidades deseadas del chasis
+   * y opcionalmente DriveFeedforwards (ignorado aquí) y aplica tensiones a los motores.
    */
   public void driveWithSpeeds(ChassisSpeeds speeds, DriveFeedforwards ff) {
-    // Read live tuning values from NetworkTables if present (Shuffleboard Tuning tab).
+    // Leer valores de afinado en vivo desde NetworkTables si existen (pestaña Tuning de Shuffleboard).
     double ks = DriveConstants.kDriveKS;
     double kv = DriveConstants.kDriveKV;
     double ka = DriveConstants.kDriveKA;
@@ -424,7 +423,7 @@ public class DriveSubsystem extends SubsystemBase {
       }
     }
 
-    // Compute base voltages using our feedforward model from DrivePhysics.
+    // Calcular tensiones base con el modelo de feedforward de DrivePhysics.
     double[] volts = DrivePhysics.computeTankVoltages(
         speeds.vxMetersPerSecond,
         speeds.omegaRadiansPerSecond,
@@ -437,7 +436,7 @@ public class DriveSubsystem extends SubsystemBase {
     double leftVolts = volts[0];
     double rightVolts = volts[1];
 
-    // Optionally incorporate PathPlanner-provided DriveFeedforwards if present and enabled
+    // Opcionalmente incorporar DriveFeedforwards de PathPlanner si está presente y habilitado.
     try {
       boolean usePPFF = NetworkTableInstance.getDefault()
           .getEntry("/Shuffleboard/Tuning/Use PathPlanner FF").getBoolean(false);
@@ -445,15 +444,14 @@ public class DriveSubsystem extends SubsystemBase {
           .getEntry("/Shuffleboard/Tuning/PP FF Scale").getDouble(1.0);
 
       if (usePPFF && ff != null) {
-        // PathPlanner provides arrays of accelerations (m/s^2). We'll take the first
-        // available acceleration value as a conservative estimate of current accel.
+        // PathPlanner proporciona arrays de aceleraciones (m/s²); usamos la primera como estimación conservadora.
         double acc = 0.0;
         double[] accs = ff.accelerationsMPSSq();
         if (accs != null && accs.length > 0) {
           acc = accs[0] * ppScale;
         }
 
-        // Add the acceleration feedforward component (ka * acc) to both sides.
+        // Añadir el componente de feedforward por aceleración (ka * acc) a ambos lados.
         leftVolts += DriveConstants.kDriveKA * acc;
         rightVolts += DriveConstants.kDriveKA * acc;
       }
@@ -462,7 +460,7 @@ public class DriveSubsystem extends SubsystemBase {
   Logger.recordOutput("Telemetry/Errors", "DriveSubsystem: failed to apply PathPlanner feedforward -> " + e.toString());
         m_loggedFFError = true;
       }
-      // Non-fatal otherwise
+      // No es fatal en otro caso.
     }
 
     tankDriveVolts(leftVolts, rightVolts);
@@ -478,14 +476,14 @@ public class DriveSubsystem extends SubsystemBase {
   public void simulationPeriodic() {
     if (m_driveSim == null) return;
 
-    // setInputs expects volts; get() is percent output [-1,1] so multiply by 12 (WPILib 2026).
+    // setInputs espera voltios; get() es salida en porcentaje [-1,1], multiplicar por 12 (WPILib 2026).
     m_driveSim.setInputs(
         m_leftGroup.get() * 12.0,
         m_rightGroup.get() * 12.0
     );
     m_driveSim.update(0.02);
 
-    // Sim returns wheel distances in meters; convert to motor rotations for SparkMax encoders.
+    // El sim devuelve distancias de rueda en metros; convertir a rotaciones de motor para encoders SparkMax.
     double leftMeters = m_driveSim.getLeftPositionMeters();
     double rightMeters = m_driveSim.getRightPositionMeters();
     double wheelCirc = Math.PI * DriveConstants.kWheelDiameterMeters;
@@ -497,6 +495,6 @@ public class DriveSubsystem extends SubsystemBase {
     m_rightFrontEncoder.setPosition(rightRotations);
     m_rightRearEncoder.setPosition(rightRotations);
 
-    // Sim gyro: OdometrySubsystem uses getSimHeading() in simulation so pose stays correct in sim.
+    // Giro del sim: OdometrySubsystem usa getSimHeading() en simulación para que la pose sea correcta.
   }
 }

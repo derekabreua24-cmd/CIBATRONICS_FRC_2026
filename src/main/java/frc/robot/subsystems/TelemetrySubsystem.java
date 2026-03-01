@@ -50,7 +50,7 @@ public class TelemetrySubsystem extends SubsystemBase {
   private final GenericEntry m_driveActiveCommandEntry;
   private final GenericEntry m_intakeActiveCommandEntry;
   // Subsistema de ejemplo eliminado — sin telemetria relacionada con el ejemplo
-    // Driver tab compact entries
+    // Entradas compactas de la pestaña Driver
     private final GenericEntry m_driverLeftAvgEntry;
     private final GenericEntry m_driverShooterVelEntry;
     private final GenericEntry m_driverNavXYawEntry;
@@ -80,7 +80,7 @@ public class TelemetrySubsystem extends SubsystemBase {
   private final GenericEntry m_intakeVelEntry;
   private final GenericEntry m_intakeCurrentEntry;
   
-  // Indexer removed from project — telemetry fields omitted
+  // Indexer eliminado del proyecto; campos de telemetría omitidos
   private final GenericEntry m_shooterVelEntry;
   private final GenericEntry m_shooterCurrentEntry;
   private final GenericEntry m_navxYawEntry;
@@ -97,10 +97,10 @@ public class TelemetrySubsystem extends SubsystemBase {
 
   // Field2d para visualizar pose del robot y objetos de vision en Shuffleboard
   private final Field2d m_field2d;
-  // Driver/Dev mode toggle
+  // Alternancia modo Driver/Dev
   private final GenericEntry m_driverModeEntry;
 
-  // Snapshot logging (throttled) - runtime configurable
+  // Registro de instantáneas (limitado); configurable en tiempo de ejecución
   private double m_snapshotPeriodSec = 0.2; // 5 Hz default
   private double m_lastSnapshotTime = 0.0;
   // Runtime display / logging controls
@@ -109,7 +109,7 @@ public class TelemetrySubsystem extends SubsystemBase {
   private final GenericEntry m_intakeReversedEntry;
   private final GenericEntry m_visionEnabledEntry;
 
-  // Shooter and feed tuning entries (synced to Tuning table in periodic() for runtime tuning)
+  // Entradas de afinación de shooter y alimentación (sincronizadas con la tabla Tuning en periodic() para afinación en vivo)
   private final GenericEntry m_shooterSetEntry;
   private final GenericEntry m_shooterPEntry;
   private final GenericEntry m_shooterIEntry;
@@ -176,7 +176,7 @@ public class TelemetrySubsystem extends SubsystemBase {
   // Diseño de comandos activos (por subsistema)
   var activeLayout = tab.getLayout("Active Commands", BuiltInLayouts.kList).withSize(3, 2);
   m_driveActiveCommandEntry = activeLayout.add("Drive Active", "").getEntry();
-  // Example active command removed
+  // Comando activo de ejemplo eliminado
   m_intakeActiveCommandEntry = activeLayout.add("Intake Active", "").getEntry();
   m_shooterActiveCommandEntry = activeLayout.add("Shooter Active", "").getEntry();
   
@@ -210,7 +210,7 @@ public class TelemetrySubsystem extends SubsystemBase {
   m_intakeCurrentEntry = intakeLayout.add("Intake Current", 0.0).getEntry();
   m_intakeReversedEntry = intakeLayout.add("Intake Reversed", false).getEntry();
 
-  // Indexer telemetry removed
+  // Telemetría del indexer eliminada
 
   // Diseño de Shooter
   var shooterLayout = tab.getLayout("Shooter", BuiltInLayouts.kList).withSize(2, 3);
@@ -229,7 +229,7 @@ public class TelemetrySubsystem extends SubsystemBase {
   m_turnIEntry = tuningLayout.add("Turn I", 0.0).getEntry();
   m_turnDEntry = tuningLayout.add("Turn D", 0.001).getEntry();
   m_turnToleranceEntry = tuningLayout.add("Turn Tol Deg", 2.0).getEntry();
-  // Vision fusion toggle (runtime A/B testing)
+  // Alternancia de fusión de visión (pruebas A/B en tiempo de ejecución)
   m_visionEnabledEntry = tuningLayout.add("Vision Fusion Enabled", true).getEntry();
 
   m_estStateXEntry = tuningLayout.add("Estimator State Std X", 0.05).getEntry();
@@ -257,7 +257,7 @@ public class TelemetrySubsystem extends SubsystemBase {
   tuningTable.getEntry("EstStateX").setDouble(m_estStateXEntry.getDouble(0.05));
   tuningTable.getEntry("EstVisionX").setDouble(m_estVisionXEntry.getDouble(0.5));
 
-  // Initial sync to Tuning table (periodic() keeps it updated for runtime tuning)
+  // Sincronización inicial con la tabla Tuning (periodic() la mantiene actualizada para afinación en vivo)
   tuningTable.getEntry("ShooterSetpointRPM").setDouble(m_shooterSetEntry.getDouble(4500.0));
   tuningTable.getEntry("ShooterP").setDouble(m_shooterPEntry.getDouble(0.0002));
   tuningTable.getEntry("ShooterI").setDouble(m_shooterIEntry.getDouble(0.0));
@@ -273,7 +273,7 @@ public class TelemetrySubsystem extends SubsystemBase {
   m_operatorLeftYEntry = controls.add("Operator Left Y", 0.0).getEntry();
   m_operatorRightXEntry = controls.add("Operator Right X", 0.0).getEntry();
 
-  // Display / runtime controls for telemetry
+  // Controles de visualización y tiempo de ejecución para telemetría
   var displayLayout = tab.getLayout("Display", BuiltInLayouts.kList).withSize(2, 2).withPosition(2, 4);
   m_extendedLoggingEntry = displayLayout.add("Extended Logging", true).getEntry();
   m_snapshotRateEntry = displayLayout.add("Snapshot Rate (Hz)", 5.0).getEntry();
@@ -319,7 +319,7 @@ public class TelemetrySubsystem extends SubsystemBase {
     String timestamped = String.format("%.3f: %s", Timer.getFPGATimestamp(), event);
     // Mostrar el ultimo evento en Shuffleboard
     m_eventLogEntry.setString(timestamped);
-    // Also update the compact driver event log entry if present
+    // Actualizar también la entrada compacta del log de eventos del driver si existe
   try { m_driverEventLogEntry.setString(timestamped); } catch (RuntimeException e) { Logger.recordOutput("Telemetry/Errors", "TelemetrySubsystem: failed to set driver event entry -> " + e.toString()); }
     // Tambien escribir en el registro persistente de datos (AdvantageKit Logger)
   Logger.recordOutput("Telemetry/Event", timestamped);
@@ -327,9 +327,9 @@ public class TelemetrySubsystem extends SubsystemBase {
 
   @Override
   public void periodic() {
-  // Odometry is updated only in OdometrySubsystem.periodic() to avoid double-updating the pose estimator.
+  // La odometría se actualiza solo en OdometrySubsystem.periodic() para no actualizar dos veces el estimador de pose.
 
-  // Sync Shuffleboard tuning entries to Tuning table so ShooterSubsystem and ShootSequenceCommand see runtime changes
+  // Sincronizar entradas de afinación de Shuffleboard a la tabla Tuning para que ShooterSubsystem y ShootSequenceCommand vean cambios en vivo
   NetworkTable tuningTable = NetworkTableInstance.getDefault().getTable("Tuning");
   tuningTable.getEntry("TurnP").setDouble(m_turnPEntry.getDouble(0.02));
   tuningTable.getEntry("TurnI").setDouble(m_turnIEntry.getDouble(0.0));
@@ -351,13 +351,12 @@ public class TelemetrySubsystem extends SubsystemBase {
   var maybeTs = m_vision.getLastTimestamp();
   var maybeStdDevs = m_vision.getLastVisionStdDevs();
         if (maybePose.isPresent() && maybeTs.isPresent()) {
-        // Only apply vision measurements when not in teleop and when the runtime toggle
-        // for vision fusion is enabled. This lets us do A/B testing at runtime.
+        // Aplicar medidas de visión solo cuando no estamos en teleop y el toggle de fusión de visión está activado.
         boolean visionEnabled = true;
         try {
           visionEnabled = m_visionEnabledEntry.getBoolean(true);
         } catch (RuntimeException ex) {
-          // If Shuffleboard entry missing, default to enabled
+          // Si falta la entrada en Shuffleboard, usar habilitado por defecto
           visionEnabled = true;
         }
         if (visionEnabled && !edu.wpi.first.wpilibj.DriverStation.isTeleop()) {
@@ -397,7 +396,7 @@ public class TelemetrySubsystem extends SubsystemBase {
       m_operatorRightXEntry.setDouble(m_operatorController.getRightX());
     }
 
-  // Update intake reversed indicator
+  // Actualizar indicador de intake en reversa
   try {
     m_intakeReversedEntry.setBoolean(m_intake.isReversed());
   } catch (RuntimeException e) {
@@ -418,7 +417,7 @@ public class TelemetrySubsystem extends SubsystemBase {
   Logger.recordOutput("Telemetry/DriveRightAvg", m_drive.getRightAverage());
   Logger.recordOutput("Telemetry/IntakeSet", m_intake.getSetpoint());
 
-  // Drive/intake encoder & current telemetry (dev only)
+  // Telemetría de encoders y corriente del drive/intake (solo en modo dev)
   boolean extended = m_extendedLoggingEntry.getBoolean(true);
   if (!driverMode) {
     m_leftPosEntry.setDouble(m_drive.getLeftAveragePosition());
@@ -429,7 +428,7 @@ public class TelemetrySubsystem extends SubsystemBase {
     m_rightVelEntry.setDouble(m_drive.getRightAverageVelocity());
     m_rightCurrentEntry.setDouble(m_drive.getRightTotalCurrent());
 
-  // Update optional detailed per-motor telemetry only when extended logging enabled
+  // Actualizar telemetría detallada por motor solo cuando el registro extendido está habilitado
   if (extended) {
       m_leftFrontVoltEntry.setDouble(m_drive.getLeftFrontVoltage());
       m_leftRearVoltEntry.setDouble(m_drive.getLeftRearVoltage());
@@ -441,7 +440,7 @@ public class TelemetrySubsystem extends SubsystemBase {
       m_rightRearTempEntry.setDouble(m_drive.getRightRearTemperature());
     }
   } else {
-    // In driver mode, update driver Field2d as well
+    // En modo driver, actualizar también el Field2d del driver
     try {
       m_field2dDriver.setRobotPose(m_drive.getPose());
     } catch (RuntimeException e) {
@@ -471,8 +470,8 @@ public class TelemetrySubsystem extends SubsystemBase {
     Command scmd = m_shooter.getCurrentCommand();
     m_shooterActiveCommandEntry.setString(scmd == null ? "None" : scmd.getClass().getSimpleName());
 
-    // Throttled comprehensive snapshot log (CSV-ish) to DataLogManager
-    // Allow runtime tuning of snapshot rate
+    // Registro de instantánea completa limitado (estilo CSV).
+    // Permitir ajustar la tasa de instantáneas en tiempo de ejecución.
     double reqHz = m_snapshotRateEntry.getDouble(5.0);
     if (reqHz > 0.001) {
       m_snapshotPeriodSec = 1.0 / reqHz;
@@ -526,11 +525,11 @@ public class TelemetrySubsystem extends SubsystemBase {
         }
       }
 
-  // Compact vs extended snapshot (compact UI mode is handled separately)
+  // Instantánea compacta vs extendida (el modo UI compacto se trata por separado)
       java.util.List<String> parts = new java.util.ArrayList<>();
       parts.add(String.format("%.3f", now));
       parts.add(String.format("%.3f", DriverStation.getMatchTime()));
-      parts.add(String.format("%.3f", now)); // fpgaTime
+      parts.add(String.format("%.3f", now)); // tiempo FPGA
       parts.add(String.format("%.3f", pose.getX()));
       parts.add(String.format("%.3f", pose.getY()));
       parts.add(String.format("%.2f", pose.getRotation().getDegrees()));
@@ -539,7 +538,7 @@ public class TelemetrySubsystem extends SubsystemBase {
       parts.add(visionDeg);
       parts.add(visionTs);
 
-      // Drive basics
+      // Datos básicos del drive
       parts.add(String.format("%.3f", m_drive.getLeftAveragePosition()));
       parts.add(String.format("%.3f", m_drive.getLeftAverageVelocity()));
       parts.add(String.format("%.3f", m_drive.getLeftTotalCurrent()));
@@ -586,7 +585,7 @@ public class TelemetrySubsystem extends SubsystemBase {
       parts.add(String.format("%.3f", m_shooter.getOutputCurrent()));
       parts.add(String.format("%.3f", m_shooter.getLastOutputPercent()));
 
-      // NavX and controls
+      // NavX y controles
       parts.add(String.format("%.3f", m_navx.getYaw()));
       parts.add(String.format("%.3f", m_navx.getPitch()));
       parts.add(String.format("%.3f", m_navx.getRoll()));

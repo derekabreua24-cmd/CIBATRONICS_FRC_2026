@@ -13,7 +13,7 @@ public class DriveCommand extends Command {
   private final CommandXboxController m_controller;
 
   // === ADDED ===
-  // Slew limiters para suavizar cambios bruscos
+  // Limitadores de slew para suavizar cambios bruscos
   private final SlewRateLimiter m_fwdLimiter = new SlewRateLimiter(3.0);
   private final SlewRateLimiter m_rotLimiter = new SlewRateLimiter(3.0);
 
@@ -25,7 +25,7 @@ public class DriveCommand extends Command {
 
   @Override
   public void execute() {
-    // Joystick deadbands; negate rot so stick right = robot turns right (WPILib arcadeDrive positive = left).
+    // Zonas muertas del joystick; negar rot para que palanca a la derecha = robot gira a la derecha (arcadeDrive de WPILib positivo = izquierda).
     double fwd = -MathUtil.applyDeadband(m_controller.getLeftY(), 0.05);
     double rot = -MathUtil.applyDeadband(m_controller.getRightX(), 0.05);
 
@@ -35,7 +35,7 @@ public class DriveCommand extends Command {
     rot = Math.copySign(rot * rot, rot);
 
     // === ADDED ===
-    // Slew rate limiting
+    // Limitación de slew rate
     fwd = m_fwdLimiter.calculate(fwd);
     rot = m_rotLimiter.calculate(rot);
 

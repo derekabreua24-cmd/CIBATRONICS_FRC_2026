@@ -32,7 +32,7 @@ public class OdometrySubsystem extends SubsystemBase {
 
   @Override
   public void periodic() {
-    // In simulation, use drivetrain sim heading so pose is correct; on robot use NavX (WPILib 2026).
+    // En simulación usar el rumbo del sim del tren de rodaje para que la pose sea correcta; en robot usar NavX (WPILib 2026).
     Rotation2d heading =
         (RobotBase.isSimulation() && m_drive.getSimHeading().isPresent())
             ? m_drive.getSimHeading().get()
@@ -48,11 +48,11 @@ public class OdometrySubsystem extends SubsystemBase {
   }
 
   /**
-   * Reinicia la odometria a una pose especificada usando la orientacion actual del giroscopio.
-   * Se confia en el heading del giroscopio para la rotacion.
+   * Reinicia la odometría a la pose indicada.
+   * Usa la rotación de la pose (p. ej. la que envía PathPlanner al iniciar una ruta).
    */
   public void resetOdometry(Pose2d pose) {
-    Rotation2d heading = m_navx.getRotation2d();
+    Rotation2d heading = pose.getRotation();
     m_drive.resetOdometry(pose, heading);
     Logger.recordOutput("Odometry/Reset", "[Odometry] Reset to pose: " + pose);
   }

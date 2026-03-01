@@ -8,10 +8,10 @@ import frc.robot.Constants.DriveConstants;
 /** Subsistema sencillo de intake usando un único SparkMax. Use kBrushless para NEO; kBrushed para brushed (ver Constants). */
 public class IntakeSubsystem extends SubsystemBase {
   private final SparkMax m_intake = new SparkMax(DriveConstants.kIntakeMotorPort, MotorType.kBrushed);
-  // When true, intake motor direction is inverted (so run(...) will flip sign)
+  // Si es true, el sentido del motor del intake está invertido (run(...) cambia el signo).
   private boolean m_reversed = false;
 
-  /** REV SparkMax setInverted() is deprecated in favor of config-based inversion; suppress until migrated. */
+  /** setInverted() de REV SparkMax está obsoleto en favor de la inversión por config; suprimir aviso hasta migrar. */
   @SuppressWarnings("deprecation")
   public IntakeSubsystem() {
     // Configurar inversión si es necesario
@@ -23,13 +23,13 @@ public class IntakeSubsystem extends SubsystemBase {
     m_intake.set(m_reversed ? -kIntakeSpeed : kIntakeSpeed);
   }
 
-  /** Toggle the intake direction; subsequent run() calls will be inverted when reversed. */
+  /** Alterna el sentido del intake; las llamadas a run() posteriores se invertirán cuando esté en reversa. */
   public void toggleReverse() {
     m_reversed = !m_reversed;
     org.littletonrobotics.junction.Logger.recordOutput("Intake/State", "Reversed=" + m_reversed);
   }
 
-  /** Returns true if intake direction is currently reversed. */
+  /** Devuelve true si el sentido del intake está actualmente invertido. */
   public boolean isReversed() {
     return m_reversed;
   }

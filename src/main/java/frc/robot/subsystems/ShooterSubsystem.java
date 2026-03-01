@@ -27,11 +27,11 @@ public class ShooterSubsystem extends SubsystemBase {
   @SuppressWarnings("removal")
 public ShooterSubsystem() {
 
-  // Shooter uses brushed SparkMax controllers (brush type depends on the motor attached)
+  // El shooter usa controladores SparkMax brushed (el tipo depende del motor conectado)
   m_shooterFront = new SparkMax(DriveConstants.kShooterFrontMotorPort, MotorType.kBrushed);
   m_shooterRear = new SparkMax(DriveConstants.kShooterRearMotorPort, MotorType.kBrushed);
 
-  // Construir un feedforward simple usando constantes definidas en Constants
+  // Construir feedforward simple con las constantes definidas en Constants
   m_feedforward = new SimpleMotorFeedforward(
     DriveConstants.kShooterKS,
     DriveConstants.kShooterKV,
@@ -40,10 +40,9 @@ public ShooterSubsystem() {
   m_shooterGroup = new MotorControllerGroup(m_shooterFront, m_shooterRear);
   // Controlador PID (salida en porcentaje). Las ganancias se leeran desde la tabla "Tuning".
   m_pid = new PIDController(0.0, 0.0, 0.0);
-  // Si el cableado físico requiere invertir un motor, use setInverted en el grupo
-  // o configure las inversiones en cada motor según sea necesario. Ejemplo:
-  // m_shooterGroup.setInverted(true);
-  // Configuracion segura para los motores del shooter
+  // Si el cableado requiere invertir un motor, usar setInverted en el grupo o configurar inversiones por motor.
+  // Ejemplo: m_shooterGroup.setInverted(true);
+  // Configuración segura para los motores del shooter.
   try {
     com.revrobotics.spark.config.SparkMaxConfig cfg = new com.revrobotics.spark.config.SparkMaxConfig();
     cfg.idleMode(com.revrobotics.spark.config.SparkBaseConfig.IdleMode.kCoast);
@@ -68,8 +67,8 @@ public void setSpeed(double speed) {
   }
 
   /**
-   * Sets shooter RPM from distance to target (e.g. from vision or limelight).
-   * Uses linear model: RPM = base + slope * distance, clamped to min/max. Tune in Constants.ShooterDistanceConstants.
+   * Establece la RPM del shooter según la distancia al objetivo (p. ej. desde visión o limelight).
+   * Modelo lineal: RPM = base + pendiente × distancia, limitado a min/max. Afinar en Constants.ShooterDistanceConstants.
    */
   public void setVelocitySetpointFromDistanceMeters(double distanceMeters) {
     double rpm =

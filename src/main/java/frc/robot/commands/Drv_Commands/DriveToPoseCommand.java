@@ -17,9 +17,9 @@ public class DriveToPoseCommand extends Command {
   private final double m_posTolMeters;
   private final double m_angTolRad;
 
-  // Tunable gains
-  private static final double kP_LINEAR = 1.2; // m/s per meter error
-  private static final double kP_ANG = 2.0; // rad/s per rad error
+  // Ganancias ajustables
+  private static final double kP_LINEAR = 1.2; // m/s por metro de error
+  private static final double kP_ANG = 2.0; // rad/s por rad de error
 
   public DriveToPoseCommand(
       DriveSubsystem drive,
@@ -39,19 +39,19 @@ public class DriveToPoseCommand extends Command {
 
   @Override
   public void initialize() {
-    // No-op
+    // Sin operación
   }
 
   @Override
   public void execute() {
     var pose = m_odometry.getPose();
 
-    // Vector to target
+    // Vector hacia el objetivo
     double dx = m_target.getX() - pose.getX();
     double dy = m_target.getY() - pose.getY();
     double distance = Math.hypot(dx, dy);
 
-    // Target angle of motion
+    // Ángulo objetivo del movimiento
     double targetAngleRad = Math.atan2(dy, dx);
     double headingRad = pose.getRotation().getRadians();
     double headingError = targetAngleRad - headingRad;
@@ -60,16 +60,16 @@ public class DriveToPoseCommand extends Command {
     headingError = Math.atan2(Math.sin(headingError), Math.cos(headingError));
 
     // === ADDED ===
-    // Forward velocity scaled by heading alignment
+    // Velocidad hacia adelante escalada por alineación del rumbo
     double forward = kP_LINEAR * distance * Math.cos(headingError);
     forward = Math.copySign(Math.min(Math.abs(forward), m_maxSpeed), forward);
 
     // === ADDED ===
-    // Turn toward target direction + final rotation if needed
+    // Girar hacia la dirección objetivo más la rotación final si hace falta
     double finalAngleError = m_target.getRotation().minus(pose.getRotation()).getRadians();
     finalAngleError = Math.atan2(Math.sin(finalAngleError), Math.cos(finalAngleError));
 
-    // Rotational correction combines heading + final orientation error
+    // La corrección rotacional combina rumbo y error de orientación final
     double rot = clamp(kP_ANG * (headingError + finalAngleError), -0.8, 0.8);
 
     m_drive.arcadeDrive(forward, rot);

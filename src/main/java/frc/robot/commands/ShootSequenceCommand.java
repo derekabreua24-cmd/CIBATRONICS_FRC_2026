@@ -50,8 +50,8 @@ public class ShootSequenceCommand extends Command {
     double currentRpm = Math.abs(m_shooter.getAverageVelocity());
     if (Math.abs(currentRpm - expectedRpm) <= kRpmTolerance) {
       // Si el lanzador esta a velocidad: alimentar segun el modo seleccionado
-      // Indexer was removed; keep intake running (intake was started in initialize())
-      // For pulse-mode we keep internal timers but no indexer motor calls.
+  // El indexer fue eliminado; mantener el intake en marcha (se inició en initialize()).
+  // En modo pulso se mantienen temporizadores internos pero no hay llamadas al motor del indexer.
       if (!continuous) {
         long now = System.currentTimeMillis();
         if (startFeedTime == 0) {
@@ -79,12 +79,12 @@ public class ShootSequenceCommand extends Command {
   public void end(boolean interrupted) {
     m_shooter.stop();
     m_intake.stop();
-    // Logging disabled here (AdvantageKit used elsewhere)
+    // Registro deshabilitado aquí (AdvantageKit se usa en otros sitios)
   }
 
   @Override
   public boolean isFinished() {
-    // Designed to be held by the operator; never finishes on its own.
+    // Diseñado para mantenerse pulsado por el operador; no termina por sí solo.
     return false;
   }
 }
