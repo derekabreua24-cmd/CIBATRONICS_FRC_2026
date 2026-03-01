@@ -349,6 +349,7 @@ public class TelemetrySubsystem extends SubsystemBase {
     if (m_vision != null) {
   var maybePose = m_vision.getLastPose();
   var maybeTs = m_vision.getLastTimestamp();
+  var maybeStdDevs = m_vision.getLastVisionStdDevs();
         if (maybePose.isPresent() && maybeTs.isPresent()) {
         // Only apply vision measurements when not in teleop and when the runtime toggle
         // for vision fusion is enabled. This lets us do A/B testing at runtime.
@@ -360,7 +361,11 @@ public class TelemetrySubsystem extends SubsystemBase {
           visionEnabled = true;
         }
         if (visionEnabled && !edu.wpi.first.wpilibj.DriverStation.isTeleop()) {
-          m_drive.addVisionMeasurement(maybePose.get(), maybeTs.getAsDouble());
+          if (maybeStdDevs.isPresent()) {
+            m_drive.addVisionMeasurement(maybePose.get(), maybeTs.getAsDouble(), maybeStdDevs.get());
+          } else {
+            m_drive.addVisionMeasurement(maybePose.get(), maybeTs.getAsDouble());
+          }
         }
       }
     }

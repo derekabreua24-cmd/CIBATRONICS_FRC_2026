@@ -50,6 +50,7 @@ import edu.wpi.first.wpilibj.DriverStation.Alliance;
 import com.pathplanner.lib.auto.AutoBuilder;
 import com.pathplanner.lib.config.RobotConfig;
 import com.pathplanner.lib.controllers.PPLTVController;
+import com.pathplanner.lib.util.PathPlannerLogging;
 import edu.wpi.first.wpilibj2.command.sysid.SysIdRoutine;
 
 public class RobotContainer {
@@ -108,9 +109,22 @@ private GenericEntry m_angTolEntry;
           CameraCalibrationLoader.loadFromProperties(
               "camera/camera_calib.properties");
 
-      // Prefer a deploy-time APRILTAG JSON if present (e.g. apriltagfield_2026.json)
+      // 1) Prefer built-in 2026 layouts when available (WPILib 2026.2+: k2026RebuiltAndymark, k2026RebuiltWelded). loadField() is the modern API (replaces deprecated loadAprilTagLayoutField).
       edu.wpi.first.apriltag.AprilTagFieldLayout fieldLayout = null;
+      for (edu.wpi.first.apriltag.AprilTagFields f : edu.wpi.first.apriltag.AprilTagFields.values()) {
+        if (f.name().toLowerCase().contains("2026")) {
+          try {
+            fieldLayout = edu.wpi.first.apriltag.AprilTagFieldLayout.loadField(f);
+            Logger.recordOutput("Telemetry/Log", "Using built-in AprilTagFieldLayout: " + f.name());
+            break;
+          } catch (Throwable t) {
+            Logger.recordOutput("Telemetry/Errors", "AprilTagFieldLayout.loadField(" + f.name() + ") failed: " + t.toString());
+          }
+        }
+      }
+
       try {
+        if (fieldLayout == null) {
         java.nio.file.Path deploy = edu.wpi.first.wpilibj.Filesystem.getDeployDirectory().toPath();
         java.nio.file.Path[] candidates = new java.nio.file.Path[] {
           deploy.resolve("apriltagfield_2026.json"),
@@ -127,18 +141,12 @@ private GenericEntry m_angTolEntry;
         }
 
         if (found != null) {
-          // Use reflection to call AprilTagFieldLayout.loadFromFile(File) if available.
+          // Modern API: constructor AprilTagFieldLayout(Path) loads from JSON (no reflection).
           try {
-            Class<?> cls = Class.forName("edu.wpi.first.apriltag.AprilTagFieldLayout");
-            java.lang.reflect.Method m = cls.getMethod("loadFromFile", java.io.File.class);
-            Object obj = m.invoke(null, found.toFile());
-            if (obj instanceof edu.wpi.first.apriltag.AprilTagFieldLayout) {
-              fieldLayout = (edu.wpi.first.apriltag.AprilTagFieldLayout) obj;
-              Logger.recordOutput("Telemetry/Log", "Loaded AprilTag field layout from deploy: " + found.toString());
-            }
-          } catch (Throwable t) {
-            // reflection failed; fall back below
-            Logger.recordOutput("Telemetry/Errors", "AprilTagFieldLayout.loadFromFile reflection failed: " + t.toString());
+            fieldLayout = new edu.wpi.first.apriltag.AprilTagFieldLayout(found);
+            Logger.recordOutput("Telemetry/Log", "Loaded AprilTag field layout from deploy: " + found.toString());
+          } catch (java.io.IOException e) {
+            Logger.recordOutput("Telemetry/Errors", "AprilTagFieldLayout from file failed: " + e.toString());
           }
         }
 
@@ -160,6 +168,7 @@ private GenericEntry m_angTolEntry;
             Logger.recordOutput("Telemetry/Errors", "Failed to export AprilTagFieldLayout to deploy: " + t.toString());
           }
         }
+        }
       } catch (Throwable t) {
         // Defensive fallback: if anything goes wrong, try to load the default field layout
         try {
@@ -171,6 +180,9 @@ private GenericEntry m_angTolEntry;
         }
       }
 
+      if (fieldLayout == null) {
+        Logger.recordOutput("Telemetry/Errors", "Vision disabled: no AprilTag field layout available.");
+      } else {
       m_visionSubsystem =
           new VisionSubsystem(fieldLayout, calib.cameraToRobot);
 
@@ -186,6 +198,7 @@ private GenericEntry m_angTolEntry;
 
   edu.wpi.first.wpilibj.Filesystem.getDeployDirectory();
   Logger.recordOutput("Telemetry/Log", "Vision successfully initialized (2026 Rebuilt).");
+      }
 
       } catch (UnsatisfiedLinkError | NoClassDefFoundError e) {
         // Native library load failures (UnsatisfiedLinkError) or missing classes should
@@ -290,6 +303,15 @@ private GenericEntry m_angTolEntry;
     m_driveSubsystem
 );
   Logger.recordOutput("Telemetry/Log", "PathPlanner 2026 fully configured.");
+
+      // Log path/target to AdvantageKit so AdvantageScope can show them in the 2D/3D Field Poses section.
+      PathPlannerLogging.setLogCurrentPoseCallback(
+          pose -> Logger.recordOutput("PathPlanner/CurrentPose", pose));
+      PathPlannerLogging.setLogTargetPoseCallback(
+          pose -> Logger.recordOutput("PathPlanner/TargetPose", pose));
+      PathPlannerLogging.setLogActivePathCallback(
+          poses -> Logger.recordOutput("PathPlanner/ActivePath",
+              poses.toArray(new edu.wpi.first.math.geometry.Pose2d[0])));
 
             // Construir el selector de autos de PathPlanner y mostrarlo en Shuffleboard
             try {

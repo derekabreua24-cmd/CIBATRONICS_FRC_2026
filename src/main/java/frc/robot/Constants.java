@@ -82,4 +82,22 @@ public final class Constants {
     public static final double kShooterRpmMin = 2800.0;
     public static final double kShooterRpmMax = 5400.0;
   }
+
+  /** Vision pose fusion: std devs for addVisionMeasurement (m, m, rad). Larger = trust vision less. */
+  public static class VisionConstants {
+    /** Std dev (m) for x/y when multiple tags and close. */
+    public static final double kVisionStdDevXYMultiTagClose = 0.06;
+    /** Std dev (m) for x/y when single tag or far. */
+    public static final double kVisionStdDevXYSingleOrFar = 0.2;
+    /** Std dev (rad) for theta when multiple tags. */
+    public static final double kVisionStdDevThetaMultiTag = 0.05;
+    /** Std dev (rad) for theta when single tag. */
+    public static final double kVisionStdDevThetaSingle = 0.12;
+    /** Distance (m) beyond which we increase std dev (tag far). */
+    public static final double kVisionFarDistanceMeters = 2.0;
+    /** Extra x/y std dev when avg tag distance > kVisionFarDistanceMeters. */
+    public static final double kVisionFarStdDevExtra = 0.08;
+    /** Extra x/y std dev when avg tag distance > 3 m. */
+    public static final double kVisionVeryFarStdDevExtra = 0.15;
+  }
 }

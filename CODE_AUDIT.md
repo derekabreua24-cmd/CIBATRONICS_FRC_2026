@@ -1,4 +1,4 @@
-# Code Audit Report — FRC Robot (2026)
+Cl# Code Audit Report — FRC Robot (2026)
 
 Audit date: 2026-02-28. Scope: all Java sources, entry points, subsystems, commands, and utilities.
 
@@ -183,3 +183,35 @@ Verified against WPILib 2026.2.2 and PathPlanner 2026 API:
 3. ~~Sync Shooter P/I/D and feed tuning from Shuffleboard to Tuning table in `TelemetrySubsystem.periodic()`.~~
 4. ~~Fix Constants comment, Robot.java doc comment, RobotContainer comment and duplicate import.~~
 5. ~~Document motor types; always clamp in DrivePhysics; clean up NavX indentation; remove placeholder test; document IntakeSubsystem deprecation.~~
+
+---
+
+## AprilTag & Vision Verification (2026)
+
+**Status:** Verified and corrected where needed.
+
+| Component | Status | Notes |
+|-----------|--------|--------|
+| **AprilTag field layout** | OK | **Modern:** 1) Built-in 2026 tried first via `AprilTagFieldLayout.loadField(f)` for any `AprilTagFields` whose name contains `"2026"` (WPILib 2026.2+: `k2026RebuiltAndymark`, `k2026RebuiltWelded`). 2) Deploy JSON via constructor `new AprilTagFieldLayout(Path)` (no reflection). 3) Fallback `kDefaultField`. Null layout → vision disabled. |
+| **AprilTag processor** | Fixed | Detector now uses **tag36h11** (FRC 2026 REBUILT standard). Previously used tag16h5, which would not detect 2026 field tags. |
+| **Camera calibration** | OK | `CameraCalibrationLoader` loads `deploy/camera/camera_calib.properties` (fx, fy, cx, cy, tagSizeMeters, optional cameraToRobot). **tagSizeMeters** set to **0.1651** (6.5 in) for 2026 REBUILT. |
+| **Camera → robot transform** | OK | Properties define camera position/rotation in robot frame (robot-to-camera). Vision uses `cameraPoseField.transformBy(m_cameraToRobot.inverse())` to get robot pose, which is correct. |
+| **VisionSubsystem** | OK | `processDetection(tagId, tagToCamera, timestamp)` → `getTagPose(tagId)` from layout, then tag→camera→robot chain; sanity filter \|x\|,\|y\| &lt; 20 m. |
+| **UsbAprilTagProcessor** | OK | USB camera, CvSink, AprilTagDetector + AprilTagPoseEstimator; separate vision thread; config (threads, decimate, sigma). |
+| **Vision → pose estimator** | OK | `TelemetrySubsystem.periodic()` calls `m_drive.addVisionMeasurement(pose, timestamp)` when vision enabled and not teleop; timestamps use FPGA time. |
+| **Reset to vision** | OK | Back button runs `ResetOdometryToVisionCommand` (resets odometry to last vision pose + current NavX heading). |
+| **Simulation** | OK | Vision init wrapped in try/catch for `UnsatisfiedLinkError`/`NoClassDefFoundError`; sim continues with vision disabled. |
+| **Shutdown** | OK | `Robot.disabledInit()` calls `RobotContainer.shutdownVision()` → `UsbAprilTagProcessor.stop()` (stops thread, closes detector, releases Mats). |
+
+**Latest AprilTag field layout (reference)**
+
+- **Official JSON format:** Two top-level keys: `"tags"` (array of `{ "ID": n, "pose": { "translation": { x, y, z }, "rotation": { "quaternion": { W, X, Y, Z } } } }`) and `"field"` (`"length"` and `"width"` in meters). FRC coordinates: NWU, origin at bottom-right of blue alliance wall. Your `deploy/apriltagfield_2026.json` matches this and includes `"field": { "length": 16.541, "width": 8.069 }`.
+- **WPILib 2026.2+ built-in fields:** `AprilTagFields.k2026RebuiltAndymark`, `AprilTagFields.k2026RebuiltWelded`. Prefer `AprilTagFieldLayout.loadField(AprilTagFields)` over the deprecated `AprilTagFields.loadAprilTagLayoutField()`. Custom layouts: use constructor `new AprilTagFieldLayout(Path)` or `AprilTagFieldLayout(String path)`.
+
+**Implemented optional improvements**
+
+1. **Vision measurement standard deviations** — `DriveSubsystem.addVisionMeasurement(pose, timestamp, stdDevs)` forwards to the pose estimator. `VisionSubsystem` computes per-measurement std devs from tag count and average distance (see `VisionConstants`); `TelemetrySubsystem` uses `getLastVisionStdDevs()` and calls the 3-arg overload when present.
+2. **Multi-tag fusion** — `VisionSubsystem.processDetections(List<VisionDetection>, timestamp)` fuses all detections in a frame: average x, y, and rotation; std devs are smaller for 2+ tags and when tags are closer. `UsbAprilTagProcessor` collects all detections per frame and calls `processDetections` once with a frame timestamp.
+3. **Frame capture timestamp** — Vision loop takes `Timer.getFPGATimestamp()` at the start of each iteration (before `grabFrame`), so the same timestamp is used for all detections in that frame and is closer to capture time.
+4. **2026 built-in field** — `RobotContainer` first iterates `AprilTagFields.values()` for any name containing `"2026"` and uses `loadField(f)` if present; then tries deploy JSON via `new AprilTagFieldLayout(found)` (modern constructor; no reflection); then falls back to `kDefaultField`.
+5. **Log vision pose to AdvantageKit** — `VisionSubsystem` logs `Vision/RobotPose` (Pose2d) in `processDetections`; add this key to AdvantageScope Poses to view the vision pose on the field.

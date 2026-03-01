@@ -21,6 +21,19 @@ The following has been verified so that the robot behaves correctly when running
 
 **Quick check:** Run "Simulate Robot", enable Teleop or Autonomous, open AdvantageScope → **File → Connect to Simulator → Default**. In the **2D Field** or **3D Field** tab, add **Odometry/Robot** to Poses; you should see the robot pose update as you drive. This setup is for **drive/pose visualization only** (no field collision or game piece physics in sim).
 
+### Testing PathPlanner autos — what to add to Poses
+
+When running a PathPlanner auto, add these to the **Poses** section in the 2D Field or 3D Field tab so you can see the path and how well the robot follows it:
+
+| Add this to Poses | What it shows |
+|-------------------|----------------|
+| **Odometry/Robot** | Actual robot pose (where the robot is). |
+| **PathPlanner/TargetPose** | Current path-following target (where the controller wants the robot to be). |
+| **PathPlanner/ActivePath** | Planned path as a pose array (the path the auto is following). |
+| **PathPlanner/CurrentPose** | Same as Odometry/Robot when a path command is running (PathPlanner’s logged pose). |
+
+Start with **Odometry/Robot** and **PathPlanner/ActivePath** to see the robot and the path; add **PathPlanner/TargetPose** to debug tracking. These keys are only published while a PathPlanner path-following command is running.
+
 ---
 
 1) Verifique las dependencias de AdvantageKit

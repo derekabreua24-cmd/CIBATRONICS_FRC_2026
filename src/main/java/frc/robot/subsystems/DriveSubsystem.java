@@ -16,7 +16,10 @@ import edu.wpi.first.math.geometry.Pose2d;
 import edu.wpi.first.math.geometry.Rotation2d;
 import edu.wpi.first.math.kinematics.DifferentialDriveKinematics;
 import edu.wpi.first.math.estimator.DifferentialDrivePoseEstimator;
+import edu.wpi.first.math.Matrix;
 import edu.wpi.first.math.VecBuilder;
+import edu.wpi.first.math.numbers.N1;
+import edu.wpi.first.math.numbers.N3;
 import edu.wpi.first.wpilibj.smartdashboard.Field2d;
 import edu.wpi.first.wpilibj.smartdashboard.SmartDashboard;
 import org.littletonrobotics.junction.Logger;
@@ -380,6 +383,11 @@ public class DriveSubsystem extends SubsystemBase {
 
   public void addVisionMeasurement(Pose2d visionPose, double timestampSeconds) {
     m_poseEstimator.addVisionMeasurement(visionPose, timestampSeconds);
+  }
+
+  /** Adds a vision measurement with per-measurement standard deviations (m, m, rad). */
+  public void addVisionMeasurement(Pose2d visionPose, double timestampSeconds, Matrix<N3, N1> visionMeasurementStdDevs) {
+    m_poseEstimator.addVisionMeasurement(visionPose, timestampSeconds, visionMeasurementStdDevs);
   }
 
   public ChassisSpeeds getChassisSpeeds() {

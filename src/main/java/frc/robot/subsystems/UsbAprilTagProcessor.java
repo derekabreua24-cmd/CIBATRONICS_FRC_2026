@@ -13,6 +13,9 @@ import org.opencv.core.Mat;
 import edu.wpi.first.wpilibj.Timer;
 import org.opencv.imgproc.Imgproc;
 
+import java.util.ArrayList;
+import java.util.List;
+
 public class UsbAprilTagProcessor extends SubsystemBase {
 
   private final UsbCamera m_camera;
@@ -50,7 +53,8 @@ public class UsbAprilTagProcessor extends SubsystemBase {
     m_sink.setSource(m_camera);
 
     m_detector = new AprilTagDetector();
-    m_detector.addFamily("tag16h5");
+    // FRC 2026 REBUILT uses 36h11 (not 16h5)
+    m_detector.addFamily("tag36h11");
 
   // Ajustes opcionales (valores seguros por defecto para roboRIO 2)
     AprilTagDetector.Config detectorConfig = m_detector.getConfig();
@@ -74,6 +78,8 @@ public class UsbAprilTagProcessor extends SubsystemBase {
 
   private void visionLoop() {
     while (m_running && !Thread.interrupted()) {
+      // Timestamp at start of iteration (closest to frame capture for addVisionMeasurement).
+      double frameTimestamp = Timer.getFPGATimestamp();
 
       long time = m_sink.grabFrame(m_frame);
 
@@ -89,14 +95,12 @@ public class UsbAprilTagProcessor extends SubsystemBase {
         continue;
       }
 
-      double timestamp = Timer.getFPGATimestamp();
+      List<VisionSubsystem.VisionDetection> list = new ArrayList<>();
       for (AprilTagDetection d : detections) {
-
         Transform3d tagToCamera = m_estimator.estimate(d);
-
-        // Reenviar deteccion al VisionSubsystem (con marca de tiempo)
-        m_vision.processDetection(d.getId(), tagToCamera, timestamp);
+        list.add(new VisionSubsystem.VisionDetection(d.getId(), tagToCamera));
       }
+      m_vision.processDetections(list, frameTimestamp);
     }
   }
 
