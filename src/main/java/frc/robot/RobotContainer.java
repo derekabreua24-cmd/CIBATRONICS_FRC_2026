@@ -269,6 +269,20 @@ public class RobotContainer {
             m_telemetrySubsystem,
             "Manual event: Driver Y pressed"));
 
+    // ----- Driver (solo): intake, shooter, stop, unjam, reverse, toggle — para pruebas con un solo controlador -----
+    m_driverController.rightTrigger()
+        .whileTrue(new ShooterCommand(m_shooterSubsystem, m_shooterRpmEntry, m_visionSubsystem));
+    m_driverController.leftTrigger()
+        .whileTrue(new IntakeCommand(m_intakeSubsystem));
+    m_driverController.rightBumper()
+        .onTrue(new frc.robot.commands.StopMechanismsCommand(m_intakeSubsystem, m_shooterSubsystem));
+    m_driverController.povDown()
+        .onTrue(new frc.robot.commands.UnjamCommand(m_intakeSubsystem));
+    m_driverController.povLeft()
+        .whileTrue(new frc.robot.commands.ReverseIntakeCommand(m_intakeSubsystem));
+    m_driverController.povRight()
+        .onTrue(new ToggleIntakeDirectionCommand(m_intakeSubsystem));
+
     m_operatorController.y()
         .onTrue(new LogEventCommand(
             m_telemetrySubsystem,
@@ -277,27 +291,18 @@ public class RobotContainer {
     // ----- Operator: stop (B), intake (LT), toggle direction (A), unjam (LB), reverse intake (RB), shooter (RT), log (Y) -----
     m_operatorController.b()
         .onTrue(new frc.robot.commands.StopMechanismsCommand(m_intakeSubsystem, m_shooterSubsystem));
-
-    // Intake: gatillo izquierdo (sentido por defecto; A cambia sentido).
     m_operatorController.leftTrigger()
         .whileTrue(new IntakeCommand(m_intakeSubsystem));
-
     m_operatorController.a()
         .onTrue(new ToggleIntakeDirectionCommand(m_intakeSubsystem));
-
-    // Unjam: un tap = pulso corto de reversa para desatascar (sin mantener).
     m_operatorController.leftBumper()
         .onTrue(new frc.robot.commands.UnjamCommand(m_intakeSubsystem));
-
-    // Intake en reversa mientras se mantiene el botón.
     m_operatorController.rightBumper()
         .whileTrue(new frc.robot.commands.ReverseIntakeCommand(m_intakeSubsystem));
-
-    // Shooter: gatillo derecho (RPM en pestaña Tuning).
     m_operatorController.rightTrigger()
         .whileTrue(new ShooterCommand(m_shooterSubsystem, m_shooterRpmEntry, m_visionSubsystem));
 
-    // Sim only: Driver A = launch one note projectile in maple-sim (no-op on real robot).
+    // Sim only: Driver A = launch one FUEL projectile in maple-sim (no-op on real robot).
     m_driverController.a()
         .onTrue(new SimLaunchNoteCommand(
             m_driveSubsystem,
@@ -401,9 +406,13 @@ public class RobotContainer {
 
   /**
    * Llamado cada ciclo de simulación. Delega en {@link MapleSimHandler} (arena maple-sim,
-   * FUEL, inyección de pose en visión).
+   * chassis e intake sim, FUEL, inyección de pose en visión).
    */
   public void simulationPeriodic() {
-    m_mapleSimHandler.simulationPeriodic(m_odometrySubsystem, m_visionSubsystem);
+    m_mapleSimHandler.simulationPeriodic(
+        m_odometrySubsystem,
+        m_visionSubsystem,
+        m_driveSubsystem,
+        m_intakeSubsystem);
   }
 }
