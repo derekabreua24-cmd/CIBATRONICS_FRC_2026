@@ -11,7 +11,8 @@ import frc.robot.commands.IntakeCommand;
 import frc.robot.subsystems.DriveSubsystem;
 import frc.robot.commands.Drv_Commands.DriveCommand;
 import frc.robot.commands.Drv_Commands.TurnToAngleCommand;
-import frc.robot.commands.SimLaunchNoteCommand;
+import frc.robot.simulation.SimLaunchNoteCommand;
+import frc.robot.simulation.MapleSimHandler;
 // IndexerSubsystem eliminado; toda la funcionalidad del indexer fue recortada del proyecto.
 import frc.robot.subsystems.TelemetrySubsystem;
 import frc.robot.subsystems.NavXSubsystem;
@@ -49,9 +50,6 @@ import edu.wpi.first.wpilibj2.command.button.CommandXboxController;
 import edu.wpi.first.wpilibj.DriverStation;
 import edu.wpi.first.wpilibj.DriverStation.Alliance;
 
-import org.ironmaple.simulation.SimulatedArena;
-
-import edu.wpi.first.math.geometry.Pose3d;
 
 // PathPlanner 2026.1.2
 import com.pathplanner.lib.auto.AutoBuilder;
@@ -78,8 +76,7 @@ public class RobotContainer {
   private VisionSubsystem m_visionSubsystem = null;
   private UsbAprilTagProcessor m_usbProcessor = null;
 
-  /** True after maple-sim field has been populated (sim only). */
-  private boolean m_mapleSimFieldInitialized = false;
+  private final MapleSimHandler m_mapleSimHandler = new MapleSimHandler();
 
   // ----- Controllers -----
   private final CommandXboxController m_driverController =
@@ -403,30 +400,10 @@ public class RobotContainer {
   }
 
   /**
-   * Llamado cada ciclo de simulación. Actualiza el mundo de física maple-sim
-   * (Team 5516 Iron Maple, https://github.com/Shenzhen-Robotics-Alliance/maple-sim),
-   * inicializa/pobla las piezas de juego una vez, registra posiciones para AdvantageScope,
-   * y inyecta pose/distance en VisionSubsystem cuando no hay cámara.
-   * Usa arena y piezas 2026 Rebuilt (FUEL). La lógica de visión/PathPlanner usa campo 2026 Rebuilt.
+   * Llamado cada ciclo de simulación. Delega en {@link MapleSimHandler} (arena maple-sim,
+   * FUEL, inyección de pose en visión).
    */
   public void simulationPeriodic() {
-    if (!edu.wpi.first.wpilibj.RobotBase.isSimulation()) {
-      return;
-    }
-    var arena = SimulatedArena.getInstance();
-    if (!m_mapleSimFieldInitialized) {
-      arena.resetFieldForAuto();
-      m_mapleSimFieldInitialized = true;
-    }
-    arena.simulationPeriodic();
-
-    // Log game piece positions (on field + in air) for AdvantageScope Field3d
-    Pose3d[] fuelPoses = arena.getGamePiecesArrayByType("Fuel");
-    Logger.recordOutput("FieldSimulation/FuelPositions", fuelPoses != null ? fuelPoses : new Pose3d[0]);
-
-    if (m_visionSubsystem != null) {
-      Pose2d pose = m_odometrySubsystem.getPose();
-      m_visionSubsystem.setSimulationPoseAndDistance(pose, 2.0);
-    }
+    m_mapleSimHandler.simulationPeriodic(m_odometrySubsystem, m_visionSubsystem);
   }
 }
