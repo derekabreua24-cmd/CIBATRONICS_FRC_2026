@@ -7,10 +7,12 @@ import frc.robot.constants.DriveConstants;
 import frc.robot.constants.ShooterConstants;
 
 import frc.robot.subsystems.IntakeSubsystem;
-import frc.robot.commands.IntakeCommand;
 import frc.robot.subsystems.DriveSubsystem;
 import frc.robot.commands.Drv_Commands.DriveCommand;
+import frc.robot.commands.Drv_Commands.ShooterCommand;
 import frc.robot.commands.Drv_Commands.TurnToAngleCommand;
+import frc.robot.commands.Intk_Commands.IntakeCommand;
+import frc.robot.commands.Intk_Commands.ToggleIntakeDirectionCommand;
 import frc.robot.simulation.SimLaunchNoteCommand;
 import frc.robot.simulation.MapleSimHandler;
 // IndexerSubsystem eliminado; toda la funcionalidad del indexer fue recortada del proyecto.
@@ -33,8 +35,6 @@ import org.littletonrobotics.junction.Logger;
 import frc.robot.subsystems.UsbAprilTagProcessor;
 import frc.robot.commands.Rst_Commands.ResetGyroCommand;
 import frc.robot.commands.Rst_Commands.ResetOdometryToVisionCommand;
-import frc.robot.commands.ShooterCommand;
-import frc.robot.commands.ToggleIntakeDirectionCommand;
 import edu.wpi.first.networktables.GenericEntry;
 
 import frc.robot.subsystems.ShooterSubsystem;
@@ -271,9 +271,9 @@ public class RobotContainer {
     m_driverController.rightBumper()
         .onTrue(new frc.robot.commands.StopMechanismsCommand(m_intakeSubsystem, m_shooterSubsystem));
     m_driverController.povDown()
-        .onTrue(new frc.robot.commands.UnjamCommand(m_intakeSubsystem));
+        .onTrue(new frc.robot.commands.Intk_Commands.UnjamCommand(m_intakeSubsystem));
     m_driverController.povLeft()
-        .whileTrue(new frc.robot.commands.ReverseIntakeCommand(m_intakeSubsystem));
+        .whileTrue(new frc.robot.commands.Intk_Commands.ReverseIntakeCommand(m_intakeSubsystem));
     m_driverController.povRight()
         .onTrue(new ToggleIntakeDirectionCommand(m_intakeSubsystem));
 
@@ -285,9 +285,9 @@ public class RobotContainer {
     m_operatorController.a()
         .onTrue(new ToggleIntakeDirectionCommand(m_intakeSubsystem));
     m_operatorController.leftBumper()
-        .onTrue(new frc.robot.commands.UnjamCommand(m_intakeSubsystem));
+        .onTrue(new frc.robot.commands.Intk_Commands.UnjamCommand(m_intakeSubsystem));
     m_operatorController.rightBumper()
-        .whileTrue(new frc.robot.commands.ReverseIntakeCommand(m_intakeSubsystem));
+        .whileTrue(new frc.robot.commands.Intk_Commands.ReverseIntakeCommand(m_intakeSubsystem));
     m_operatorController.rightTrigger()
         .whileTrue(new ShooterCommand(m_shooterSubsystem, m_shooterRpmEntry, m_visionSubsystem));
 
