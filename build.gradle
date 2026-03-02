@@ -1,11 +1,13 @@
 plugins {
     id "java"
-    id "edu.wpi.first.GradleRIO" version "2026.1.1"
+    id "edu.wpi.first.GradleRIO" version "2026.2.1"
 }
 
 repositories {
     // REV Robotics Maven repository (official)
     maven { url 'https://maven.revrobotics.com' }
+    // Maple-sim (Team 5516 Iron Maple) – https://github.com/Shenzhen-Robotics-Alliance/maple-sim
+    maven { url 'https://shenzhen-robotics-alliance.github.io/maple-sim/vendordep/repos/releases' }
 }
 
 
@@ -79,6 +81,9 @@ dependencies {
     implementation wpi.java.vendor.java()
     // REV Robotics 2026 Java library (provides CANSparkMax and related classes)
     implementation 'com.revrobotics.frc:REVLib-java:2026.0.3'
+    // Maple-sim (Team 5516 Iron Maple) – 2D physics arena for simulation
+    implementation 'org.ironmaple:maplesim-java:0.4.0-beta'
+    implementation 'org.dyn4j:dyn4j:5.0.2'
     // Vendor libraries are provided via vendordeps (see vendordeps/REVLib.json)
 
     roborioDebug wpi.java.deps.wpilibJniDebug(wpi.platforms.roborio)
