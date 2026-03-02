@@ -33,7 +33,6 @@ import org.littletonrobotics.junction.Logger;
 import frc.robot.subsystems.UsbAprilTagProcessor;
 import frc.robot.commands.Rst_Commands.ResetGyroCommand;
 import frc.robot.commands.Rst_Commands.ResetOdometryToVisionCommand;
-import frc.robot.commands.LogEventCommand;
 import frc.robot.commands.ShooterCommand;
 import frc.robot.commands.ToggleIntakeDirectionCommand;
 import edu.wpi.first.networktables.GenericEntry;
@@ -242,7 +241,7 @@ public class RobotContainer {
   }
 
   private void configureBindings() {
-    // ----- Driver: SysId (LB + A/B/X/Y), gyro reset (Start), vision reset (Back), log (Y), turn 90° (X), drive-to-pose (B) -----
+    // ----- Driver: SysId (LB + A/B/X/Y), gyro reset (Start), vision reset (Back), turn 90° (X), drive-to-pose (B) -----
     // SysId: Left Bumper + A/B/X/Y for drivetrain characterization (see CHARACTERIZATION.md).
     m_driverController.leftBumper().and(m_driverController.a()).whileTrue(
         m_driveSubsystem.sysIdQuasistatic(SysIdRoutine.Direction.kForward));
@@ -264,11 +263,6 @@ public class RobotContainer {
               m_navxSubsystem));
     }
 
-    m_driverController.y()
-        .onTrue(new LogEventCommand(
-            m_telemetrySubsystem,
-            "Manual event: Driver Y pressed"));
-
     // ----- Driver (solo): intake, shooter, stop, unjam, reverse, toggle — para pruebas con un solo controlador -----
     m_driverController.rightTrigger()
         .whileTrue(new ShooterCommand(m_shooterSubsystem, m_shooterRpmEntry, m_visionSubsystem));
@@ -283,12 +277,7 @@ public class RobotContainer {
     m_driverController.povRight()
         .onTrue(new ToggleIntakeDirectionCommand(m_intakeSubsystem));
 
-    m_operatorController.y()
-        .onTrue(new LogEventCommand(
-            m_telemetrySubsystem,
-            "Manual event: Operator Y pressed"));
-
-    // ----- Operator: stop (B), intake (LT), toggle direction (A), unjam (LB), reverse intake (RB), shooter (RT), log (Y) -----
+    // ----- Operator: stop (B), intake (LT), toggle direction (A), unjam (LB), reverse intake (RB), shooter (RT) -----
     m_operatorController.b()
         .onTrue(new frc.robot.commands.StopMechanismsCommand(m_intakeSubsystem, m_shooterSubsystem));
     m_operatorController.leftTrigger()
@@ -402,6 +391,11 @@ public class RobotContainer {
     if (m_usbProcessor != null) {
       m_usbProcessor.stop();
     }
+  }
+
+  /** Registra un evento en la telemetría (Shuffleboard/AdvantageKit). Usado para logging automático. */
+  public void logEvent(String message) {
+    m_telemetrySubsystem.logEvent(message);
   }
 
   /**

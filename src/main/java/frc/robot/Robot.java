@@ -70,6 +70,7 @@ public class Robot extends LoggedRobot {
   /** Esta función se llama una vez cada vez que el robot entra en modo Disabled. */
   @Override
   public void disabledInit() {
+    m_robotContainer.logEvent("Robot disabled");
     // Detener de inmediato los procesadores de visión al deshabilitar.
     m_robotContainer.shutdownVision();
   }
@@ -80,6 +81,7 @@ public class Robot extends LoggedRobot {
   /** Este autónomo ejecuta el comando autónomo seleccionado por la clase {@link RobotContainer}. */
   @Override
   public void autonomousInit() {
+    m_robotContainer.logEvent("Autonomous started");
     m_autonomousCommand = m_robotContainer.getAutonomousCommand();
 
     // Programar el comando autónomo seleccionado.
@@ -94,6 +96,7 @@ public class Robot extends LoggedRobot {
 
   @Override
   public void teleopInit() {
+    m_robotContainer.logEvent("Teleop started");
     // Asegura que el autónomo deje de ejecutarse al iniciar teleop.
     // Para que el autónomo continúe hasta ser interrumpido, quite esta línea.
     if (m_autonomousCommand != null) {
@@ -107,6 +110,7 @@ public class Robot extends LoggedRobot {
 
   @Override
   public void testInit() {
+    m_robotContainer.logEvent("Test started");
     // Cancelar todos los comandos al iniciar el modo de prueba.
     CommandScheduler.getInstance().cancelAll();
   }
