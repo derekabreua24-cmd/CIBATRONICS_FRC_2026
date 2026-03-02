@@ -9,7 +9,6 @@ import frc.robot.constants.ShooterConstants;
 import frc.robot.subsystems.IntakeSubsystem;
 import frc.robot.subsystems.DriveSubsystem;
 import frc.robot.commands.Drv_Commands.DriveCommand;
-import frc.robot.commands.Drv_Commands.ShooterCommand;
 import frc.robot.commands.Drv_Commands.TurnToAngleCommand;
 import frc.robot.commands.Intk_Commands.IntakeCommand;
 import frc.robot.commands.Intk_Commands.ToggleIntakeDirectionCommand;
@@ -35,6 +34,7 @@ import org.littletonrobotics.junction.Logger;
 import frc.robot.subsystems.UsbAprilTagProcessor;
 import frc.robot.commands.Rst_Commands.ResetGyroCommand;
 import frc.robot.commands.Rst_Commands.ResetOdometryToVisionCommand;
+import frc.robot.commands.Sht_Commands.ShooterCommand;
 import edu.wpi.first.networktables.GenericEntry;
 
 import frc.robot.subsystems.ShooterSubsystem;
