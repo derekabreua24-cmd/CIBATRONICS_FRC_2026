@@ -7,7 +7,6 @@ import com.revrobotics.RelativeEncoder;
 import edu.wpi.first.wpilibj2.command.Command;
 import edu.wpi.first.wpilibj2.command.SubsystemBase;
 import edu.wpi.first.wpilibj.drive.DifferentialDrive;
-import edu.wpi.first.wpilibj.motorcontrol.MotorControllerGroup;
 import edu.wpi.first.math.kinematics.ChassisSpeeds;
 import com.pathplanner.lib.util.DriveFeedforwards;
 import edu.wpi.first.networktables.NetworkTableInstance;
@@ -24,10 +23,6 @@ import edu.wpi.first.wpilibj.smartdashboard.Field2d;
 import edu.wpi.first.wpilibj.smartdashboard.SmartDashboard;
 import org.littletonrobotics.junction.Logger;
 
-// Importaciones para la simulación del tren de rodaje
-
-import edu.wpi.first.math.system.plant.DCMotor;
-import edu.wpi.first.wpilibj.simulation.DifferentialDrivetrainSim;
 import edu.wpi.first.wpilibj.RobotBase;
 
 import edu.wpi.first.units.Units;
@@ -35,6 +30,7 @@ import edu.wpi.first.units.measure.Voltage;
 import edu.wpi.first.wpilibj2.command.sysid.SysIdRoutine;
 
 import java.util.Optional;
+import java.util.function.Consumer;
 import frc.robot.constants.DriveConstants;
 
 public class DriveSubsystem extends SubsystemBase {
@@ -43,8 +39,14 @@ public class DriveSubsystem extends SubsystemBase {
   private boolean m_loggedNetworkTableError = false;
   private boolean m_loggedFFError = false;
   
-  // Variables de simulación del tren de rodaje.
-  private DifferentialDrivetrainSim m_driveSim;
+  /** MapleSim-consistent sim state: wheel positions (m) and heading (rad). Driven by maple-sim physics pose via setSimStateFromMapleSim. */
+  private double m_mapleSimLeftPosM = 0.0;
+  private double m_mapleSimRightPosM = 0.0;
+  private double m_mapleSimHeadingRad = 0.0;
+  /** Last physics pose from maple-sim for delta-based wheel position accumulation. Null on first frame or after reset. */
+  private Pose2d m_lastMapleSimPose = null;
+  /** Called when odometry is reset in sim so maple-sim chassis body can be teleported to the new pose. */
+  private Consumer<Pose2d> m_simResetCallback = null;
 
   // SysId: última tensión aplicada para que el callback de log la registre.
   private volatile double m_sysIdAppliedVoltage = 0.0;
@@ -78,19 +80,11 @@ public class DriveSubsystem extends SubsystemBase {
   private final RelativeEncoder m_rightRearEncoder = m_rightRear.getEncoder();
 
   // ===============================
-  // Grupos de motores
+  // Drive (2026: leaders only; followers set via config)
   // ===============================
 
-  @SuppressWarnings("removal")
-  private final MotorControllerGroup m_leftGroup =
-      new MotorControllerGroup(m_leftFront, m_leftRear);
-
-  @SuppressWarnings("removal")
-  private final MotorControllerGroup m_rightGroup =
-      new MotorControllerGroup(m_rightFront, m_rightRear);
-
   private final DifferentialDrive m_drive =
-      new DifferentialDrive(m_leftGroup, m_rightGroup);
+      new DifferentialDrive(m_leftFront, m_rightFront);
 
   // ===============================
   // Odometria
@@ -102,21 +96,17 @@ public class DriveSubsystem extends SubsystemBase {
   private final DifferentialDrivePoseEstimator m_poseEstimator;
 
   public DriveSubsystem() {
-    if (RobotBase.isSimulation()) {
+    // In sim, encoder/heading state is driven by maple-sim physics via setSimStateFromMapleSim (MapleSimHandler).
 
-    m_driveSim = new DifferentialDrivetrainSim(
-        DCMotor.getCIM(4),
-        DriveConstants.kDriveGearRatio,
-        DriveConstants.kSimMomentOfInertiaKgM2,
-        DriveConstants.kSimMassKg,
-        DriveConstants.kWheelDiameterMeters / 2.0,
-        DriveConstants.kTrackwidthMeters,
-        null
-    );
-}
+    // 2026 API: use SparkMax follow (config) instead of MotorControllerGroup.
+    com.revrobotics.spark.config.SparkMaxConfig followLeft = new com.revrobotics.spark.config.SparkMaxConfig();
+    followLeft.follow(m_leftFront);
+    com.revrobotics.spark.config.SparkMaxConfig followRight = new com.revrobotics.spark.config.SparkMaxConfig();
+    followRight.follow(m_rightFront);
+    m_leftRear.configure(followLeft, com.revrobotics.ResetMode.kResetSafeParameters, com.revrobotics.PersistMode.kPersistParameters);
+    m_rightRear.configure(followRight, com.revrobotics.ResetMode.kResetSafeParameters, com.revrobotics.PersistMode.kPersistParameters);
 
-
-  SmartDashboard.putData("Field", m_field);
+    SmartDashboard.putData("Field", m_field);
 
   // Seguridad de motores (motor safety)
   m_drive.setSafetyEnabled(true);
@@ -301,7 +291,7 @@ public class DriveSubsystem extends SubsystemBase {
     // La pose se actualiza en OdometrySubsystem.periodic() con updateOdometryWithTime(); aquí solo se muestra.
     Pose2d pose = m_poseEstimator.getEstimatedPosition();
 
-    // Actualizar la visualización del campo y registrar la pose para AdvantageKit
+    // Actualizar la visualización del campo y registrar la pose para AdvantageKit.
     m_field.setRobotPose(pose);
     Logger.recordOutput("Odometry/Robot", pose);
 
@@ -345,12 +335,21 @@ public class DriveSubsystem extends SubsystemBase {
   }
 
   public void resetOdometry(Pose2d pose, Rotation2d heading) {
-
-  // Reiniciar posiciones de encoder a cero antes de resetear odometría
-  m_leftFrontEncoder.setPosition(0);
+    // Reiniciar posiciones de encoder a cero antes de resetear odometría.
+    m_leftFrontEncoder.setPosition(0);
     m_leftRearEncoder.setPosition(0);
     m_rightFrontEncoder.setPosition(0);
     m_rightRearEncoder.setPosition(0);
+
+    if (RobotBase.isSimulation()) {
+      m_mapleSimLeftPosM = 0.0;
+      m_mapleSimRightPosM = 0.0;
+      m_mapleSimHeadingRad = heading.getRadians();
+      m_lastMapleSimPose = pose;
+      if (m_simResetCallback != null) {
+        m_simResetCallback.accept(pose);
+      }
+    }
 
     m_poseEstimator.resetPosition(heading, 0.0, 0.0, pose);
   }
@@ -360,12 +359,12 @@ public class DriveSubsystem extends SubsystemBase {
   }
 
   /**
-   * En simulación, devuelve el rumbo del sim del tren de rodaje para que la odometría sea correcta.
-   * Si no hay sim o es null, devuelve vacío.
+   * En simulación, devuelve el rumbo del sim (MapleSim-consistent) para que la odometría sea correcta.
+   * En robot real devuelve vacío y se usa el NavX.
    */
   public Optional<Rotation2d> getSimHeading() {
-    if (m_driveSim != null) {
-      return Optional.of(m_driveSim.getHeading());
+    if (RobotBase.isSimulation()) {
+      return Optional.of(Rotation2d.fromRadians(m_mapleSimHeadingRad));
     }
     return Optional.empty();
   }
@@ -390,16 +389,68 @@ public class DriveSubsystem extends SubsystemBase {
   }
 
   public ChassisSpeeds getChassisSpeeds() {
+    // Convertir RPM de SparkMax a metros por segundo.
+    double leftVel = rpmToMetersPerSecond(getLeftAverageVelocity());
+    double rightVel = rpmToMetersPerSecond(getRightAverageVelocity());
+    double vx = (leftVel + rightVel) / 2.0;
+    double omega = (rightVel - leftVel) / DriveConstants.kTrackwidthMeters;
+    return new ChassisSpeeds(vx, 0.0, omega);
+  }
 
-  // Convertir RPM de SparkMax a metros por segundo.
-  double leftVel = rpmToMetersPerSecond(getLeftAverageVelocity());
-  double rightVel = rpmToMetersPerSecond(getRightAverageVelocity());
+  /**
+   * In simulation, returns desired chassis speeds from current motor outputs (voltage) using the same
+   * feedforward model so maple-sim is commanded with what we're trying to do, not encoder-derived speeds.
+   */
+  public ChassisSpeeds getDesiredChassisSpeedsForSim() {
+    if (!RobotBase.isSimulation()) {
+      return getChassisSpeeds();
+    }
+    double leftVolts = m_leftFront.get() * 12.0;
+    double rightVolts = m_rightFront.get() * 12.0;
+    double ks = DriveConstants.kDriveKS;
+    double kv = DriveConstants.kDriveKV;
+    double maxSpeed = DriveConstants.kDriveEstMaxSpeed;
+    double leftVel = (Math.abs(leftVolts) > 0.01) ? (leftVolts - Math.signum(leftVolts) * ks) / kv : 0.0;
+    double rightVel = (Math.abs(rightVolts) > 0.01) ? (rightVolts - Math.signum(rightVolts) * ks) / kv : 0.0;
+    leftVel = Math.max(-maxSpeed, Math.min(maxSpeed, leftVel));
+    rightVel = Math.max(-maxSpeed, Math.min(maxSpeed, rightVel));
+    double vx = (leftVel + rightVel) / 2.0;
+    double omega = (rightVel - leftVel) / DriveConstants.kTrackwidthMeters;
+    return new ChassisSpeeds(vx, 0.0, omega);
+  }
 
-  double vx = (leftVel + rightVel) / 2.0;
-  double omega = (rightVel - leftVel) / DriveConstants.kTrackwidthMeters;
+  /**
+   * Updates sim state (encoder positions, heading) from maple-sim physics pose. Call from
+   * MapleSimHandler after arena.simulationPeriodic() so drive/odometry reflect the physics body (including collisions).
+   */
+  public void setSimStateFromMapleSim(Pose2d physicsPose) {
+    if (!RobotBase.isSimulation()) return;
+    m_mapleSimHeadingRad = physicsPose.getRotation().getRadians();
+    if (m_lastMapleSimPose != null) {
+      double dx = physicsPose.getX() - m_lastMapleSimPose.getX();
+      double dy = physicsPose.getY() - m_lastMapleSimPose.getY();
+      double dTheta = physicsPose.getRotation().getRadians() - m_lastMapleSimPose.getRotation().getRadians();
+      double arc = Math.hypot(dx, dy);
+      double halfTrack = DriveConstants.kTrackwidthMeters / 2.0;
+      double leftDelta = arc - dTheta * halfTrack;
+      double rightDelta = arc + dTheta * halfTrack;
+      m_mapleSimLeftPosM += leftDelta;
+      m_mapleSimRightPosM += rightDelta;
+    }
+    m_lastMapleSimPose = physicsPose;
+    double wheelCirc = Math.PI * DriveConstants.kWheelDiameterMeters;
+    double leftRotations = (m_mapleSimLeftPosM / wheelCirc) * DriveConstants.kDriveGearRatio;
+    double rightRotations = (m_mapleSimRightPosM / wheelCirc) * DriveConstants.kDriveGearRatio;
+    m_leftFrontEncoder.setPosition(leftRotations);
+    m_leftRearEncoder.setPosition(leftRotations);
+    m_rightFrontEncoder.setPosition(rightRotations);
+    m_rightRearEncoder.setPosition(rightRotations);
+  }
 
-  return new ChassisSpeeds(vx, 0.0, omega);
-}
+  /** Registers a callback invoked when odometry is reset in sim so maple-sim chassis can be synced (e.g. teleport body). */
+  public void setSimResetCallback(Consumer<Pose2d> callback) {
+    m_simResetCallback = callback;
+  }
 
   /**
    * Destino BiConsumer del AutoBuilder de PathPlanner: acepta velocidades deseadas del chasis
@@ -467,34 +518,14 @@ public class DriveSubsystem extends SubsystemBase {
   }
 
   public void tankDriveVolts(double leftVolts, double rightVolts) {
-  m_leftGroup.setVoltage(leftVolts);
-  m_rightGroup.setVoltage(rightVolts);
-  m_drive.feed();
+    m_leftFront.setVoltage(leftVolts);
+    m_rightFront.setVoltage(rightVolts);
+    m_drive.feed();
   }
    
   @Override
   public void simulationPeriodic() {
-    if (m_driveSim == null) return;
-
-    // setInputs espera voltios; get() es salida en porcentaje [-1,1], multiplicar por 12 (WPILib 2026).
-    m_driveSim.setInputs(
-        m_leftGroup.get() * 12.0,
-        m_rightGroup.get() * 12.0
-    );
-    m_driveSim.update(0.02);
-
-    // El sim devuelve distancias de rueda en metros; convertir a rotaciones de motor para encoders SparkMax.
-    double leftMeters = m_driveSim.getLeftPositionMeters();
-    double rightMeters = m_driveSim.getRightPositionMeters();
-    double wheelCirc = Math.PI * DriveConstants.kWheelDiameterMeters;
-    double leftRotations = (leftMeters / wheelCirc) * DriveConstants.kDriveGearRatio;
-    double rightRotations = (rightMeters / wheelCirc) * DriveConstants.kDriveGearRatio;
-
-    m_leftFrontEncoder.setPosition(leftRotations);
-    m_leftRearEncoder.setPosition(leftRotations);
-    m_rightFrontEncoder.setPosition(rightRotations);
-    m_rightRearEncoder.setPosition(rightRotations);
-
-    // Giro del sim: OdometrySubsystem usa getSimHeading() en simulación para que la pose sea correcta.
+    // Drive sim state is fully driven by maple-sim: MapleSimHandler sets chassis speeds, runs physics,
+    // then calls setSimStateFromMapleSim(pose) to sync encoder positions and heading from the physics body.
   }
 }

@@ -81,7 +81,7 @@ dependencies {
     implementation wpi.java.vendor.java()
     // REV Robotics 2026 Java library (provides CANSparkMax and related classes)
     implementation 'com.revrobotics.frc:REVLib-java:2026.0.3'
-    // Maple-sim (Team 5516 Iron Maple) – 2D physics arena for simulation
+    // Maple-sim (Team 5516 Iron Maple) – 2D physics arena for simulation (coordinates per vendordeps/maple-sim.json)
     implementation 'org.ironmaple:maplesim-java:0.4.0-beta'
     implementation 'org.dyn4j:dyn4j:5.0.2'
     // Vendor libraries are provided via vendordeps (see vendordeps/REVLib.json)

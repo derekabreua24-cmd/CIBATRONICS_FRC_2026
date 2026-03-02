@@ -129,6 +129,8 @@ public class Robot extends LoggedRobot {
    */
   @Override
   public void simulationInit() {
+    // Set initial pose from MapleSimConstants so odometry and maple-sim start at the same place.
+    m_robotContainer.resetSimulationInitialPose();
     // Start selected auto for quick smoke test.
     Logger.recordOutput("Telemetry/Log", "simulationInit: starting auto for smoke test.");
     autonomousInit();

@@ -1,5 +1,6 @@
 package frc.robot.simulation;
 
+import edu.wpi.first.math.geometry.Pose3d;
 import edu.wpi.first.math.geometry.Translation2d;
 import edu.wpi.first.math.kinematics.ChassisSpeeds;
 import edu.wpi.first.units.Units;
@@ -8,6 +9,7 @@ import edu.wpi.first.wpilibj2.command.InstantCommand;
 import frc.robot.subsystems.DriveSubsystem;
 import frc.robot.subsystems.OdometrySubsystem;
 import frc.robot.subsystems.ShooterSubsystem;
+import org.littletonrobotics.junction.Logger;
 import org.ironmaple.simulation.SimulatedArena;
 import org.ironmaple.simulation.seasonspecific.rebuilt2026.RebuiltFuelOnFly;
 
@@ -51,6 +53,7 @@ public class SimLaunchNoteCommand extends InstantCommand {
     double launchSpeedMps = (targetRpm / 6000.0) * LAUNCH_SPEED_AT_6000_RPM;
     launchSpeedMps = Math.max(5.0, Math.min(25.0, launchSpeedMps));
 
+    // RebuiltFuelOnFly constructor already calls withTouchGroundHeight and enableBecomesGamePieceOnFieldAfterTouchGround (official API).
     RebuiltFuelOnFly fuel = new RebuiltFuelOnFly(
         pose.getTranslation(),
         new Translation2d(SHOOTER_OFFSET_X, 0),
@@ -59,7 +62,10 @@ public class SimLaunchNoteCommand extends InstantCommand {
         Units.Meters.of(LAUNCH_HEIGHT_M),
         Units.MetersPerSecond.of(launchSpeedMps),
         Units.Degrees.of(LAUNCH_ANGLE_DEG));
-    fuel.enableBecomesGamePieceOnFieldAfterTouchGround();
-    SimulatedArena.getInstance().addGamePieceProjectile(fuel);
+    // Official doc: visualize trajectory in AdvantageScope (hit vs miss).
+    fuel.withProjectileTrajectoryDisplayCallBack(
+        hitPoses -> Logger.recordOutput("FieldSimulation/ProjectileTrajectory/Hit", hitPoses.toArray(new Pose3d[0])),
+        missPoses -> Logger.recordOutput("FieldSimulation/ProjectileTrajectory/Miss", missPoses.toArray(new Pose3d[0])));
+    SimulatedArena.getInstance().addGamePieceProjectile(fuel); // arena calls launch() internally
   }
 }

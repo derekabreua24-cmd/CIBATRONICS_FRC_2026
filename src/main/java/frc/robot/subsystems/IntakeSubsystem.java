@@ -11,11 +11,11 @@ public class IntakeSubsystem extends SubsystemBase {
   // Si es true, el sentido del motor del intake está invertido (run(...) cambia el signo).
   private boolean m_reversed = false;
 
-  /** setInverted() de REV SparkMax está obsoleto en favor de la inversión por config; suprimir aviso hasta migrar. */
-  @SuppressWarnings("deprecation")
+  /** 2026 API: inversión por config en lugar de setInverted(). */
   public IntakeSubsystem() {
-    // Configurar inversión si es necesario
-    m_intake.setInverted(false);
+    com.revrobotics.spark.config.SparkMaxConfig cfg = new com.revrobotics.spark.config.SparkMaxConfig();
+    cfg.inverted(false);
+    m_intake.configure(cfg, com.revrobotics.ResetMode.kResetSafeParameters, com.revrobotics.PersistMode.kPersistParameters);
   }
 
   /** Runs the intake motor at the given output magnitude (use IntakeConstants.kDefaultSpeed). */

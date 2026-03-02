@@ -167,6 +167,9 @@ public class RobotContainer {
         m_navxSubsystem,
         m_visionSubsystem);
 
+    // When odometry is reset in sim, sync maple-sim chassis body to the new pose.
+    m_driveSubsystem.setSimResetCallback(pose -> m_mapleSimHandler.resetChassisPose(pose));
+
     var autoTab = Shuffleboard.getTab("Autonomous");
     m_targetXEntry = autoTab.add("Target X (m)", 1.5).getEntry();
     m_targetYEntry = autoTab.add("Target Y (m)", 0.0).getEntry();
@@ -399,6 +402,14 @@ public class RobotContainer {
   }
 
   /**
+   * Resetea la odometría a la pose inicial de simulación definida en {@link frc.robot.constants.MapleSimConstants}.
+   * Llamado desde {@link Robot#simulationInit()} para que el robot y maple-sim arranquen en la misma pose.
+   */
+  public void resetSimulationInitialPose() {
+    m_odometrySubsystem.resetOdometry(frc.robot.constants.MapleSimConstants.kSimInitialPose);
+  }
+
+  /**
    * Llamado cada ciclo de simulación. Delega en {@link MapleSimHandler} (arena maple-sim,
    * chassis e intake sim, FUEL, inyección de pose en visión).
    */
@@ -407,6 +418,7 @@ public class RobotContainer {
         m_odometrySubsystem,
         m_visionSubsystem,
         m_driveSubsystem,
-        m_intakeSubsystem);
+        m_intakeSubsystem,
+        m_shooterSubsystem);
   }
 }

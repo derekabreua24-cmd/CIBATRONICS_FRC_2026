@@ -4,7 +4,6 @@ import org.littletonrobotics.junction.Logger;
 
 import com.revrobotics.spark.SparkMax;
 import com.revrobotics.spark.SparkLowLevel.MotorType;
-import edu.wpi.first.wpilibj.motorcontrol.MotorControllerGroup;
 import edu.wpi.first.wpilibj2.command.SubsystemBase;
 import edu.wpi.first.math.controller.SimpleMotorFeedforward;
 import edu.wpi.first.math.controller.PIDController;
@@ -16,16 +15,13 @@ import frc.robot.constants.ShooterConstants;
 public class ShooterSubsystem extends SubsystemBase {
   private final SparkMax m_shooterFront;
   private final SparkMax m_shooterRear;
-  @SuppressWarnings("removal")
-  private final MotorControllerGroup m_shooterGroup;
   private final SimpleMotorFeedforward m_feedforward;
   private final PIDController m_pid;
   private double m_targetRpm = 0.0;
   // Guardar el ultimo porcentaje de salida calculado para registro
   private double m_lastOutputPercent = 0.0;
 
-  @SuppressWarnings("removal")
-public ShooterSubsystem() {
+  public ShooterSubsystem() {
 
   // El shooter usa controladores SparkMax brushed (el tipo depende del motor conectado)
   m_shooterFront = new SparkMax(ShooterConstants.kShooterFrontMotorPort, MotorType.kBrushed);
@@ -37,31 +33,32 @@ public ShooterSubsystem() {
     ShooterConstants.kShooterKV,
     ShooterConstants.kShooterKA);
 
-  m_shooterGroup = new MotorControllerGroup(m_shooterFront, m_shooterRear);
   // Controlador PID (salida en porcentaje). Valores por defecto en ShooterConstants; Tuning table permite afinación en vivo.
   m_pid = new PIDController(
       ShooterConstants.kShooterP,
       ShooterConstants.kShooterI,
       ShooterConstants.kShooterD);
-  // Si el cableado requiere invertir un motor, usar setInverted en el grupo o configurar inversiones por motor.
-  // Ejemplo: m_shooterGroup.setInverted(true);
-  // Configuración segura para los motores del shooter.
+
+  // 2026 API: leader (front) + follower (rear) via config; no MotorControllerGroup.
   try {
-    com.revrobotics.spark.config.SparkMaxConfig cfg = new com.revrobotics.spark.config.SparkMaxConfig();
-    cfg.idleMode(com.revrobotics.spark.config.SparkBaseConfig.IdleMode.kCoast);
-    cfg.smartCurrentLimit(60);
-    cfg.openLoopRampRate(0.1);
-    cfg.voltageCompensation(12.0f);
-    m_shooterFront.configure(cfg, com.revrobotics.ResetMode.kResetSafeParameters, com.revrobotics.PersistMode.kPersistParameters);
-    m_shooterRear.configure(cfg, com.revrobotics.ResetMode.kResetSafeParameters, com.revrobotics.PersistMode.kPersistParameters);
+    com.revrobotics.spark.config.SparkMaxConfig leaderCfg = new com.revrobotics.spark.config.SparkMaxConfig();
+    leaderCfg.idleMode(com.revrobotics.spark.config.SparkBaseConfig.IdleMode.kCoast);
+    leaderCfg.smartCurrentLimit(60);
+    leaderCfg.openLoopRampRate(0.1);
+    leaderCfg.voltageCompensation(12.0f);
+    m_shooterFront.configure(leaderCfg, com.revrobotics.ResetMode.kResetSafeParameters, com.revrobotics.PersistMode.kPersistParameters);
+
+    com.revrobotics.spark.config.SparkMaxConfig followCfg = new com.revrobotics.spark.config.SparkMaxConfig();
+    followCfg.follow(m_shooterFront);
+    m_shooterRear.configure(followCfg, com.revrobotics.ResetMode.kResetSafeParameters, com.revrobotics.PersistMode.kPersistParameters);
   } catch (RuntimeException e) {
-  Logger.recordOutput("Shooter/Errors", "[ShooterSubsystem] SparkMax configure failed: " + e.toString());
+    Logger.recordOutput("Shooter/Errors", "[ShooterSubsystem] SparkMax configure failed: " + e.toString());
   }
   }
 
   /** Establece la salida del shooter (-1..1). */
-public void setSpeed(double speed) {
-    m_shooterGroup.set(speed);
+  public void setSpeed(double speed) {
+    m_shooterFront.set(speed);
   }
 
   /** Establece el objetivo de velocidad del shooter (RPM). Usa feedforward y PID en periodic(). */
@@ -88,7 +85,7 @@ public void setSpeed(double speed) {
   /** Detiene el shooter y limpia el setpoint para que periodic() no vuelva a comandar. */
   public void stop() {
     m_targetRpm = 0.0;
-    m_shooterGroup.stopMotor();
+    m_shooterFront.stopMotor();
   }
 
   public double getFrontVelocity() {
@@ -129,10 +126,10 @@ public void setSpeed(double speed) {
 
       double out = pidPercent + ffPercent;
       out = Math.max(-1.0, Math.min(1.0, out));
-      m_shooterGroup.set(out);
+      m_shooterFront.set(out);
       m_lastOutputPercent = out;
     } else {
-      m_shooterGroup.set(0.0);
+      m_shooterFront.set(0.0);
       m_lastOutputPercent = 0.0;
     }
   }

@@ -5,9 +5,9 @@ import org.ironmaple.simulation.drivesims.AbstractDriveTrainSimulation;
 import org.ironmaple.simulation.drivesims.configs.DriveTrainSimulationConfig;
 
 /**
- * Chassis body in the maple-sim arena that follows our robot's odometry and chassis speeds.
- * Used so {@link org.ironmaple.simulation.IntakeSimulation} can attach to a body and collect FUEL.
- * We do not apply motor forces; pose and velocity are set from outside each period.
+ * Chassis body in the maple-sim arena. Velocity is set each tick from desired chassis speeds;
+ * the physics engine integrates position and resolves collisions (e.g. walls). Pose is read back
+ * and used to update drive/odometry. Used so {@link org.ironmaple.simulation.IntakeSimulation} can attach and collect FUEL.
  */
 public final class KinematicChassisSim extends AbstractDriveTrainSimulation {
 
@@ -17,6 +17,6 @@ public final class KinematicChassisSim extends AbstractDriveTrainSimulation {
 
   @Override
   public void simulationSubTick() {
-    // No motor forces; pose and velocity are driven by setSimulationWorldPose/setRobotSpeeds from MapleSimHandler.
+    // No motor forces; velocity is set by MapleSimHandler via setRobotSpeeds; pose comes from physics.
   }
 }

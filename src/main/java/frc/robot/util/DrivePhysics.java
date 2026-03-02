@@ -37,11 +37,9 @@ public final class DrivePhysics {
     // Usar SimpleMotorFeedforward para un cálculo de feedforward limpio y testeable.
     SimpleMotorFeedforward ff = new SimpleMotorFeedforward(ks, kv, ka);
 
-    // Por ahora no hay información de aceleración por paso; se pasa 0.
-    @SuppressWarnings("removal")
-    double leftVolts = ff.calculate(leftVel, 0.0);
-    @SuppressWarnings("removal")
-    double rightVolts = ff.calculate(rightVel, 0.0);
+    // 2026 API: use 1-arg calculate(velocity) when acceleration is zero.
+    double leftVolts = ff.calculate(leftVel);
+    double rightVolts = ff.calculate(rightVel);
 
     // Limitar siempre a la tensión de batería por seguridad (evitar ordenar más de ±12 V).
     double clampMax = 12.0;
