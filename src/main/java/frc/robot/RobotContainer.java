@@ -7,7 +7,6 @@ import frc.robot.constants.DriveConstants;
 import frc.robot.constants.ShooterConstants;
 
 import frc.robot.subsystems.IntakeSubsystem;
-import frc.robot.subsystems.FeederSubsystem;
 import frc.robot.subsystems.DriveSubsystem;
 import frc.robot.commands.Drv_Commands.DriveCommand;
 import frc.robot.commands.Drv_Commands.TurnToAngleCommand;
@@ -36,7 +35,6 @@ import frc.robot.subsystems.UsbAprilTagProcessor;
 import frc.robot.commands.Rst_Commands.ResetGyroCommand;
 import frc.robot.commands.Rst_Commands.ResetOdometryToVisionCommand;
 import frc.robot.commands.Sht_Commands.ShooterCommand;
-import frc.robot.commands.Fdr_Commands.FeederCommand;
 import edu.wpi.first.networktables.GenericEntry;
 
 import frc.robot.subsystems.ShooterSubsystem;
@@ -71,7 +69,6 @@ public class RobotContainer {
   private final OdometrySubsystem m_odometrySubsystem =
       new OdometrySubsystem(m_driveSubsystem, m_navxSubsystem);
   private final IntakeSubsystem m_intakeSubsystem = new IntakeSubsystem();
-  private final FeederSubsystem m_feederSubsystem = new FeederSubsystem();
   private final ShooterSubsystem m_shooterSubsystem = new ShooterSubsystem();
   private final TelemetrySubsystem m_telemetrySubsystem;
 
@@ -88,12 +85,6 @@ public class RobotContainer {
 
   // ----- Shuffleboard / PathPlanner -----
   private edu.wpi.first.wpilibj.smartdashboard.SendableChooser<Command> m_ppAutoChooser = null;
-  private GenericEntry m_targetXEntry;
-  private GenericEntry m_targetYEntry;
-  private GenericEntry m_targetHeadingEntry;
-  private GenericEntry m_maxSpeedEntry;
-  private GenericEntry m_posTolEntry;
-  private GenericEntry m_angTolEntry;
   private GenericEntry m_ppltvGainEntry;
   private GenericEntry m_resetOdomEntry;
   private GenericEntry m_shooterRpmEntry;
@@ -174,12 +165,6 @@ public class RobotContainer {
     m_driveSubsystem.setSimResetCallback(pose -> m_mapleSimHandler.resetChassisPose(pose));
 
     var autoTab = Shuffleboard.getTab("Autonomous");
-    m_targetXEntry = autoTab.add("Target X (m)", 1.5).getEntry();
-    m_targetYEntry = autoTab.add("Target Y (m)", 0.0).getEntry();
-    m_targetHeadingEntry = autoTab.add("Target Heading (deg)", 0.0).getEntry();
-    m_maxSpeedEntry = autoTab.add("Max Speed (m/s)", 0.6).getEntry();
-    m_posTolEntry = autoTab.add("Pos Tol (m)", 0.1).getEntry();
-    m_angTolEntry = autoTab.add("Ang Tol (deg)", 5.0).getEntry();
     var resetOdomWidget = autoTab.add("Reiniciar odom al inicio de ruta", true).withPosition(0, 4).withSize(2, 1);
     m_resetOdomEntry = resetOdomWidget.getEntry();
 
@@ -247,7 +232,7 @@ public class RobotContainer {
   }
 
   private void configureBindings() {
-    // ----- Driver: SysId (LB + A/B/X/Y), gyro reset (Start), vision reset (Back), turn 90° (X), drive-to-pose (B) -----
+    // ----- Driver: SysId (LB + A/B/X/Y), gyro reset (Start), vision reset (Back), turn 90° (X) -----
     // SysId: Left Bumper + A/B/X/Y for drivetrain characterization (see CHARACTERIZATION.md).
     m_driverController.leftBumper().and(m_driverController.a()).whileTrue(
         m_driveSubsystem.sysIdQuasistatic(SysIdRoutine.Direction.kForward));
@@ -269,22 +254,17 @@ public class RobotContainer {
               m_navxSubsystem));
     }
 
-    // ----- Operator: stop (B), intake (LT), toggle direction (A), unjam (LB), reverse intake (RB), shooter (RT), feeder (Y) -----
+    // ----- Operator: stop (B), intake (LT), toggle direction (A), unjam (LB), shooter (RT) -----
     m_operatorController.b()
-        .onTrue(new frc.robot.commands.StopMechanismsCommand(
-            m_intakeSubsystem, m_shooterSubsystem, m_feederSubsystem));
+        .onTrue(new frc.robot.commands.StopMechanismsCommand(m_intakeSubsystem, m_shooterSubsystem));
     m_operatorController.leftTrigger()
-        .whileTrue(new IntakeCommand(m_intakeSubsystem));
+        .whileTrue(new IntakeCommand(m_intakeSubsystem, m_shooterSubsystem));
     m_operatorController.a()
         .onTrue(new ToggleIntakeDirectionCommand(m_intakeSubsystem));
     m_operatorController.leftBumper()
         .onTrue(new frc.robot.commands.Intk_Commands.UnjamCommand(m_intakeSubsystem));
-    m_operatorController.rightBumper()
-        .whileTrue(new frc.robot.commands.Intk_Commands.ReverseIntakeCommand(m_intakeSubsystem, m_feederSubsystem));
     m_operatorController.rightTrigger()
         .whileTrue(new ShooterCommand(m_shooterSubsystem, m_shooterRpmEntry, m_visionSubsystem));
-    m_operatorController.y()
-        .whileTrue(new FeederCommand(m_feederSubsystem));
 
     // Sim only: Driver A (without LB) = launch one FUEL projectile in maple-sim. A+LB = SysId only, no launch.
     m_driverController.a()
@@ -294,30 +274,12 @@ public class RobotContainer {
             m_odometrySubsystem,
             m_shooterSubsystem));
 
-    // Driver X = girar a 90°. B = conducir hasta pose objetivo (valores en pestaña Autonomous).
+    // Driver X = turn to 90°.
     m_driverController.x()
         .onTrue(new TurnToAngleCommand(
             m_driveSubsystem,
             m_navxSubsystem,
             90.0));
-
-    m_driverController.b()
-        .onTrue(Commands.runOnce(() -> {
-          double x = m_targetXEntry.getDouble(1.5);
-          double y = m_targetYEntry.getDouble(0.0);
-          double headingDeg = m_targetHeadingEntry.getDouble(0.0);
-          double maxSpeed = m_maxSpeedEntry.getDouble(0.6);
-          double posTol = m_posTolEntry.getDouble(0.1);
-          double angTolDeg = m_angTolEntry.getDouble(5.0);
-          edu.wpi.first.wpilibj2.command.CommandScheduler.getInstance().schedule(
-              new frc.robot.commands.Drv_Commands.DriveToPoseCommand(
-                  m_driveSubsystem,
-                  m_odometrySubsystem,
-                  new Pose2d(x, y, Rotation2d.fromDegrees(headingDeg)),
-                  maxSpeed,
-                  posTol,
-                  angTolDeg));
-        }));
   }
 
   public Command getAutonomousCommand() {

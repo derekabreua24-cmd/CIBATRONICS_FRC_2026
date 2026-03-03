@@ -45,10 +45,6 @@
 - **API:** `run(speed)`, `toggleReverse()`, `stop()`, `getSetpoint()`; maple-sim uses `getSetpoint() > threshold` for intake sim.
 - **Deprecation:** `setInverted` suppressed; consider migrating to REV config when convenient.
 
-### FeederSubsystem
-- **API:** `run(speed)`, `stop()`, `getSetpoint()`, `getOutputCurrent()`; single SparkMax (brushed) on FeederConstants port.
-- **Use:** FeederCommand (operator Y); ReverseIntakeCommand also runs feeder in reverse.
-
 ### ShooterSubsystem
 - **Control:** Velocity setpoint (RPM); PID + feedforward in `periodic()`; tuning from NetworkTable `Tuning` (ShooterP/I/D).
 - **Tuning:** TelemetrySubsystem writes Shuffleboard Shooter Tuning values into `Tuning`; ShooterSubsystem reads from `Tuning` — consistent.
@@ -74,16 +70,13 @@
 | Command | Requirements | Null / edge cases |
 |---------|--------------|--------------------|
 | DriveCommand | drive | Default command; fine. |
-| TurnToAngleCommand | drive | Reads TurnP/I/D/Tol from `Tuning` (TelemetrySubsystem populates). |
-| DriveToPoseCommand | drive, odometry | Proportional drive-to-pose; angle normalization correct. |
+| TurnToAngleCommand | drive | Reads TurnP/I/D/Tol from `Tuning` (TelemetrySubsystem populates). Driver X = turn to 90°. |
 | IntakeCommand, UnjamCommand | intake | Require IntakeSubsystem. |
-| ReverseIntakeCommand | intake, feeder | Runs both in reverse (operator RB). |
-| FeederCommand | feeder | Operator Y; runs feeder at default speed. |
 | ShooterCommand | shooter | Vision optional; uses RPM entry or distance-based RPM. |
 | ResetGyroCommand | navx | — |
 | ResetOdometryToVisionCommand | drive, vision | Only bound when `m_visionSubsystem != null`. |
-| StopMechanismsCommand | intake, shooter, feeder | Stops all three (operator B). |
-| ToggleIntakeDirectionCommand | intake | — |
+| StopMechanismsCommand | intake, shooter | Stops both (operator B). |
+| ToggleIntakeDirectionCommand | intake | Operator A; toggles intake direction (forward/reverse). |
 | SimLaunchNoteCommand | none | No-op when `!isSimulation()`; uses odometry pose, chassis speeds, shooter RPM. |
 
 ---
@@ -102,7 +95,7 @@
 ## 6. Constants & config
 
 - **DriveConstants:** Ports, geometry, feedforward, sim mass; used by drive and PathPlanner.
-- **IntakeConstants, FeederConstants, ShooterConstants, VisionConstants, AutoConstants, OperatorConstants:** Used consistently; no obvious conflicts.
+- **IntakeConstants, ShooterConstants, VisionConstants, AutoConstants, OperatorConstants:** Used consistently; no obvious conflicts.
 
 ---
 

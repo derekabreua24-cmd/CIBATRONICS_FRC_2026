@@ -11,11 +11,11 @@ package frc.robot.constants;
 public final class DriveConstants {
   private DriveConstants() {}
 
-  // ----- CAN ports (right {1,2}, left {3,4}) -----
-  public static final int kRightFrontMotorPort = 4;
-  public static final int kRightRearMotorPort = 3;
-  public static final int kLeftFrontMotorPort = 2;
+  // ----- CAN ports: 1=left rear, 2=left front, 3=right rear, 4=right front -----
   public static final int kLeftRearMotorPort = 1;
+  public static final int kLeftFrontMotorPort = 2;
+  public static final int kRightRearMotorPort = 3;
+  public static final int kRightFrontMotorPort = 4;
   public static final int[] kLeftMotorPorts = {kLeftFrontMotorPort, kLeftRearMotorPort};
   public static final int[] kRightMotorPorts = {kRightFrontMotorPort, kRightRearMotorPort};
 

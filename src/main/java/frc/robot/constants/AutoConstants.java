@@ -5,17 +5,11 @@
 package frc.robot.constants;
 
 /**
- * Gains and tolerances for autonomous drive-to-pose, turn-to-angle, and similar commands.
- * Used by DriveToPoseCommand and TurnToAngleCommand.
+ * Gains and tolerances for turn-to-angle and similar commands.
+ * Used by TurnToAngleCommand.
  */
 public final class AutoConstants {
   private AutoConstants() {}
-
-  // ----- Drive to pose (proportional only) -----
-  /** Proportional gain for linear (forward) error. */
-  public static final double kDriveToPoseKpLinear = 1.2;
-  /** Proportional gain for angular error. */
-  public static final double kDriveToPoseKpAng = 2.0;
 
   // ----- Turn to angle (PID, degrees in, rotation out -0.8..0.8) -----
   /** Turn PID: proportional gain (tuned for ~0.8 output at ~25–30° error). */

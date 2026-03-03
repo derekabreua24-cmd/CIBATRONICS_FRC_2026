@@ -11,13 +11,15 @@ package frc.robot.constants;
 public final class ShooterConstants {
   private ShooterConstants() {}
 
-  // ----- Motor ports -----
-  public static final int kShooterFrontMotorPort = 6;
-  public static final int kShooterRearMotorPort = 7;
+  // ----- Motor port (single shooter motor) -----
+  public static final int kShooterMotorPort = 6;
 
   // ----- Default speed and cap -----
   public static final double kShooterSpeed = 0.9;
   public static final double kShooterMaxRPM = 5700.0;
+
+  /** Speed (0..1) for shooter when used as feeder during intake. Motor runs in reverse to pull note in; flip sign in code if your mechanism is opposite. */
+  public static final double kShooterFeedSpeed = 0.5;
 
   // ----- Feedforward (V, V/(rad/s), V/(rad/s²)) -----
   public static final double kShooterKS = 0.2;
