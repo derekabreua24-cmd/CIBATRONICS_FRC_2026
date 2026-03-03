@@ -12,10 +12,10 @@ public final class DriveConstants {
   private DriveConstants() {}
 
   // ----- CAN ports (right {1,2}, left {3,4}) -----
-  public static final int kRightFrontMotorPort = 1;
-  public static final int kRightRearMotorPort = 2;
-  public static final int kLeftFrontMotorPort = 3;
-  public static final int kLeftRearMotorPort = 4;
+  public static final int kRightFrontMotorPort = 4;
+  public static final int kRightRearMotorPort = 3;
+  public static final int kLeftFrontMotorPort = 2;
+  public static final int kLeftRearMotorPort = 1;
   public static final int[] kLeftMotorPorts = {kLeftFrontMotorPort, kLeftRearMotorPort};
   public static final int[] kRightMotorPorts = {kRightFrontMotorPort, kRightRearMotorPort};
 

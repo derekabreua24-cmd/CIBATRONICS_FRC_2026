@@ -15,7 +15,7 @@ public final class IntakeConstants {
   public static final int kIntakeMotorPort = 5;
 
   /** Default intake output magnitude (0..1). Used by IntakeCommand, UnjamCommand. */
-  public static final double kDefaultSpeed = 0.8;
+  public static final double kDefaultSpeed = 1;
 
   /** Unjam (reverse pulse) configuration. */
   public static final class Unjam {

@@ -12,8 +12,8 @@ public final class ShooterConstants {
   private ShooterConstants() {}
 
   // ----- Motor ports -----
-  public static final int kShooterFrontMotorPort = 7;
-  public static final int kShooterRearMotorPort = 8;
+  public static final int kShooterFrontMotorPort = 6;
+  public static final int kShooterRearMotorPort = 7;
 
   // ----- Default speed and cap -----
   public static final double kShooterSpeed = 0.9;

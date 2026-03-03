@@ -7,6 +7,7 @@ import frc.robot.constants.DriveConstants;
 import frc.robot.constants.ShooterConstants;
 
 import frc.robot.subsystems.IntakeSubsystem;
+import frc.robot.subsystems.FeederSubsystem;
 import frc.robot.subsystems.DriveSubsystem;
 import frc.robot.commands.Drv_Commands.DriveCommand;
 import frc.robot.commands.Drv_Commands.TurnToAngleCommand;
@@ -35,6 +36,7 @@ import frc.robot.subsystems.UsbAprilTagProcessor;
 import frc.robot.commands.Rst_Commands.ResetGyroCommand;
 import frc.robot.commands.Rst_Commands.ResetOdometryToVisionCommand;
 import frc.robot.commands.Sht_Commands.ShooterCommand;
+import frc.robot.commands.Fdr_Commands.FeederCommand;
 import edu.wpi.first.networktables.GenericEntry;
 
 import frc.robot.subsystems.ShooterSubsystem;
@@ -69,6 +71,7 @@ public class RobotContainer {
   private final OdometrySubsystem m_odometrySubsystem =
       new OdometrySubsystem(m_driveSubsystem, m_navxSubsystem);
   private final IntakeSubsystem m_intakeSubsystem = new IntakeSubsystem();
+  private final FeederSubsystem m_feederSubsystem = new FeederSubsystem();
   private final ShooterSubsystem m_shooterSubsystem = new ShooterSubsystem();
   private final TelemetrySubsystem m_telemetrySubsystem;
 
@@ -266,23 +269,10 @@ public class RobotContainer {
               m_navxSubsystem));
     }
 
-    // ----- Driver (solo): intake, shooter, stop, unjam, reverse, toggle — para pruebas con un solo controlador -----
-    m_driverController.rightTrigger()
-        .whileTrue(new ShooterCommand(m_shooterSubsystem, m_shooterRpmEntry, m_visionSubsystem));
-    m_driverController.leftTrigger()
-        .whileTrue(new IntakeCommand(m_intakeSubsystem));
-    m_driverController.rightBumper()
-        .onTrue(new frc.robot.commands.StopMechanismsCommand(m_intakeSubsystem, m_shooterSubsystem));
-    m_driverController.povDown()
-        .onTrue(new frc.robot.commands.Intk_Commands.UnjamCommand(m_intakeSubsystem));
-    m_driverController.povLeft()
-        .whileTrue(new frc.robot.commands.Intk_Commands.ReverseIntakeCommand(m_intakeSubsystem));
-    m_driverController.povRight()
-        .onTrue(new ToggleIntakeDirectionCommand(m_intakeSubsystem));
-
-    // ----- Operator: stop (B), intake (LT), toggle direction (A), unjam (LB), reverse intake (RB), shooter (RT) -----
+    // ----- Operator: stop (B), intake (LT), toggle direction (A), unjam (LB), reverse intake (RB), shooter (RT), feeder (Y) -----
     m_operatorController.b()
-        .onTrue(new frc.robot.commands.StopMechanismsCommand(m_intakeSubsystem, m_shooterSubsystem));
+        .onTrue(new frc.robot.commands.StopMechanismsCommand(
+            m_intakeSubsystem, m_shooterSubsystem, m_feederSubsystem));
     m_operatorController.leftTrigger()
         .whileTrue(new IntakeCommand(m_intakeSubsystem));
     m_operatorController.a()
@@ -290,12 +280,15 @@ public class RobotContainer {
     m_operatorController.leftBumper()
         .onTrue(new frc.robot.commands.Intk_Commands.UnjamCommand(m_intakeSubsystem));
     m_operatorController.rightBumper()
-        .whileTrue(new frc.robot.commands.Intk_Commands.ReverseIntakeCommand(m_intakeSubsystem));
+        .whileTrue(new frc.robot.commands.Intk_Commands.ReverseIntakeCommand(m_intakeSubsystem, m_feederSubsystem));
     m_operatorController.rightTrigger()
         .whileTrue(new ShooterCommand(m_shooterSubsystem, m_shooterRpmEntry, m_visionSubsystem));
+    m_operatorController.y()
+        .whileTrue(new FeederCommand(m_feederSubsystem));
 
-    // Sim only: Driver A = launch one FUEL projectile in maple-sim (no-op on real robot).
+    // Sim only: Driver A (without LB) = launch one FUEL projectile in maple-sim. A+LB = SysId only, no launch.
     m_driverController.a()
+        .and(m_driverController.leftBumper().negate())
         .onTrue(new SimLaunchNoteCommand(
             m_driveSubsystem,
             m_odometrySubsystem,
