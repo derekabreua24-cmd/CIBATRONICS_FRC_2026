@@ -21,7 +21,7 @@ public class UnjamCommand extends Command {
   @Override
   public void initialize() {
     m_timer.restart();
-    m_intake.run(-IntakeConstants.kDefaultSpeed);
+    m_intake.runVoltage(-IntakeConstants.kIntakeMaxVoltage);
   }
 
   @Override

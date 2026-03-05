@@ -99,11 +99,12 @@ public class DriveSubsystem extends SubsystemBase {
     // In sim, encoder/heading state is driven by maple-sim physics via setSimStateFromMapleSim (MapleSimHandler).
 
     // All four motors configured independently (no leader/follower); DifferentialDrive sets left/right via setLeftOutput/setRightOutput.
+    // All drivetrain motors use brake mode (not coast) when idle.
     com.revrobotics.spark.config.SparkMaxConfig driveCfg = new com.revrobotics.spark.config.SparkMaxConfig();
     driveCfg.idleMode(com.revrobotics.spark.config.SparkBaseConfig.IdleMode.kBrake);
     driveCfg.smartCurrentLimit(40);
     driveCfg.openLoopRampRate(0.1);
-    driveCfg.voltageCompensation(12.0f);
+    driveCfg.voltageCompensation((float) DriveConstants.kNominalVoltage);
     for (SparkMax motor : new SparkMax[] { m_leftFront, m_leftRear, m_rightFront, m_rightRear }) {
       motor.configure(driveCfg, com.revrobotics.ResetMode.kResetSafeParameters, com.revrobotics.PersistMode.kPersistParameters);
     }
@@ -159,18 +160,16 @@ public class DriveSubsystem extends SubsystemBase {
   // Métodos de conducción (teleop / básicos)
   // ===============================
 
-  private static final double kNominalVoltage = 12.0;
-
   /** Sets both left motors from percent (-1..1) as voltage. Used by DifferentialDrive. */
   private void setLeftOutput(double output) {
-    double volts = Math.max(-kNominalVoltage, Math.min(kNominalVoltage, output * kNominalVoltage));
+    double volts = Math.max(-DriveConstants.kNominalVoltage, Math.min(DriveConstants.kNominalVoltage, output * DriveConstants.kNominalVoltage));
     m_leftFront.setVoltage(volts);
     m_leftRear.setVoltage(volts);
   }
 
   /** Sets both right motors from percent (-1..1) as voltage. Used by DifferentialDrive. */
   private void setRightOutput(double output) {
-    double volts = Math.max(-kNominalVoltage, Math.min(kNominalVoltage, output * kNominalVoltage));
+    double volts = Math.max(-DriveConstants.kNominalVoltage, Math.min(DriveConstants.kNominalVoltage, output * DriveConstants.kNominalVoltage));
     m_rightFront.setVoltage(volts);
     m_rightRear.setVoltage(volts);
   }
@@ -423,8 +422,8 @@ public class DriveSubsystem extends SubsystemBase {
     if (!RobotBase.isSimulation()) {
       return getChassisSpeeds();
     }
-    double leftVolts = m_leftFront.get() * 12.0;
-    double rightVolts = m_rightFront.get() * 12.0;
+    double leftVolts = m_leftFront.get() * DriveConstants.kNominalVoltage;
+    double rightVolts = m_rightFront.get() * DriveConstants.kNominalVoltage;
     double ks = DriveConstants.kDriveKS;
     double kv = DriveConstants.kDriveKV;
     double maxSpeed = DriveConstants.kDriveEstMaxSpeed;

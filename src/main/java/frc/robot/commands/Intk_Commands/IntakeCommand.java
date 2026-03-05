@@ -27,15 +27,15 @@ public class IntakeCommand extends Command {
 
   @Override
   public void execute() {
-    m_intake.run(-IntakeConstants.kDefaultSpeed);
-    m_shooter.setFeedSpeed(ShooterConstants.kShooterFeedSpeed);
-    Logger.recordOutput("Intake/Events", "[IntakeCommand] Executing intake (reversed) at speed=" + IntakeConstants.kDefaultSpeed);
+    m_intake.runVoltage(-IntakeConstants.kIntakeMaxVoltage);
+    m_shooter.setFeedVoltage(ShooterConstants.kShooterFeedVoltage);
+    Logger.recordOutput("Intake/Events", "[IntakeCommand] Executing intake at max voltage=" + IntakeConstants.kIntakeMaxVoltage);
   }
 
   @Override
   public void end(boolean interrupted) {
     m_intake.stop();
-    m_shooter.setFeedSpeed(0.0);
+    m_shooter.setFeedVoltage(0.0);
   }
 
   @Override

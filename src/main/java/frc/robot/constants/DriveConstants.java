@@ -19,9 +19,13 @@ public final class DriveConstants {
   public static final int[] kLeftMotorPorts = {kLeftFrontMotorPort, kLeftRearMotorPort};
   public static final int[] kRightMotorPorts = {kRightFrontMotorPort, kRightRearMotorPort};
 
+  // ----- Voltage (all motor outputs use setVoltage) -----
+  /** Nominal bus voltage (V). Used for drive, intake, shooter voltage clamping. */
+  public static final double kNominalVoltage = 12.0;
+
   // ----- Teleop scaling -----
-  /** Forward/back speed scale (1.0 = full). */
-  public static final double kDriveSpeedScale = 0.8;
+  /** Forward/back speed scale (1.0 = full). Scaled stick output is applied as voltage via setVoltage. */
+  public static final double kDriveSpeedScale = -0.8;
   /** Turn speed scale (1.0 = full). */
   public static final double kTurnSpeedScale = 0.7;
 

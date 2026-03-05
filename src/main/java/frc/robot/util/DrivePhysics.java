@@ -1,6 +1,7 @@
 package frc.robot.util;
 
 import edu.wpi.first.math.controller.SimpleMotorFeedforward;
+import frc.robot.constants.DriveConstants;
 
 /**
  * Utilidad de física para calcular tensiones de ruedas a partir de las velocidades deseadas del chasis.
@@ -41,8 +42,8 @@ public final class DrivePhysics {
     double leftVolts = ff.calculate(leftVel);
     double rightVolts = ff.calculate(rightVel);
 
-    // Limitar siempre a la tensión de batería por seguridad (evitar ordenar más de ±12 V).
-    double clampMax = 12.0;
+    // Clamp to nominal bus voltage (all drive outputs use voltage).
+    double clampMax = DriveConstants.kNominalVoltage;
     leftVolts = Math.max(-clampMax, Math.min(clampMax, leftVolts));
     rightVolts = Math.max(-clampMax, Math.min(clampMax, rightVolts));
 

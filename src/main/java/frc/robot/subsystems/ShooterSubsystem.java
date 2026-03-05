@@ -17,8 +17,8 @@ public class ShooterSubsystem extends SubsystemBase {
   private final SimpleMotorFeedforward m_feedforward;
   private final PIDController m_pid;
   private double m_targetRpm = 0.0;
-  /** When > 0, motor runs at -m_feedSpeed (reverse) to feed note during intake. */
-  private double m_feedSpeed = 0.0;
+  /** When > 0, motor runs at -this voltage (reverse) to feed note during intake. */
+  private double m_feedVoltage = 0.0;
   private double m_lastOutputPercent = 0.0;
 
   public ShooterSubsystem() {
@@ -39,19 +39,22 @@ public class ShooterSubsystem extends SubsystemBase {
       cfg.idleMode(com.revrobotics.spark.config.SparkBaseConfig.IdleMode.kBrake);
       cfg.smartCurrentLimit(60);
       cfg.openLoopRampRate(0.1);
-      cfg.voltageCompensation(12.0f);
+      cfg.voltageCompensation((float) ShooterConstants.kShooterVoltage);
       m_shooter.configure(cfg, com.revrobotics.ResetMode.kResetSafeParameters, com.revrobotics.PersistMode.kPersistParameters);
     } catch (RuntimeException e) {
       Logger.recordOutput("Shooter/Errors", "[ShooterSubsystem] SparkMax configure failed: " + e.toString());
     }
   }
 
-  private static final double kNominalVoltage = 12.0;
-
-  /** Open-loop speed (-1..1) applied as voltage. */
-  public void setSpeed(double speed) {
-    double volts = Math.max(-kNominalVoltage, Math.min(kNominalVoltage, speed * kNominalVoltage));
+  /** Open-loop voltage (V). Clamped to ±12 V (ShooterConstants.kShooterVoltage). */
+  public void setVoltage(double volts) {
+    volts = Math.max(-ShooterConstants.kShooterVoltage, Math.min(ShooterConstants.kShooterVoltage, volts));
     m_shooter.setVoltage(volts);
+  }
+
+  /** Convenience: open-loop as fraction of 12 V (-1..1). */
+  public void setSpeed(double speed) {
+    setVoltage(speed * ShooterConstants.kShooterVoltage);
   }
 
   /** Set velocity setpoint (RPM). PID + feedforward applied in periodic(). */
@@ -72,15 +75,15 @@ public class ShooterSubsystem extends SubsystemBase {
     setVelocitySetpointRpm(rpm);
   }
 
-  /** Run shooter in reverse at given speed (0..1) to feed note during intake. Call with 0 to stop. */
-  public void setFeedSpeed(double speed) {
-    m_feedSpeed = Math.max(0.0, Math.min(1.0, speed));
+  /** Set feed on/off for intake; motor runs in reverse at fixed 12 V. Any value > 0 uses 12 V. Call with 0 to stop. */
+  public void setFeedVoltage(double volts) {
+    m_feedVoltage = volts > 0.0 ? ShooterConstants.kShooterVoltage : 0.0;
   }
 
   /** Stop shooter and clear setpoints. */
   public void stop() {
     m_targetRpm = 0.0;
-    m_feedSpeed = 0.0;
+    m_feedVoltage = 0.0;
     m_shooter.stopMotor();
   }
 
@@ -107,21 +110,21 @@ public class ShooterSubsystem extends SubsystemBase {
       m_pid.setPID(p, i, d);
     }
 
-    // Feed (reverse for intake) takes precedence; else velocity control for shooting. All outputs as voltage.
-    if (m_feedSpeed > 0.0) {
-      double volts = -m_feedSpeed * kNominalVoltage;
+    // Feed (reverse for intake) takes precedence; always 12 V when active.
+    if (m_feedVoltage > 0.0) {
+      double volts = -ShooterConstants.kShooterVoltage;
       m_shooter.setVoltage(volts);
-      m_lastOutputPercent = -m_feedSpeed;
+      m_lastOutputPercent = -volts / ShooterConstants.kShooterVoltage;
     } else if (m_targetRpm > 1.0) {
       // Shooter motor reversed: invert encoder reading and output so PID still holds target RPM.
       double currentRpm = -getVelocity();
       double pidPercent = m_pid.calculate(currentRpm, m_targetRpm);
       double targetRadPerSec = m_targetRpm * 2.0 * Math.PI / 60.0;
       double ffVolts = m_feedforward.calculate(targetRadPerSec);
-      double outVolts = -(pidPercent * kNominalVoltage + ffVolts);
-      outVolts = Math.max(-kNominalVoltage, Math.min(kNominalVoltage, outVolts));
+      double outVolts = -(pidPercent * ShooterConstants.kShooterVoltage + ffVolts);
+      outVolts = Math.max(-ShooterConstants.kShooterVoltage, Math.min(ShooterConstants.kShooterVoltage, outVolts));
       m_shooter.setVoltage(outVolts);
-      m_lastOutputPercent = outVolts / kNominalVoltage;
+      m_lastOutputPercent = outVolts / ShooterConstants.kShooterVoltage;
     } else {
       m_shooter.setVoltage(0.0);
       m_lastOutputPercent = 0.0;

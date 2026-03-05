@@ -14,8 +14,11 @@ public final class IntakeConstants {
   /** CAN ID for the intake motor (match motor type in IntakeSubsystem: kBrushed/kBrushless). */
   public static final int kIntakeMotorPort = 5;
 
-  /** Default intake output magnitude (0..1). Used by IntakeCommand, UnjamCommand. */
-  public static final double kDefaultSpeed = 1;
+  /** Fixed voltage (V) for intake. When intake is running, it always uses this—no scaling. */
+  public static final double kIntakeVoltage = 12.0;
+  /** Alias for backwards compatibility; same as kIntakeVoltage. */
+  public static final double kIntakeMaxVoltage = kIntakeVoltage;
+  public static final double kDefaultVoltage = kIntakeVoltage;
 
   /** Unjam (reverse pulse) configuration. */
   public static final class Unjam {

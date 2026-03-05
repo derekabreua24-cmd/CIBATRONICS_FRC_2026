@@ -14,12 +14,17 @@ public final class ShooterConstants {
   // ----- Motor port (single shooter motor) -----
   public static final int kShooterMotorPort = 6;
 
-  // ----- Default speed and cap -----
-  public static final double kShooterSpeed = 0.9;
+  // ----- Voltage and RPM -----
+  /** Fixed voltage (V) for shooter. When shooter feed is active, it always uses this—no scaling. */
+  public static final double kShooterVoltage = 12.0;
+  /** Alias; same as kShooterVoltage. */
+  public static final double kShooterNominalVoltage = kShooterVoltage;
+  /** Default as fraction of max RPM for dashboard/tuning. 1.0 = absolute max. */
+  public static final double kShooterSpeed = 1.0;
   public static final double kShooterMaxRPM = 5700.0;
 
-  /** Speed (0..1) for shooter when used as feeder during intake. Motor runs in reverse to pull note in; flip sign in code if your mechanism is opposite. */
-  public static final double kShooterFeedSpeed = 0.5;
+  /** Feed voltage when shooter runs as feeder during intake. Always 12 V. */
+  public static final double kShooterFeedVoltage = kShooterVoltage;
 
   // ----- Feedforward (V, V/(rad/s), V/(rad/s²)) -----
   public static final double kShooterKS = 0.2;

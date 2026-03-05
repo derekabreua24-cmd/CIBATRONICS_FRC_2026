@@ -264,7 +264,7 @@ public class RobotContainer {
     m_operatorController.leftBumper()
         .onTrue(new frc.robot.commands.Intk_Commands.UnjamCommand(m_intakeSubsystem));
     m_operatorController.rightTrigger()
-        .whileTrue(new ShooterCommand(m_shooterSubsystem, m_shooterRpmEntry, m_visionSubsystem));
+        .whileTrue(new ShooterCommand(m_shooterSubsystem, m_shooterRpmEntry, m_intakeSubsystem, m_visionSubsystem));
 
     // Sim only: Driver A (without LB) = launch one FUEL projectile in maple-sim. A+LB = SysId only, no launch.
     m_driverController.a()

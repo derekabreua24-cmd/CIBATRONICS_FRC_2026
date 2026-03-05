@@ -11,22 +11,28 @@ public class IntakeSubsystem extends SubsystemBase {
   // Si es true, el sentido del motor del intake está invertido (run(...) cambia el signo).
   private boolean m_reversed = false;
 
-  private static final double kNominalVoltage = 12.0;
-
-  /** 2026 API: brake, voltage comp, no inversion in config. */
+  /** 2026 API: brake, voltage comp, no inversion in config. All output via setVoltage at 12 V. */
   public IntakeSubsystem() {
     com.revrobotics.spark.config.SparkMaxConfig cfg = new com.revrobotics.spark.config.SparkMaxConfig();
     cfg.inverted(false);
     cfg.idleMode(com.revrobotics.spark.config.SparkBaseConfig.IdleMode.kBrake);
-    cfg.voltageCompensation(12.0f);
+    cfg.voltageCompensation((float) IntakeConstants.kIntakeVoltage);
     m_intake.configure(cfg, com.revrobotics.ResetMode.kResetSafeParameters, com.revrobotics.PersistMode.kPersistParameters);
   }
 
-  /** Runs the intake motor at the given output magnitude (-1..1) as voltage. */
+  /** Runs intake at fixed 12 V. When non-zero, magnitude is always IntakeConstants.kIntakeVoltage (12 V). Reversed state flips sign. */
+  public void runVoltage(double volts) {
+    if (volts == 0.0) {
+      m_intake.setVoltage(0.0);
+      return;
+    }
+    double v = (m_reversed ? -1 : 1) * IntakeConstants.kIntakeVoltage * Math.signum(volts);
+    m_intake.setVoltage(v);
+  }
+
+  /** Convenience: run at 12 V in given direction (speed sign: positive = forward, negative = reverse). */
   public void run(double speed) {
-    double s = m_reversed ? -speed : speed;
-    double volts = Math.max(-kNominalVoltage, Math.min(kNominalVoltage, s * kNominalVoltage));
-    m_intake.setVoltage(volts);
+    runVoltage(speed == 0 ? 0 : Math.signum(speed) * IntakeConstants.kIntakeVoltage);
   }
 
   /** Alterna el sentido del intake; las llamadas a run() posteriores se invertirán cuando esté en reversa. */
