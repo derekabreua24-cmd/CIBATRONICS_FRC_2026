@@ -11,16 +11,22 @@ public class IntakeSubsystem extends SubsystemBase {
   // Si es true, el sentido del motor del intake está invertido (run(...) cambia el signo).
   private boolean m_reversed = false;
 
-  /** 2026 API: inversión por config en lugar de setInverted(). */
+  private static final double kNominalVoltage = 12.0;
+
+  /** 2026 API: brake, voltage comp, no inversion in config. */
   public IntakeSubsystem() {
     com.revrobotics.spark.config.SparkMaxConfig cfg = new com.revrobotics.spark.config.SparkMaxConfig();
     cfg.inverted(false);
+    cfg.idleMode(com.revrobotics.spark.config.SparkBaseConfig.IdleMode.kBrake);
+    cfg.voltageCompensation(12.0f);
     m_intake.configure(cfg, com.revrobotics.ResetMode.kResetSafeParameters, com.revrobotics.PersistMode.kPersistParameters);
   }
 
-  /** Runs the intake motor at the given output magnitude (use IntakeConstants.kDefaultSpeed). */
+  /** Runs the intake motor at the given output magnitude (-1..1) as voltage. */
   public void run(double speed) {
-    m_intake.set(m_reversed ? -speed : speed);
+    double s = m_reversed ? -speed : speed;
+    double volts = Math.max(-kNominalVoltage, Math.min(kNominalVoltage, s * kNominalVoltage));
+    m_intake.setVoltage(volts);
   }
 
   /** Alterna el sentido del intake; las llamadas a run() posteriores se invertirán cuando esté en reversa. */

@@ -36,7 +36,7 @@ public class ShooterSubsystem extends SubsystemBase {
 
     try {
       com.revrobotics.spark.config.SparkMaxConfig cfg = new com.revrobotics.spark.config.SparkMaxConfig();
-      cfg.idleMode(com.revrobotics.spark.config.SparkBaseConfig.IdleMode.kCoast);
+      cfg.idleMode(com.revrobotics.spark.config.SparkBaseConfig.IdleMode.kBrake);
       cfg.smartCurrentLimit(60);
       cfg.openLoopRampRate(0.1);
       cfg.voltageCompensation(12.0f);
@@ -46,9 +46,12 @@ public class ShooterSubsystem extends SubsystemBase {
     }
   }
 
-  /** Open-loop speed (-1..1). */
+  private static final double kNominalVoltage = 12.0;
+
+  /** Open-loop speed (-1..1) applied as voltage. */
   public void setSpeed(double speed) {
-    m_shooter.set(speed);
+    double volts = Math.max(-kNominalVoltage, Math.min(kNominalVoltage, speed * kNominalVoltage));
+    m_shooter.setVoltage(volts);
   }
 
   /** Set velocity setpoint (RPM). PID + feedforward applied in periodic(). */
@@ -104,22 +107,23 @@ public class ShooterSubsystem extends SubsystemBase {
       m_pid.setPID(p, i, d);
     }
 
-    // Feed (reverse for intake) takes precedence; else velocity control for shooting.
+    // Feed (reverse for intake) takes precedence; else velocity control for shooting. All outputs as voltage.
     if (m_feedSpeed > 0.0) {
-      m_shooter.set(-m_feedSpeed);
+      double volts = -m_feedSpeed * kNominalVoltage;
+      m_shooter.setVoltage(volts);
       m_lastOutputPercent = -m_feedSpeed;
     } else if (m_targetRpm > 1.0) {
-      double currentRpm = getVelocity();
+      // Shooter motor reversed: invert encoder reading and output so PID still holds target RPM.
+      double currentRpm = -getVelocity();
       double pidPercent = m_pid.calculate(currentRpm, m_targetRpm);
       double targetRadPerSec = m_targetRpm * 2.0 * Math.PI / 60.0;
       double ffVolts = m_feedforward.calculate(targetRadPerSec);
-      double ffPercent = ffVolts / 12.0;
-      double out = pidPercent + ffPercent;
-      out = Math.max(-1.0, Math.min(1.0, out));
-      m_shooter.set(out);
-      m_lastOutputPercent = out;
+      double outVolts = -(pidPercent * kNominalVoltage + ffVolts);
+      outVolts = Math.max(-kNominalVoltage, Math.min(kNominalVoltage, outVolts));
+      m_shooter.setVoltage(outVolts);
+      m_lastOutputPercent = outVolts / kNominalVoltage;
     } else {
-      m_shooter.set(0.0);
+      m_shooter.setVoltage(0.0);
       m_lastOutputPercent = 0.0;
     }
   }

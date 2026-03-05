@@ -80,11 +80,11 @@ public class DriveSubsystem extends SubsystemBase {
   private final RelativeEncoder m_rightRearEncoder = m_rightRear.getEncoder();
 
   // ===============================
-  // Drive (2026: leaders only; followers set via config)
+  // Drive (all four motors set explicitly; no leader/follower)
   // ===============================
 
   private final DifferentialDrive m_drive =
-      new DifferentialDrive(m_leftFront, m_rightFront);
+      new DifferentialDrive(this::setLeftOutput, this::setRightOutput);
 
   // ===============================
   // Odometria
@@ -98,13 +98,15 @@ public class DriveSubsystem extends SubsystemBase {
   public DriveSubsystem() {
     // In sim, encoder/heading state is driven by maple-sim physics via setSimStateFromMapleSim (MapleSimHandler).
 
-    // 2026 API: use SparkMax follow (config) instead of MotorControllerGroup.
-    com.revrobotics.spark.config.SparkMaxConfig followLeft = new com.revrobotics.spark.config.SparkMaxConfig();
-    followLeft.follow(m_leftFront);
-    com.revrobotics.spark.config.SparkMaxConfig followRight = new com.revrobotics.spark.config.SparkMaxConfig();
-    followRight.follow(m_rightFront);
-    m_leftRear.configure(followLeft, com.revrobotics.ResetMode.kResetSafeParameters, com.revrobotics.PersistMode.kPersistParameters);
-    m_rightRear.configure(followRight, com.revrobotics.ResetMode.kResetSafeParameters, com.revrobotics.PersistMode.kPersistParameters);
+    // All four motors configured independently (no leader/follower); DifferentialDrive sets left/right via setLeftOutput/setRightOutput.
+    com.revrobotics.spark.config.SparkMaxConfig driveCfg = new com.revrobotics.spark.config.SparkMaxConfig();
+    driveCfg.idleMode(com.revrobotics.spark.config.SparkBaseConfig.IdleMode.kBrake);
+    driveCfg.smartCurrentLimit(40);
+    driveCfg.openLoopRampRate(0.1);
+    driveCfg.voltageCompensation(12.0f);
+    for (SparkMax motor : new SparkMax[] { m_leftFront, m_leftRear, m_rightFront, m_rightRear }) {
+      motor.configure(driveCfg, com.revrobotics.ResetMode.kResetSafeParameters, com.revrobotics.PersistMode.kPersistParameters);
+    }
 
     SmartDashboard.putData("Field", m_field);
 
@@ -156,6 +158,22 @@ public class DriveSubsystem extends SubsystemBase {
   // ===============================
   // Métodos de conducción (teleop / básicos)
   // ===============================
+
+  private static final double kNominalVoltage = 12.0;
+
+  /** Sets both left motors from percent (-1..1) as voltage. Used by DifferentialDrive. */
+  private void setLeftOutput(double output) {
+    double volts = Math.max(-kNominalVoltage, Math.min(kNominalVoltage, output * kNominalVoltage));
+    m_leftFront.setVoltage(volts);
+    m_leftRear.setVoltage(volts);
+  }
+
+  /** Sets both right motors from percent (-1..1) as voltage. Used by DifferentialDrive. */
+  private void setRightOutput(double output) {
+    double volts = Math.max(-kNominalVoltage, Math.min(kNominalVoltage, output * kNominalVoltage));
+    m_rightFront.setVoltage(volts);
+    m_rightRear.setVoltage(volts);
+  }
 
   public void arcadeDrive(double fwd, double rot) {
     m_drive.arcadeDrive(
@@ -519,7 +537,9 @@ public class DriveSubsystem extends SubsystemBase {
 
   public void tankDriveVolts(double leftVolts, double rightVolts) {
     m_leftFront.setVoltage(leftVolts);
+    m_leftRear.setVoltage(leftVolts);
     m_rightFront.setVoltage(rightVolts);
+    m_rightRear.setVoltage(rightVolts);
     m_drive.feed();
   }
    

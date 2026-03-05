@@ -309,6 +309,7 @@ public class RobotContainer {
             autoFile = p;
             break;
           }
+          
         }
         if (autoFile != null && m_resetOdomEntry.getBoolean(true)) {
           String autoJson = Files.readString(autoFile, StandardCharsets.UTF_8);
