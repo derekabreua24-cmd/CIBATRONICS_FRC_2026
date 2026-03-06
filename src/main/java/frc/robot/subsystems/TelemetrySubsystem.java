@@ -78,9 +78,7 @@ public class TelemetrySubsystem extends SubsystemBase {
   private final GenericEntry m_rightFrontTempEntry;
   private final GenericEntry m_rightRearTempEntry;
 
-  // Telemetria del intake
-  private final GenericEntry m_intakePosEntry;
-  private final GenericEntry m_intakeVelEntry;
+  // Telemetria del intake (brushed, no encoder)
   private final GenericEntry m_intakeCurrentEntry;
   
   // Indexer eliminado del proyecto; campos de telemetría omitidos
@@ -205,17 +203,15 @@ public class TelemetrySubsystem extends SubsystemBase {
   m_rightFrontTempEntry = rightDriveLayout.add("Right Front Temp", 0.0).getEntry();
   m_rightRearTempEntry = rightDriveLayout.add("Right Rear Temp", 0.0).getEntry();
 
-  // Diseño de Intake
+  // Diseño de Intake (brushed motor, no encoder)
   var intakeLayout = tab.getLayout("Intake", BuiltInLayouts.kList).withSize(2, 3);
   m_intakeSetEntry = intakeLayout.add("Intake Setpoint", 0.0).getEntry();
-  m_intakePosEntry = intakeLayout.add("Intake Pos", 0.0).getEntry();
-  m_intakeVelEntry = intakeLayout.add("Intake Vel", 0.0).getEntry();
   m_intakeCurrentEntry = intakeLayout.add("Intake Current", 0.0).getEntry();
   m_intakeReversedEntry = intakeLayout.add("Intake Reversed", false).getEntry();
 
   // Telemetría del indexer eliminada
 
-  // Diseño de Shooter
+  // Diseño de Shooter (velocity only)
   var shooterLayout = tab.getLayout("Shooter", BuiltInLayouts.kList).withSize(2, 3);
   m_shooterVelEntry = shooterLayout.add("Shooter Vel", 0.0).getEntry();
   m_shooterCurrentEntry = shooterLayout.add("Shooter Current", 0.0).getEntry();
@@ -457,8 +453,6 @@ public class TelemetrySubsystem extends SubsystemBase {
     }
   }
 
-    m_intakePosEntry.setDouble(m_intake.getEncoderPosition());
-    m_intakeVelEntry.setDouble(m_intake.getEncoderVelocity());
     m_intakeCurrentEntry.setDouble(m_intake.getOutputCurrent());
 
   // Telemetria NavX
@@ -467,9 +461,12 @@ public class TelemetrySubsystem extends SubsystemBase {
   m_navxRollEntry.setDouble(m_navx.getRoll());
 
 
-  // Telemetria del shooter
+  // Telemetria del shooter (Shuffleboard; Logger/DataLogManager via ShooterSubsystem.periodic()) — velocity only
   m_shooterVelEntry.setDouble(m_shooter.getAverageVelocity());
   m_shooterCurrentEntry.setDouble(m_shooter.getOutputCurrent());
+  Logger.recordOutput("Telemetry/ShooterVel", m_shooter.getAverageVelocity());
+  Logger.recordOutput("Telemetry/ShooterTargetRpm", m_shooter.getTargetRpm());
+  Logger.recordOutput("Telemetry/ShooterCurrent", m_shooter.getOutputCurrent());
 
   // Nombres de comandos activos por subsistema
     Command dcmd = m_drive.getCurrentCommand();
@@ -582,10 +579,8 @@ public class TelemetrySubsystem extends SubsystemBase {
 
       parts.add(String.format("%.3f", m_drive.getRightAverage()));
 
-  // Intake/shooter
+  // Intake/shooter (intake has no encoder)
       parts.add(String.format("%.3f", m_intake.getSetpoint()));
-      parts.add(String.format("%.3f", m_intake.getEncoderPosition()));
-      parts.add(String.format("%.3f", m_intake.getEncoderVelocity()));
       parts.add(String.format("%.3f", m_intake.getOutputCurrent()));
 
 

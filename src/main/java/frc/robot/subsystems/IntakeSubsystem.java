@@ -61,17 +61,7 @@ public class IntakeSubsystem extends SubsystemBase {
     return m_intake.get();
   }
 
-  /** Devuelve la posición del encoder (rotaciones) del motor del intake. */
-  public double getEncoderPosition() {
-    return m_intake.getEncoder().getPosition();
-  }
-
-  /** Devuelve la velocidad del encoder del motor del intake. */
-  public double getEncoderVelocity() {
-    return m_intake.getEncoder().getVelocity();
-  }
-
-  /** Devuelve la corriente de salida (amperios) del motor del intake. */
+  /** Devuelve la corriente de salida (amperios) del motor del intake. No encoder (brushed motor). */
   public double getOutputCurrent() {
     return m_intake.getOutputCurrent();
   }

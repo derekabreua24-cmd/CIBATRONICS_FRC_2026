@@ -9,7 +9,7 @@ import org.littletonrobotics.junction.Logger;
 
 /**
  * Runs the intake and the shooter (as feeder) while active.
- * Intake motor pulls note in; shooter motor runs in reverse to feed the note into the shooter.
+ * Intake motor pulls fuel in; shooter motor runs in reverse to feed the fuel into the shooter.
  * Releasing stops both. Shooter command (RT) runs the same motor forward at RPM to launch.
  */
 public class IntakeCommand extends Command {

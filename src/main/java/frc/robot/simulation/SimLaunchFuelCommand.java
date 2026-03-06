@@ -14,10 +14,11 @@ import org.ironmaple.simulation.SimulatedArena;
 import org.ironmaple.simulation.seasonspecific.rebuilt2026.RebuiltFuelOnFly;
 
 /**
- * Simulation-only: launches one FUEL projectile in the maple-sim 2026 Rebuilt arena using current
- * robot pose, chassis speeds, and shooter target RPM. No-op on real robot.
+ * Simulation-only (2026 Rebuilt): launches one FUEL projectile in the maple-sim arena using current
+ * robot pose, chassis speeds, and shooter target RPM. Uses {@link org.ironmaple.simulation.seasonspecific.rebuilt2026.RebuiltFuelOnFly}.
+ * No-op on real robot.
  */
-public class SimLaunchNoteCommand extends InstantCommand {
+public class SimLaunchFuelCommand extends InstantCommand {
 
   private final DriveSubsystem m_drive;
   private final OdometrySubsystem m_odometry;
@@ -32,7 +33,7 @@ public class SimLaunchNoteCommand extends InstantCommand {
   /** Approx launch speed (m/s) at 6000 RPM; scale by targetRpm/6000. */
   private static final double LAUNCH_SPEED_AT_6000_RPM = 20.0;
 
-  public SimLaunchNoteCommand(DriveSubsystem drive, OdometrySubsystem odometry, ShooterSubsystem shooter) {
+  public SimLaunchFuelCommand(DriveSubsystem drive, OdometrySubsystem odometry, ShooterSubsystem shooter) {
     super();
     m_drive = drive;
     m_odometry = odometry;

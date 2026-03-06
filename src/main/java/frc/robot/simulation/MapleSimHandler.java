@@ -17,12 +17,14 @@ import frc.robot.subsystems.VisionSubsystem;
 
 /**
  * Handles maple-sim (Shenzhen Robotics Alliance / Team 5516 Iron Maple) simulation
- * periodic logic aligned with official examples and docs.
+ * for the <strong>2026 Rebuilt</strong> game. All arena, game pieces, and goals are 2026 Rebuilt.
  * <p>
  * Flow matches <a href="https://shenzhen-robotics-alliance.github.io/maple-sim/using-the-simulated-arena/">Using the Simulated Arena</a>:
- * {@link SimulatedArena#getInstance()} (default 2026 Rebuilt arena), {@link SimulatedArena#resetFieldForAuto()},
+ * {@link SimulatedArena#getInstance()} returns the default 2026 Rebuilt arena
+ * ({@code org.ironmaple.simulation.seasonspecific.rebuilt2026.Arena2026Rebuilt}),
+ * {@link SimulatedArena#resetFieldForAuto()} populates FUEL for 2026 Rebuilt,
  * add chassis via {@link SimulatedArena#addDriveTrainSimulation}, intake via {@link IntakeSimulation#register},
- * then {@link SimulatedArena#simulationPeriodic()} each cycle. FUEL positions from {@link SimulatedArena#getGamePiecesArrayByType}("Fuel").
+ * then {@link SimulatedArena#simulationPeriodic()} each cycle. FUEL from {@link SimulatedArena#getGamePiecesArrayByType}("Fuel").
  * <p>
  * See also <a href="https://shenzhen-robotics-alliance.github.io/maple-sim/simulating-intake/">Simulating Intake</a>,
  * <a href="https://shenzhen-robotics-alliance.github.io/maple-sim/simulating-projectiles/">Simulating Projectiles</a>.
@@ -51,10 +53,11 @@ public final class MapleSimHandler {
     if (!edu.wpi.first.wpilibj.RobotBase.isSimulation()) {
       return;
     }
+    // 2026 Rebuilt: getInstance() returns Arena2026Rebuilt (FUEL, hubs, field layout).
     var arena = SimulatedArena.getInstance();
 
     if (!m_fieldInitialized) {
-      // Official pattern: reset field, then add drivetrain and intake (see using-the-simulated-arena.md).
+      // 2026 Rebuilt: resetFieldForAuto() populates field with FUEL as at match start.
       arena.resetFieldForAuto();
       Pose2d initialPose = odometry.getPose();
       DriveTrainSimulationConfig config = DriveTrainSimulationConfig.Default()
@@ -63,6 +66,7 @@ public final class MapleSimHandler {
           .withTrackLengthTrackWidth(Units.Meters.of(0.5), Units.Meters.of(DriveConstants.kTrackwidthMeters));
       m_chassisSim = new KinematicChassisSim(config, initialPose);
       arena.addDriveTrainSimulation(m_chassisSim);
+      // 2026 Rebuilt: game piece type is "Fuel".
       m_intakeSim = IntakeSimulation.OverTheBumperIntake(
           "Fuel",
           m_chassisSim,
@@ -79,8 +83,8 @@ public final class MapleSimHandler {
       m_chassisSim.setRobotSpeeds(drive.getDesiredChassisSpeedsForSim());
     }
     if (m_intakeSim != null && intake != null) {
-      // Only "collect" when intake is running forward (positive setpoint); reverse = stop intake in sim.
-      if (intake.getSetpoint() > INTAKE_RUNNING_THRESHOLD) {
+      // Intake "on" when motor has significant output (either direction). Our code uses negative voltage to pull fuel in.
+      if (Math.abs(intake.getSetpoint()) > INTAKE_RUNNING_THRESHOLD) {
         m_intakeSim.startIntake();
       } else {
         m_intakeSim.stopIntake();
@@ -109,12 +113,12 @@ public final class MapleSimHandler {
       Logger.recordOutput("FieldSimulation/IntakeFuelCount", m_intakeSim.getGamePiecesAmount());
     }
 
-    // Hub poses so AdvantageScope 3D field shows shooting targets (intake/shooting context).
+    // 2026 Rebuilt hub poses (match RebuiltHub) for AdvantageScope 3D field.
     Logger.recordOutput("FieldSimulation/Goals/BlueHub", MapleSimConstants.kBlueHubPose);
     Logger.recordOutput("FieldSimulation/Goals/RedHub", MapleSimConstants.kRedHubPose);
 
-    // Intake active (true when running forward) for visibility in AdvantageScope line graphs.
-    boolean intakeActive = intake != null && intake.getSetpoint() > INTAKE_RUNNING_THRESHOLD;
+    // Intake active (true when running in either direction) for visibility in AdvantageScope line graphs.
+    boolean intakeActive = intake != null && Math.abs(intake.getSetpoint()) > INTAKE_RUNNING_THRESHOLD;
     Logger.recordOutput("FieldSimulation/IntakeActive", intakeActive);
 
     // Shooter active and target RPM for visibility in AdvantageScope (shooting context).

@@ -11,7 +11,7 @@ package frc.robot.constants;
 public final class ShooterConstants {
   private ShooterConstants() {}
 
-  // ----- Motor port (single shooter motor) -----
+  // ----- Motor port (single shooter motor: brushless NEO, internal encoder) -----
   public static final int kShooterMotorPort = 6;
 
   // ----- Voltage and RPM -----
