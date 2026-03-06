@@ -141,6 +141,13 @@ public class UsbAprilTagProcessor extends SubsystemBase {
       List<VisionSubsystem.VisionDetection> list = new ArrayList<>();
       for (AprilTagDetection d : detections) {
         Transform3d tagToCamera = m_estimator.estimate(d);
+        // Simple console print when AprilTag ID 3 is detected (for Arducam/USB testing).
+        if (d.getId() == 3) {
+          System.out.printf(
+              "AprilTag ID 3 detected at t=%.3f s, pose (tag->camera): %s%n",
+              frameTimestamp,
+              tagToCamera.toString());
+        }
         list.add(new VisionSubsystem.VisionDetection(d.getId(), tagToCamera));
       }
       m_vision.processDetections(list, frameTimestamp);
