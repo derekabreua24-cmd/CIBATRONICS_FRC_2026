@@ -10,14 +10,14 @@ import edu.wpi.first.math.geometry.Rotation2d;
 import edu.wpi.first.math.geometry.Rotation3d;
 
 /**
- * Poses and other settings for maple-sim (Team 5516 Iron Maple) simulation.
+ * Poses and other settings for maple-sim <strong>2026 Rebuilt</strong> simulation.
  * This is the single place to configure where the robot and field start in sim.
  *
  * <ul>
  *   <li><b>Robot initial pose</b> – Used when simulation starts so odometry and the sim chassis
  *       start at the same position.</li>
- *   <li><b>Hub poses</b> – Blue/Red hub positions (2026 Rebuilt) logged for AdvantageScope 3D field.</li>
- *   <li><b>FUEL on field</b> – Game piece positions come from maple-sim; we log them in MapleSimHandler.</li>
+ *   <li><b>Hub poses</b> – Blue/Red hub positions (2026 Rebuilt; match {@code RebuiltHub.blueHubPose/redHubPose}) logged for AdvantageScope 3D field.</li>
+ *   <li><b>FUEL on field</b> – Game piece type is "Fuel" (2026 Rebuilt); positions come from maple-sim; we log them in MapleSimHandler.</li>
  * </ul>
  */
 public final class MapleSimConstants {

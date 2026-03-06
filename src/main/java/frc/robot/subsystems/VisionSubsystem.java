@@ -10,9 +10,11 @@ import edu.wpi.first.wpilibj2.command.SubsystemBase;
 
 import java.util.ArrayList;
 import java.util.Collections;
+import java.util.HashSet;
 import java.util.List;
 import java.util.Optional;
 import java.util.OptionalDouble;
+import java.util.Set;
 import java.util.concurrent.atomic.AtomicReference;
 
 import org.littletonrobotics.junction.Logger;
@@ -35,6 +37,8 @@ public class VisionSubsystem extends SubsystemBase {
   private volatile double m_lastTimestamp = 0.0;
   /** Distancia (m) desde la cámara al tag más cercano en el último frame; &lt; 0 si no hay detección válida. Usado para RPM por distancia del shooter. */
   private volatile double m_lastTargetDistanceMeters = -1.0;
+  /** Tag IDs seen in the last frame that contributed to a valid pose. Used e.g. for ShootWhenTag3Command. */
+  private volatile Set<Integer> m_lastSeenTagIds = Collections.emptySet();
 
   // ----------------------------------------------------
   // Constructores
@@ -67,21 +71,26 @@ public class VisionSubsystem extends SubsystemBase {
   public Optional<Pose2d> processDetections(List<VisionDetection> detections, double timestampSeconds) {
     if (detections == null || detections.isEmpty()) {
       m_lastTargetDistanceMeters = -1.0;
+      m_lastSeenTagIds = Collections.emptySet();
       return Optional.empty();
     }
     List<Pose2d> validPoses = new ArrayList<>();
     List<Double> distances = new ArrayList<>();
+    Set<Integer> seenIds = new HashSet<>();
     for (VisionDetection d : detections) {
       Optional<Pose2d> p = computeRobotPose(d.tagId(), d.tagToCamera());
       if (p.isPresent()) {
         validPoses.add(p.get());
         double dist = d.tagToCamera().getTranslation().getNorm();
         distances.add(dist);
+        seenIds.add(d.tagId());
       }
     }
     if (validPoses.isEmpty()) {
+      m_lastSeenTagIds = Collections.emptySet();
       return Optional.empty();
     }
+    m_lastSeenTagIds = seenIds;
 
     // Fusionar: promedios de x, y y de la rotación (ángulo).
     double sumX = 0, sumY = 0, sumAngle = 0;
@@ -216,8 +225,13 @@ public class VisionSubsystem extends SubsystemBase {
     return m_lastTargetDistanceMeters >= 0 ? OptionalDouble.of(m_lastTargetDistanceMeters) : OptionalDouble.empty();
   }
 
+  /** True if the given AprilTag ID was seen in the last frame (and contributed to pose). Use for tag-triggered actions. */
+  public boolean hasSeenTag(int tagId) {
+    return m_lastSeenTagIds.contains(tagId);
+  }
+
   /**
-   * Inyecta pose y distancia sintéticos en simulación (sin cámara) para probar la tubería de visión en AdvantageScope.
+   * Inyecta pose y distancia sintéticos en simulación 2026 Rebuilt (sin cámara) para probar la tubería de visión en AdvantageScope.
    * Solo debe llamarse cuando {@code RobotBase.isSimulation()} es true. Registra Vision/RobotPose y Vision/TargetDistanceMeters.
    */
   public void setSimulationPoseAndDistance(Pose2d pose, double distanceMeters) {

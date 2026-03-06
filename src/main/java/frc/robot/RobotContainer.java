@@ -12,7 +12,7 @@ import frc.robot.commands.Drv_Commands.DriveCommand;
 import frc.robot.commands.Drv_Commands.TurnToAngleCommand;
 import frc.robot.commands.Intk_Commands.IntakeCommand;
 import frc.robot.commands.Intk_Commands.ToggleIntakeDirectionCommand;
-import frc.robot.simulation.SimLaunchNoteCommand;
+import frc.robot.simulation.SimLaunchFuelCommand;
 import frc.robot.simulation.MapleSimHandler;
 // IndexerSubsystem eliminado; toda la funcionalidad del indexer fue recortada del proyecto.
 import frc.robot.subsystems.TelemetrySubsystem;
@@ -35,6 +35,7 @@ import frc.robot.subsystems.UsbAprilTagProcessor;
 import frc.robot.commands.Rst_Commands.ResetGyroCommand;
 import frc.robot.commands.Rst_Commands.ResetOdometryToVisionCommand;
 import frc.robot.commands.Sht_Commands.ShooterCommand;
+import frc.robot.commands.Sht_Commands.ShootWhenTag3Command;
 import edu.wpi.first.networktables.GenericEntry;
 
 import frc.robot.subsystems.ShooterSubsystem;
@@ -269,7 +270,7 @@ public class RobotContainer {
     // Sim only: Driver A (without LB) = launch one FUEL projectile in maple-sim. A+LB = SysId only, no launch.
     m_driverController.a()
         .and(m_driverController.leftBumper().negate())
-        .onTrue(new SimLaunchNoteCommand(
+        .onTrue(new SimLaunchFuelCommand(
             m_driveSubsystem,
             m_odometrySubsystem,
             m_shooterSubsystem));
@@ -342,6 +343,11 @@ public class RobotContainer {
     } catch (IOException | RuntimeException e) {
       Logger.recordOutput("Telemetry/Errors", "[AutoChooser] Reset-odom parse error: " + e.getMessage());
       m_odometrySubsystem.resetOdometry(new Pose2d());
+    }
+    // During autonomous only: shoot when camera sees AprilTag ID 3 (runs in parallel with selected auto).
+    if (m_visionSubsystem != null) {
+      return ppCmd.alongWith(
+          new ShootWhenTag3Command(m_visionSubsystem, m_shooterSubsystem, m_intakeSubsystem));
     }
     return ppCmd;
   }

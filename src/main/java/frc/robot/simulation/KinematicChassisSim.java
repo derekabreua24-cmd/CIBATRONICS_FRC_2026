@@ -5,7 +5,7 @@ import org.ironmaple.simulation.drivesims.AbstractDriveTrainSimulation;
 import org.ironmaple.simulation.drivesims.configs.DriveTrainSimulationConfig;
 
 /**
- * Chassis body in the maple-sim arena. Velocity is set each tick from desired chassis speeds;
+ * Chassis body in the maple-sim 2026 Rebuilt arena. Velocity is set each tick from desired chassis speeds;
  * the physics engine integrates position and resolves collisions (e.g. walls). Pose is read back
  * and used to update drive/odometry. Used so {@link org.ironmaple.simulation.IntakeSimulation} can attach and collect FUEL.
  */

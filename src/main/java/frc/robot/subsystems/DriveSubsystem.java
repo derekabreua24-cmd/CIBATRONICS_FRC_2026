@@ -2,7 +2,6 @@ package frc.robot.subsystems;
 
 import com.revrobotics.spark.SparkMax;
 import com.revrobotics.spark.SparkLowLevel.MotorType;
-import com.revrobotics.RelativeEncoder;
 
 import edu.wpi.first.wpilibj2.command.Command;
 import edu.wpi.first.wpilibj2.command.SubsystemBase;
@@ -70,14 +69,7 @@ public class DriveSubsystem extends SubsystemBase {
 
   private final Field2d m_field = new Field2d();
 
-  // ===============================
-  // Codificadores
-  // ===============================
-
-  private final RelativeEncoder m_leftFrontEncoder = m_leftFront.getEncoder();
-  private final RelativeEncoder m_leftRearEncoder = m_leftRear.getEncoder();
-  private final RelativeEncoder m_rightFrontEncoder = m_rightFront.getEncoder();
-  private final RelativeEncoder m_rightRearEncoder = m_rightRear.getEncoder();
+  // No wheel encoders (brushed drivetrain, no budget). In sim, wheel state comes from MapleSim via m_mapleSimLeftPosM/m_mapleSimRightPosM.
 
   // ===============================
   // Drive (all four motors set explicitly; no leader/follower)
@@ -174,10 +166,11 @@ public class DriveSubsystem extends SubsystemBase {
     m_rightRear.setVoltage(volts);
   }
 
+  /** Arcade drive. Fwd and turn are reversed: stick forward → backward, stick right → turn left. */
   public void arcadeDrive(double fwd, double rot) {
     m_drive.arcadeDrive(
-        fwd * DriveConstants.kDriveSpeedScale,
-        rot * DriveConstants.kTurnSpeedScale);
+        -fwd * DriveConstants.kDriveSpeedScale,
+        -rot * DriveConstants.kTurnSpeedScale);
 
   // Mantener alimentador del watchdog
   m_drive.feed();
@@ -188,27 +181,29 @@ public class DriveSubsystem extends SubsystemBase {
   }
 
   // ===============================
-  // Lectores de encoder
+  // Wheel position/velocity (no encoders: 0 on real; sim uses MapleSim state)
   // ===============================
 
   public double getLeftAveragePosition() {
-    return (m_leftFrontEncoder.getPosition()
-        + m_leftRearEncoder.getPosition()) / 2.0;
+    if (RobotBase.isSimulation()) {
+      return metersToRotations(m_mapleSimLeftPosM);
+    }
+    return 0.0;
   }
 
   public double getRightAveragePosition() {
-    return (m_rightFrontEncoder.getPosition()
-        + m_rightRearEncoder.getPosition()) / 2.0;
+    if (RobotBase.isSimulation()) {
+      return metersToRotations(m_mapleSimRightPosM);
+    }
+    return 0.0;
   }
 
   public double getLeftAverageVelocity() {
-    return (m_leftFrontEncoder.getVelocity()
-        + m_leftRearEncoder.getVelocity()) / 2.0;
+    return 0.0;
   }
 
   public double getRightAverageVelocity() {
-    return (m_rightFrontEncoder.getVelocity()
-        + m_rightRearEncoder.getVelocity()) / 2.0;
+    return 0.0;
   }
 
   public double getLeftTotalCurrent() {
@@ -328,6 +323,11 @@ public class DriveSubsystem extends SubsystemBase {
     return rotations * wheelCirc / DriveConstants.kDriveGearRatio;
   }
 
+  private static double metersToRotations(double meters) {
+    double wheelCirc = Math.PI * DriveConstants.kWheelDiameterMeters;
+    return meters * DriveConstants.kDriveGearRatio / wheelCirc;
+  }
+
   private static double rpmToMetersPerSecond(double rpm) {
   double wheelCirc = Math.PI * DriveConstants.kWheelDiameterMeters;
   double rps = rpm / 60.0;
@@ -352,12 +352,6 @@ public class DriveSubsystem extends SubsystemBase {
   }
 
   public void resetOdometry(Pose2d pose, Rotation2d heading) {
-    // Reiniciar posiciones de encoder a cero antes de resetear odometría.
-    m_leftFrontEncoder.setPosition(0);
-    m_leftRearEncoder.setPosition(0);
-    m_rightFrontEncoder.setPosition(0);
-    m_rightRearEncoder.setPosition(0);
-
     if (RobotBase.isSimulation()) {
       m_mapleSimLeftPosM = 0.0;
       m_mapleSimRightPosM = 0.0;
@@ -405,8 +399,11 @@ public class DriveSubsystem extends SubsystemBase {
     m_poseEstimator.addVisionMeasurement(visionPose, timestampSeconds, visionMeasurementStdDevs);
   }
 
+  /** On real robot returns (0,0,0) since there are no encoders. In sim returns desired chassis speeds from motor outputs so PathPlanner and projectile sim get a sensible value. */
   public ChassisSpeeds getChassisSpeeds() {
-    // Convertir RPM de SparkMax a metros por segundo.
+    if (RobotBase.isSimulation()) {
+      return getDesiredChassisSpeedsForSim();
+    }
     double leftVel = rpmToMetersPerSecond(getLeftAverageVelocity());
     double rightVel = rpmToMetersPerSecond(getRightAverageVelocity());
     double vx = (leftVel + rightVel) / 2.0;
@@ -437,8 +434,9 @@ public class DriveSubsystem extends SubsystemBase {
   }
 
   /**
-   * Updates sim state (encoder positions, heading) from maple-sim physics pose. Call from
+   * Updates sim wheel state (heading and left/right distances) from maple-sim physics pose. Call from
    * MapleSimHandler after arena.simulationPeriodic() so drive/odometry reflect the physics body (including collisions).
+   * No physical encoders; position is kept in m_mapleSimLeftPosM / m_mapleSimRightPosM for getLeftAveragePosition/getRightAveragePosition in sim.
    */
   public void setSimStateFromMapleSim(Pose2d physicsPose) {
     if (!RobotBase.isSimulation()) return;
@@ -455,13 +453,6 @@ public class DriveSubsystem extends SubsystemBase {
       m_mapleSimRightPosM += rightDelta;
     }
     m_lastMapleSimPose = physicsPose;
-    double wheelCirc = Math.PI * DriveConstants.kWheelDiameterMeters;
-    double leftRotations = (m_mapleSimLeftPosM / wheelCirc) * DriveConstants.kDriveGearRatio;
-    double rightRotations = (m_mapleSimRightPosM / wheelCirc) * DriveConstants.kDriveGearRatio;
-    m_leftFrontEncoder.setPosition(leftRotations);
-    m_leftRearEncoder.setPosition(leftRotations);
-    m_rightFrontEncoder.setPosition(rightRotations);
-    m_rightRearEncoder.setPosition(rightRotations);
   }
 
   /** Registers a callback invoked when odometry is reset in sim so maple-sim chassis can be synced (e.g. teleport body). */
