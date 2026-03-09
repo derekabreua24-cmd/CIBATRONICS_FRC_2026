@@ -5,20 +5,19 @@ import edu.wpi.first.networktables.GenericEntry;
 import frc.robot.subsystems.ShooterSubsystem;
 import frc.robot.subsystems.IntakeSubsystem;
 import frc.robot.subsystems.VisionSubsystem;
-import frc.robot.constants.ShooterConstants;
-import frc.robot.constants.IntakeConstants;
 
 /**
- * Comando para girar el shooter mientras se mantiene el botón.
- * También corre el intake para alimentar la nota al shooter.
- * Si visión está disponible y hay una distancia al tag, usa RPM por distancia (setVelocitySetpointFromDistanceMeters).
- * Si no, usa la RPM de la entrada de Shuffleboard (Tuning) o el valor por defecto.
+ * Comando para disparar: shooter (flywheel + feeder) a 11 V y inner intake a 4 V en reversa para alimentar.
+ * Mantener el botón para seguir disparando.
  */
 public class ShooterCommand extends Command {
+  /** Voltage (V) for shooter motor (flywheel + feeder) when shooting. */
+  private static final double kShootVoltage = 11.0;
+  /** Voltage (V) for inner intake in feed direction (reverse) when shooting. */
+  private static final double kInnerIntakeFeedVoltage = 4.0;
+
   private final ShooterSubsystem m_shooter;
   private final IntakeSubsystem m_intake;
-  private final GenericEntry m_shooterRpmEntry;
-  private final VisionSubsystem m_vision;
 
   public ShooterCommand(ShooterSubsystem shooter, GenericEntry shooterRpmEntry, IntakeSubsystem intake) {
     this(shooter, shooterRpmEntry, intake, null);
@@ -27,34 +26,22 @@ public class ShooterCommand extends Command {
   public ShooterCommand(ShooterSubsystem shooter, GenericEntry shooterRpmEntry, IntakeSubsystem intake, VisionSubsystem vision) {
     m_shooter = shooter;
     m_intake = intake;
-    m_shooterRpmEntry = shooterRpmEntry;
-    m_vision = vision;
     addRequirements(shooter, intake);
   }
 
   @Override
   public void initialize() {
-    updateSetpoint();
+    m_shooter.setShootVoltage(kShootVoltage);
     if (m_intake != null) {
-      m_intake.runVoltage(IntakeConstants.kIntakeMaxVoltage);
+      m_intake.runAtVoltage(-kInnerIntakeFeedVoltage);
     }
   }
 
   @Override
   public void execute() {
-    updateSetpoint();
+    m_shooter.setShootVoltage(kShootVoltage);
     if (m_intake != null) {
-      m_intake.runVoltage(IntakeConstants.kIntakeMaxVoltage);
-    }
-  }
-
-  private void updateSetpoint() {
-    if (m_vision != null && m_vision.getLastTargetDistanceMeters().isPresent()) {
-      m_shooter.setVelocitySetpointFromDistanceMeters(m_vision.getLastTargetDistanceMeters().getAsDouble());
-    } else {
-      double defaultRpm = ShooterConstants.kShooterMaxRPM * Math.abs(ShooterConstants.kShooterSpeed);
-      double targetRpm = m_shooterRpmEntry == null ? defaultRpm : m_shooterRpmEntry.getDouble(defaultRpm);
-      m_shooter.setVelocitySetpointRpm(targetRpm);
+      m_intake.runAtVoltage(-kInnerIntakeFeedVoltage);
     }
   }
 

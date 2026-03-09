@@ -15,7 +15,7 @@ public final class IntakeConstants {
   public static final int kIntakeMotorPort = 5;
 
   /** Fixed voltage (V) for intake. When intake is running, it always uses this—no scaling. */
-  public static final double kIntakeVoltage = 12.0;
+  public static final double kIntakeVoltage = 8.0;
   /** Alias for backwards compatibility; same as kIntakeVoltage. */
   public static final double kIntakeMaxVoltage = kIntakeVoltage;
   public static final double kDefaultVoltage = kIntakeVoltage;
