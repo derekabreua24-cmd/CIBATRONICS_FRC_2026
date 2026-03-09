@@ -72,7 +72,7 @@ public class DriveSubsystem extends SubsystemBase {
   // No wheel encoders (brushed drivetrain, no budget). In sim, wheel state comes from MapleSim via m_mapleSimLeftPosM/m_mapleSimRightPosM.
 
   // ===============================
-  // Drive (all four motors set explicitly; no leader/follower)
+  // Drive (all four motors set explicitly via setVoltage; no percent output)
   // ===============================
 
   private final DifferentialDrive m_drive =
@@ -222,6 +222,16 @@ public class DriveSubsystem extends SubsystemBase {
 
   public double getRightAverage() {
     return (m_rightFront.get() + m_rightRear.get()) / 2.0;
+  }
+
+  /** Left side commanded voltage (V). All drive output is voltage. */
+  public double getLeftCommandedVoltage() {
+    return getLeftAverage() * DriveConstants.kNominalVoltage;
+  }
+
+  /** Right side commanded voltage (V). All drive output is voltage. */
+  public double getRightCommandedVoltage() {
+    return getRightAverage() * DriveConstants.kNominalVoltage;
   }
 
   // ===============================

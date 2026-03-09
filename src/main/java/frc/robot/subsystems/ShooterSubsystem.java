@@ -14,7 +14,7 @@ import frc.robot.constants.ShooterConstants;
 /**
  * Single-motor shooter (CAN ID 6): brushless NEO with internal encoder.
  * Closed-loop velocity control: PID + feedforward from target RPM, output clamped to ±11 V.
- * Uses voltage compensation (11 V nominal). Feed mode = 4 V reverse.
+ * Uses voltage compensation (11 V nominal). Feed mode = 8 V (feeder/outer intake during intake).
  */
 public class ShooterSubsystem extends SubsystemBase {
   private static final double kNominalVoltage = ShooterConstants.kShooterVoltage;
@@ -30,7 +30,7 @@ public class ShooterSubsystem extends SubsystemBase {
       ShooterConstants.kShooterKA);
   private double m_targetRpm = 0.0;
   private double m_lastTargetRpm = -1.0;
-  /** When > 0, motor runs at kShooterFeedVoltage (4 V) reverse to feed during intake. */
+  /** When > 0, motor runs at kShooterFeedVoltage (8 V) to feed during intake. */
   private double m_feedVoltage = 0.0;
   /** When > 0, motor runs at this voltage (V) in shooting direction (open-loop). Used by ShooterCommand for fixed 11 V shoot. */
   private double m_shootVoltage = 0.0;
@@ -58,7 +58,7 @@ public class ShooterSubsystem extends SubsystemBase {
     m_shooter.setVoltage(volts);
   }
 
-  /** Convenience: open-loop as fraction of max voltage (-1..1). */
+  /** Convenience: -1..1 converted to voltage. All real output is voltage (setVoltage, setShootVoltage, setFeedVoltage). */
   public void setSpeed(double speed) {
     setVoltage(speed * ShooterConstants.kShooterVoltage);
   }
@@ -81,7 +81,7 @@ public class ShooterSubsystem extends SubsystemBase {
     setVelocitySetpointRpm(rpm);
   }
 
-  /** Set feed on/off for intake; motor runs in reverse at kShooterFeedVoltage (4 V). Any value > 0 enables. Call with 0 to stop. */
+  /** Set feed on/off for intake; motor runs at kShooterFeedVoltage (8 V). Any value > 0 enables. Call with 0 to stop. */
   public void setFeedVoltage(double volts) {
     m_feedVoltage = volts > 0.0 ? ShooterConstants.kShooterFeedVoltage : 0.0;
   }
@@ -123,14 +123,14 @@ public class ShooterSubsystem extends SubsystemBase {
       m_pid.setPID(p, i, d);
     }
 
-    // Feed (reverse for intake) takes precedence; uses kShooterFeedVoltage (4 V) when active.
+    // Feed (for intake) takes precedence; uses kShooterFeedVoltage (8 V) when active.
     if (m_feedVoltage > 0.0) {
-      double volts = -ShooterConstants.kShooterFeedVoltage;
+      double volts = ShooterConstants.kShooterFeedVoltage;
       m_shooter.setVoltage(volts);
-      m_lastOutputPercent = -volts / ShooterConstants.kShooterFeedVoltage;
+      m_lastOutputPercent = volts / ShooterConstants.kShooterFeedVoltage;
     } else if (m_shootVoltage > 0.0) {
       // Fixed voltage shoot (e.g. 11 V from ShooterCommand).
-      double volts = -m_shootVoltage;
+      double volts = m_shootVoltage;
       m_shooter.setVoltage(volts);
       m_lastOutputPercent = volts / kNominalVoltage;
     } else if (m_targetRpm > 1.0) {
@@ -168,5 +168,10 @@ public class ShooterSubsystem extends SubsystemBase {
 
   public double getLastOutputPercent() {
     return m_lastOutputPercent;
+  }
+
+  /** Last commanded voltage (V). All output is voltage. */
+  public double getCommandedVoltage() {
+    return m_lastOutputPercent * kNominalVoltage;
   }
 }

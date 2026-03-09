@@ -140,7 +140,7 @@ public class TelemetrySubsystem extends SubsystemBase {
     driverTab.add("Field", m_field2dDriver).withSize(6, 4).withPosition(6, 0);
 
     // Inicializar entradas compactas para la pestaña Driver
-    m_driverLeftAvgEntry = driverTab.add("Drive Left Avg", 0.0).getEntry();
+    m_driverLeftAvgEntry = driverTab.add("Drive Left (V)", 0.0).getEntry();
     m_driverShooterVelEntry = driverTab.add("Shooter Vel", 0.0).getEntry();
     m_driverNavXYawEntry = driverTab.add("NavX Yaw", 0.0).getEntry();
     m_driverMatchTimeEntry = driverTab.add("Match Time", 0.0).getEntry();
@@ -184,7 +184,7 @@ public class TelemetrySubsystem extends SubsystemBase {
 
   // Diseño de Drive - separar Left/Right para mejor lectura
   var leftDriveLayout = tab.getLayout("Drive Left", BuiltInLayouts.kList).withSize(3, 4).withPosition(0, 0);
-  m_leftAvgEntry = leftDriveLayout.add("Drive Left Avg", 0.0).getEntry();
+  m_leftAvgEntry = leftDriveLayout.add("Drive Left (V)", 0.0).getEntry();
   m_leftPosEntry = leftDriveLayout.add("Left Pos", 0.0).getEntry();
   m_leftVelEntry = leftDriveLayout.add("Left Vel", 0.0).getEntry();
   m_leftCurrentEntry = leftDriveLayout.add("Left Current", 0.0).getEntry();
@@ -194,7 +194,7 @@ public class TelemetrySubsystem extends SubsystemBase {
   m_leftRearTempEntry = leftDriveLayout.add("Left Rear Temp", 0.0).getEntry();
 
   var rightDriveLayout = tab.getLayout("Drive Right", BuiltInLayouts.kList).withSize(3, 4).withPosition(3, 0);
-  m_rightAvgEntry = rightDriveLayout.add("Drive Right Avg", 0.0).getEntry();
+  m_rightAvgEntry = rightDriveLayout.add("Drive Right (V)", 0.0).getEntry();
   m_rightPosEntry = rightDriveLayout.add("Right Pos", 0.0).getEntry();
   m_rightVelEntry = rightDriveLayout.add("Right Vel", 0.0).getEntry();
   m_rightCurrentEntry = rightDriveLayout.add("Right Current", 0.0).getEntry();
@@ -205,7 +205,7 @@ public class TelemetrySubsystem extends SubsystemBase {
 
   // Diseño de Intake (brushed motor, no encoder)
   var intakeLayout = tab.getLayout("Intake", BuiltInLayouts.kList).withSize(2, 3);
-  m_intakeSetEntry = intakeLayout.add("Intake Setpoint", 0.0).getEntry();
+  m_intakeSetEntry = intakeLayout.add("Intake Voltage (V)", 0.0).getEntry();
   m_intakeCurrentEntry = intakeLayout.add("Intake Current", 0.0).getEntry();
   m_intakeReversedEntry = intakeLayout.add("Intake Reversed", false).getEntry();
 
@@ -382,14 +382,14 @@ public class TelemetrySubsystem extends SubsystemBase {
   // (mantiene compatibilidad con rutas de codigo de layout anteriores).
   if (driverMode) {
     // Actualizar solo widgets compactos en la pestaña Driver
-    m_driverLeftAvgEntry.setDouble(m_drive.getLeftAverage());
+    m_driverLeftAvgEntry.setDouble(m_drive.getLeftCommandedVoltage());
     m_driverShooterVelEntry.setDouble(m_shooter.getAverageVelocity());
     m_driverNavXYawEntry.setDouble(m_navx.getYaw());
     m_driverMatchTimeEntry.setDouble(DriverStation.getMatchTime());
   } else {
-    m_leftAvgEntry.setDouble(m_drive.getLeftAverage());
-    m_rightAvgEntry.setDouble(m_drive.getRightAverage());
-    m_intakeSetEntry.setDouble(m_intake.getSetpoint());
+    m_leftAvgEntry.setDouble(m_drive.getLeftCommandedVoltage());
+    m_rightAvgEntry.setDouble(m_drive.getRightCommandedVoltage());
+    m_intakeSetEntry.setDouble(m_intake.getCommandedVoltage());
   }
 
   // Ejes del controlador
@@ -418,9 +418,9 @@ public class TelemetrySubsystem extends SubsystemBase {
     m_fpgaTimeEntry.setDouble(Timer.getFPGATimestamp());
 
   // Registrar promedios del drive y setpoints del intake periodicamente
-  Logger.recordOutput("Telemetry/DriveLeftAvg", m_drive.getLeftAverage());
-  Logger.recordOutput("Telemetry/DriveRightAvg", m_drive.getRightAverage());
-  Logger.recordOutput("Telemetry/IntakeSet", m_intake.getSetpoint());
+  Logger.recordOutput("Telemetry/DriveLeftVoltage", m_drive.getLeftCommandedVoltage());
+  Logger.recordOutput("Telemetry/DriveRightVoltage", m_drive.getRightCommandedVoltage());
+  Logger.recordOutput("Telemetry/IntakeVoltage", m_intake.getCommandedVoltage());
 
   // Telemetría de encoders y corriente del drive/intake (solo en modo dev)
   boolean extended = m_extendedLoggingEntry.getBoolean(true);
@@ -561,7 +561,7 @@ public class TelemetrySubsystem extends SubsystemBase {
         parts.add(String.format("%.3f", m_drive.getLeftRearTemperature()));
       }
 
-      parts.add(String.format("%.3f", m_drive.getLeftAverage()));
+      parts.add(String.format("%.3f", m_drive.getLeftCommandedVoltage()));
       parts.add(String.format("%.3f", m_drive.getRightAveragePosition()));
       parts.add(String.format("%.3f", m_drive.getRightAverageVelocity()));
       parts.add(String.format("%.3f", m_drive.getRightTotalCurrent()));
@@ -577,17 +577,17 @@ public class TelemetrySubsystem extends SubsystemBase {
         parts.add(String.format("%.3f", m_drive.getRightRearTemperature()));
       }
 
-      parts.add(String.format("%.3f", m_drive.getRightAverage()));
+      parts.add(String.format("%.3f", m_drive.getRightCommandedVoltage()));
 
-  // Intake/shooter (intake has no encoder)
-      parts.add(String.format("%.3f", m_intake.getSetpoint()));
+  // Intake/shooter (all voltage)
+      parts.add(String.format("%.3f", m_intake.getCommandedVoltage()));
       parts.add(String.format("%.3f", m_intake.getOutputCurrent()));
 
 
       parts.add(String.format("%.3f", m_shooter.getTargetRpm()));
       parts.add(String.format("%.3f", m_shooter.getAverageVelocity()));
       parts.add(String.format("%.3f", m_shooter.getOutputCurrent()));
-      parts.add(String.format("%.3f", m_shooter.getLastOutputPercent()));
+      parts.add(String.format("%.3f", m_shooter.getCommandedVoltage()));
 
       // NavX y controles
       parts.add(String.format("%.3f", m_navx.getYaw()));

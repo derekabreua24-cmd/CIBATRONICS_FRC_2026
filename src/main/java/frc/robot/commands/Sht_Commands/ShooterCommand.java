@@ -7,14 +7,14 @@ import frc.robot.subsystems.IntakeSubsystem;
 import frc.robot.subsystems.VisionSubsystem;
 
 /**
- * Comando para disparar: shooter (flywheel + feeder) a 11 V y inner intake a 4 V en reversa para alimentar.
+ * Comando para disparar: shooter (flywheel + feeder) a 9 V y inner intake a 8 V para alimentar.
  * Mantener el botón para seguir disparando.
  */
 public class ShooterCommand extends Command {
   /** Voltage (V) for shooter motor (flywheel + feeder) when shooting. */
-  private static final double kShootVoltage = 11.0;
-  /** Voltage (V) for inner intake in feed direction (reverse) when shooting. */
-  private static final double kInnerIntakeFeedVoltage = 4.0;
+  private static final double kShootVoltage = 9.0;
+  /** Voltage (V) for inner intake when feeding during shoot. */
+  private static final double kInnerIntakeFeedVoltage = 8.0;
 
   private final ShooterSubsystem m_shooter;
   private final IntakeSubsystem m_intake;
@@ -33,7 +33,7 @@ public class ShooterCommand extends Command {
   public void initialize() {
     m_shooter.setShootVoltage(kShootVoltage);
     if (m_intake != null) {
-      m_intake.runAtVoltage(-kInnerIntakeFeedVoltage);
+      m_intake.runAtVoltage(kInnerIntakeFeedVoltage);
     }
   }
 
@@ -41,7 +41,7 @@ public class ShooterCommand extends Command {
   public void execute() {
     m_shooter.setShootVoltage(kShootVoltage);
     if (m_intake != null) {
-      m_intake.runAtVoltage(-kInnerIntakeFeedVoltage);
+      m_intake.runAtVoltage(kInnerIntakeFeedVoltage);
     }
   }
 

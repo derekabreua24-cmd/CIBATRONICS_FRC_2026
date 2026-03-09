@@ -23,8 +23,8 @@ public final class ShooterConstants {
   public static final double kShooterSpeed = 0.7;
   public static final double kShooterMaxRPM = 5700.0;
 
-  /** Feed voltage when shooter runs as feeder during intake. */
-  public static final double kShooterFeedVoltage = 4.0;
+  /** Feed voltage (V) when shooter runs as feeder (outer intake) during intake. */
+  public static final double kShooterFeedVoltage = 8.0;
 
   // ----- Feedforward (V, V/(rad/s), V/(rad/s²)) -----
   public static final double kShooterKS = 0.2;

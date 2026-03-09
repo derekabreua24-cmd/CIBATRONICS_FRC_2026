@@ -2,17 +2,18 @@ package frc.robot.commands.Intk_Commands;
 
 import frc.robot.subsystems.IntakeSubsystem;
 import frc.robot.subsystems.ShooterSubsystem;
-import frc.robot.constants.IntakeConstants;
 import frc.robot.constants.ShooterConstants;
 import edu.wpi.first.wpilibj2.command.Command;
 import org.littletonrobotics.junction.Logger;
 
 /**
- * Runs the intake and the shooter (as feeder) while active.
- * Intake motor pulls fuel in; shooter motor runs in reverse to feed the fuel into the shooter.
- * Releasing stops both. Shooter command (RT) runs the same motor forward at RPM to launch.
+ * Runs the intake (motor CAN 5) at 8 V and the shooter as feeder while active.
+ * Intake pulls fuel in; feeder runs at kShooterFeedVoltage. Releasing stops both.
  */
 public class IntakeCommand extends Command {
+  /** Intake motor (CAN 5) voltage (V) when running in this command. */
+  private static final double kIntakeVoltage = 8.0;
+
   private final IntakeSubsystem m_intake;
   private final ShooterSubsystem m_shooter;
 
@@ -27,9 +28,9 @@ public class IntakeCommand extends Command {
 
   @Override
   public void execute() {
-    m_intake.runVoltage(-IntakeConstants.kIntakeMaxVoltage);
+    m_intake.runAtVoltage(-kIntakeVoltage);
     m_shooter.setFeedVoltage(ShooterConstants.kShooterFeedVoltage);
-    Logger.recordOutput("Intake/Events", "[IntakeCommand] Executing intake at max voltage=" + IntakeConstants.kIntakeMaxVoltage);
+    Logger.recordOutput("Intake/Events", "[IntakeCommand] Intake (CAN 5) at " + kIntakeVoltage + " V");
   }
 
   @Override
