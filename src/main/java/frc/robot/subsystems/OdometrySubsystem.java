@@ -38,8 +38,6 @@ public class OdometrySubsystem extends SubsystemBase {
             ? m_drive.getSimHeading().get()
             : m_navx.getRotation2d();
     m_drive.updateOdometryWithTime(Timer.getFPGATimestamp(), heading);
-
-    Logger.recordOutput("Odometry/Update", "[Odometry] Updating odometry. pose=" + getPose());
   }
 
   /** Devuelve la pose estimada actual del robot. */

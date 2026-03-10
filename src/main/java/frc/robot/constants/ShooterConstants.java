@@ -24,19 +24,24 @@ public final class ShooterConstants {
   public static final double kShooterMaxRPM = 5700.0;
 
   /** Feed voltage (V) when shooter runs as feeder (outer intake) during intake. */
-  public static final double kShooterFeedVoltage = 8.0;
+  public static final double kShooterFeedVoltage = 9.0;
 
-  // ----- Feedforward (V, V/(rad/s), V/(rad/s²)) -----
+  /** RPM tolerance for "at speed" before feeding (closed-loop). */
+  public static final double kShooterAtSpeedToleranceRpm = 150.0;
+  /** Delay (s) after shooter is at speed before running the feeder. */
+  public static final double kShooterFeedDelayAfterAtSpeedSec = 0.5;
+
+  // ----- Feedforward (SimpleMotorFeedforward: kS in V, kV in V/(rad/s), kA in V/(rad/s²)) -----
   public static final double kShooterKS = 0.2;
   public static final double kShooterKV = 0.02;
   public static final double kShooterKA = 0.001;
 
-  // ----- Velocity PID (error in RPM, output added to FF percent) -----
-  /** Shooter velocity PID: proportional (tuned for ~4000–5000 RPM range). */
+  // ----- Velocity PID (error in RPM; output is dimensionless fraction, multiplied by kShooterVoltage to get volts) -----
+  /** P: 1/RPM so (RPM error)*P = fraction. Tuned for ~4000–5000 RPM. */
   public static final double kShooterP = 0.00035;
-  /** Shooter velocity PID: integral (removes steady-state RPM error). */
+  /** I: removes steady-state RPM error. */
   public static final double kShooterI = 0.00002;
-  /** Shooter velocity PID: derivative (usually 0 for velocity loop). */
+  /** D: usually 0 for velocity loop (noise). */
   public static final double kShooterD = 0.0;
 
   /** Distance-based RPM: base + slope×distance (m), clamped to min/max. */

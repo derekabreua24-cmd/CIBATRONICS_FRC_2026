@@ -1,5 +1,6 @@
 package frc.robot.commands.Drv_Commands;
 
+import edu.wpi.first.math.MathUtil;
 import edu.wpi.first.math.controller.PIDController;
 import edu.wpi.first.networktables.NetworkTable;
 import edu.wpi.first.networktables.NetworkTableInstance;
@@ -50,8 +51,8 @@ public class TurnToAngleCommand extends Command {
     double currentDeg = m_navx.getRotation2d().getDegrees();
     double output = m_pid.calculate(currentDeg, m_targetDeg);
 
-    // === ADDED === Clamp output to safe range
-    double rot = Math.max(-kMaxTurnOutput, Math.min(kMaxTurnOutput, output));
+    // WPILib: clamp controller output to safe range
+    double rot = MathUtil.clamp(output, -kMaxTurnOutput, kMaxTurnOutput);
 
     // === ADDED === Apply minimum output to overcome static friction
     if (!m_pid.atSetpoint() && Math.abs(rot) < kMinTurnOutput) {

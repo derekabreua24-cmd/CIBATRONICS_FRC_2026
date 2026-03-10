@@ -2,40 +2,59 @@ package frc.robot.commands.Sht_Commands;
 
 import edu.wpi.first.wpilibj.Timer;
 import edu.wpi.first.wpilibj2.command.Command;
-import frc.robot.constants.IntakeConstants;
 import frc.robot.constants.ShooterConstants;
 import frc.robot.subsystems.IntakeSubsystem;
 import frc.robot.subsystems.ShooterSubsystem;
 import frc.robot.subsystems.VisionSubsystem;
 
-/**
- * Runs shooter and intake (feeds balls) only while the camera detects AprilTag ID 3.
- * Feeder runs 0.5 s after shooter is at speed. When tag 3 is not seen, shooter and intake stop.
- */
-public class ShootWhenTag3Command extends Command {
+import java.util.Set;
+import java.util.stream.Collectors;
+import java.util.stream.IntStream;
 
-  private static final int kTargetTagId = 3;
+/**
+ * Distance-based shooting when the camera sees any of the given AprilTag IDs.
+ * Shooter spins up; feeder runs 0.5 s after shooter is at speed. When no target tag is seen, shooter and intake stop.
+ */
+public class ShootWhenTagCommand extends Command {
+
+  private static final double kIntakeFeedVoltage = 6.0;
 
   private final VisionSubsystem m_vision;
   private final ShooterSubsystem m_shooter;
   private final IntakeSubsystem m_intake;
+  private final Set<Integer> m_tagIds;
   private final Timer m_feedDelayTimer = new Timer();
   private boolean m_feedDelayStarted = false;
 
-  public ShootWhenTag3Command(
+  /**
+   * @param vision   vision subsystem (read-only)
+   * @param shooter  shooter subsystem
+   * @param intake   intake subsystem
+   * @param tagIds   AprilTag IDs that trigger shooting (e.g. 3, 4)
+   */
+  public ShootWhenTagCommand(
       VisionSubsystem vision,
       ShooterSubsystem shooter,
-      IntakeSubsystem intake) {
+      IntakeSubsystem intake,
+      int... tagIds) {
     m_vision = vision;
     m_shooter = shooter;
     m_intake = intake;
+    m_tagIds = IntStream.of(tagIds).boxed().collect(Collectors.toSet());
     addRequirements(shooter, intake);
-    // Vision is read-only; no addRequirements(vision)
+  }
+
+  private boolean isAnyTargetTagSeen() {
+    if (m_vision == null) return false;
+    for (int id : m_tagIds) {
+      if (m_vision.hasSeenTag(id)) return true;
+    }
+    return false;
   }
 
   @Override
   public void execute() {
-    if (m_vision != null && m_vision.hasSeenTag(kTargetTagId)) {
+    if (isAnyTargetTagSeen()) {
       if (m_vision.getLastTargetDistanceMeters().isPresent()) {
         m_shooter.setVelocitySetpointFromDistanceMeters(m_vision.getLastTargetDistanceMeters().getAsDouble());
       } else {
@@ -47,7 +66,7 @@ public class ShootWhenTag3Command extends Command {
           m_feedDelayStarted = true;
         }
         if (m_feedDelayTimer.hasElapsed(ShooterConstants.kShooterFeedDelayAfterAtSpeedSec)) {
-          m_intake.runVoltage(IntakeConstants.kIntakeMaxVoltage);
+          m_intake.runAtVoltage(kIntakeFeedVoltage);
         } else {
           m_intake.stop();
         }

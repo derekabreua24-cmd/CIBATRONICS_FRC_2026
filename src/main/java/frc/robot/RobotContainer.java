@@ -35,7 +35,7 @@ import frc.robot.subsystems.UsbAprilTagProcessor;
 import frc.robot.commands.Rst_Commands.ResetGyroCommand;
 import frc.robot.commands.Rst_Commands.ResetOdometryToVisionCommand;
 import frc.robot.commands.Sht_Commands.ShooterCommand;
-import frc.robot.commands.Sht_Commands.ShootWhenTag3Command;
+import frc.robot.commands.Sht_Commands.ShootWhenTagCommand;
 import edu.wpi.first.networktables.GenericEntry;
 
 import frc.robot.subsystems.ShooterSubsystem;
@@ -344,10 +344,10 @@ public class RobotContainer {
       Logger.recordOutput("Telemetry/Errors", "[AutoChooser] Reset-odom parse error: " + e.getMessage());
       m_odometrySubsystem.resetOdometry(new Pose2d());
     }
-    // During autonomous only: shoot when camera sees AprilTag ID 3 (runs in parallel with selected auto).
+    // During autonomous: distance-based shooting when camera sees AprilTag ID 3 or 4 (runs in parallel with selected auto).
     if (m_visionSubsystem != null) {
       return ppCmd.alongWith(
-          new ShootWhenTag3Command(m_visionSubsystem, m_shooterSubsystem, m_intakeSubsystem));
+          new ShootWhenTagCommand(m_visionSubsystem, m_shooterSubsystem, m_intakeSubsystem, 3, 4));
     }
     return ppCmd;
   }

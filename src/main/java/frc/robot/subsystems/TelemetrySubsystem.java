@@ -17,7 +17,6 @@ import edu.wpi.first.math.geometry.Translation2d;
 import edu.wpi.first.math.geometry.Rotation2d;
 import frc.robot.constants.AutoConstants;
 import frc.robot.constants.ShooterConstants;
-import frc.robot.util.GeometryUtils;
 import org.littletonrobotics.junction.Logger;
 import edu.wpi.first.networktables.NetworkTable;
 import edu.wpi.first.networktables.NetworkTableInstance;
@@ -104,6 +103,9 @@ public class TelemetrySubsystem extends SubsystemBase {
   // Registro de instantáneas (limitado); configurable en tiempo de ejecución
   private double m_snapshotPeriodSec = 0.2; // 5 Hz default
   private double m_lastSnapshotTime = 0.0;
+  /** Throttle display/logging to avoid loop overrun (run heavy telemetry every this many cycles). */
+  private static final int kTelemetryThrottleDivisor = 2;
+  private int m_telemetryCycleCount = 0;
   // Runtime display / logging controls
   private final GenericEntry m_extendedLoggingEntry;
   private final GenericEntry m_snapshotRateEntry;
@@ -374,6 +376,11 @@ public class TelemetrySubsystem extends SubsystemBase {
       }
     }
 
+  // Throttle heavy Shuffleboard/Logger/Field2d updates to avoid loop overrun (control path above runs every cycle)
+  if (m_telemetryCycleCount++ % kTelemetryThrottleDivisor != 0) {
+    return;
+  }
+
   // Modo Driver vs Dev: cuando Driver Mode está activado, actualizamos solo los widgets compactos
   boolean driverMode = m_driverModeEntry.getBoolean(false);
 
@@ -513,15 +520,17 @@ public class TelemetrySubsystem extends SubsystemBase {
           visionY = String.format("%.3f", vp.getY());
           visionDeg = String.format("%.2f", vp.getRotation().getDegrees());
 
-          // ---- New: publish a small Pose2d[] of vision candidates using Transform2d ----
+          // Publish vision candidate poses to Field2d (WPILib Field2d.getObject().setPose).
           try {
             Pose2d base = vp;
             Pose2d[] candidates = new Pose2d[] {
               base,
-              base.transformBy(new Transform2d(new Translation2d(0.2, 0.0), new Rotation2d(0.0))),
-              base.transformBy(new Transform2d(new Translation2d(-0.2, 0.0), new Rotation2d(0.0)))
+              base.transformBy(new Transform2d(new Translation2d(0.2, 0.0), Rotation2d.kZero)),
+              base.transformBy(new Transform2d(new Translation2d(-0.2, 0.0), Rotation2d.kZero))
             };
-            GeometryUtils.publishPose2dArrayToField2d(m_field2d, "VisionCandidates", candidates);
+            for (int i = 0; i < candidates.length; i++) {
+              m_field2d.getObject("VisionCandidates_" + i).setPose(candidates[i]);
+            }
           } catch (RuntimeException e) {
             Logger.recordOutput("Telemetry/Errors", "TelemetrySubsystem: failed to publish Pose2d[] candidates -> " + e.toString());
           }
