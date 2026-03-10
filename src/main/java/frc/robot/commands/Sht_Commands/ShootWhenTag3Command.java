@@ -33,6 +33,11 @@ public class ShootWhenTag3Command extends Command {
   }
 
   @Override
+  public void initialize() {
+    m_feedDelayStarted = false;
+  }
+
+  @Override
   public void execute() {
     if (m_vision != null && m_vision.hasSeenTag(kTargetTagId)) {
       if (m_vision.getLastTargetDistanceMeters().isPresent()) {
@@ -46,13 +51,13 @@ public class ShootWhenTag3Command extends Command {
           m_feedDelayStarted = true;
         }
         if (m_feedDelayTimer.hasElapsed(ShooterConstants.kShooterFeedDelayAfterAtSpeedSec)) {
-          m_intake.runAtVoltage(ShooterConstants.kFeederVoltageDuringShoot);
+          m_intake.setFeederVoltageSetpoint(ShooterConstants.kFeederVoltageDuringShoot);
         } else {
-          m_intake.stop();
+          m_intake.setFeederVoltageSetpoint(0.0);
         }
       } else {
         m_feedDelayStarted = false;
-        m_intake.stop();
+        m_intake.setFeederVoltageSetpoint(0.0);
       }
     } else {
       m_feedDelayStarted = false;

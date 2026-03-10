@@ -87,16 +87,15 @@ public class ShooterSubsystem extends SubsystemBase {
         ShooterConstants.ShooterDistanceConstants.kShooterRpmAt0M
             + ShooterConstants.ShooterDistanceConstants.kShooterRpmPerMeter
                 * Math.max(0.0, distanceMeters);
-    rpm =
-        Math.max(
-            ShooterConstants.ShooterDistanceConstants.kShooterRpmMin,
-            Math.min(ShooterConstants.ShooterDistanceConstants.kShooterRpmMax, rpm));
+    rpm = MathUtil.clamp(rpm,
+        ShooterConstants.ShooterDistanceConstants.kShooterRpmMin,
+        ShooterConstants.ShooterDistanceConstants.kShooterRpmMax);
     setVelocitySetpointRpm(rpm);
   }
 
   /** Set feed voltage (V) for intake. When volts > 0, feeder runs at that voltage. Call with 0 to stop. */
   public void setFeedVoltage(double volts) {
-    m_feedVoltage = volts > 0.0 ? Math.min(ShooterConstants.kShooterVoltage, volts) : 0.0;
+    m_feedVoltage = volts > 0.0 ? MathUtil.clamp(volts, 0.0, ShooterConstants.kShooterVoltage) : 0.0;
   }
 
   /** Run shooter at fixed voltage (V) in shooting direction. Use for shoot command (e.g. 11 V). Call with 0 to use velocity setpoint instead. */

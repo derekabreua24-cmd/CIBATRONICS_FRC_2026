@@ -20,6 +20,13 @@ public final class IntakeConstants {
   public static final double kIntakeMaxVoltage = kIntakeVoltage;
   public static final double kDefaultVoltage = kIntakeVoltage;
 
+  /** Open-loop PID for feeder: target voltage, no velocity feedback. P=1 so output = setpoint; I/D=0. */
+  public static final double kIntakeFeederP = 1.0;
+  public static final double kIntakeFeederI = 0.0;
+  public static final double kIntakeFeederD = 0.0;
+  /** Nominal voltage (V) for clamping PID output. */
+  public static final double kIntakeNominalVoltage = 12.0;
+
   /** Unjam (reverse pulse) configuration. */
   public static final class Unjam {
     private Unjam() {}

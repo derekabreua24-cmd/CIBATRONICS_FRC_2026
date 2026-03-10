@@ -88,6 +88,7 @@ public class VisionSubsystem extends SubsystemBase {
     }
     if (validPoses.isEmpty()) {
       m_lastSeenTagIds = Collections.emptySet();
+      m_lastTargetDistanceMeters = -1.0;
       return Optional.empty();
     }
     m_lastSeenTagIds = seenIds;
