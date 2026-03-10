@@ -26,10 +26,12 @@ public final class ShooterConstants {
   /** Feed voltage (V) when shooter runs as feeder (outer intake) during intake. */
   public static final double kShooterFeedVoltage = 9.0;
 
-  /** RPM tolerance for "at speed" before feeding (closed-loop). */
+  /** Consider "at speed" when current RPM >= this fraction of target (e.g. 0.95 = 95%). */
+  public static final double kShooterAtSpeedFraction = 0.95;
+  /** RPM tolerance for "at speed" (secondary; primary is kShooterAtSpeedFraction). */
   public static final double kShooterAtSpeedToleranceRpm = 150.0;
-  /** Delay (s) after shooter is at speed before running the feeder. */
-  public static final double kShooterFeedDelayAfterAtSpeedSec = 0.5;
+  /** Delay (s) after shooter is at speed before running the feeder (0.5–0.8 s typical). */
+  public static final double kShooterFeedDelayAfterAtSpeedSec = 0.65;
 
   // ----- Feedforward (SimpleMotorFeedforward: kS in V, kV in V/(rad/s), kA in V/(rad/s²)) -----
   public static final double kShooterKS = 0.2;

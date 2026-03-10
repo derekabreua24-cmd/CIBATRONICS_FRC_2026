@@ -9,12 +9,12 @@ import frc.robot.subsystems.IntakeSubsystem;
 import frc.robot.subsystems.VisionSubsystem;
 
 /**
- * Shoot: spin shooter to target RPM (closed-loop), wait until at speed, then 0.5 s later run intake to feed.
- * Hold button to keep shooting. Default RPM from dashboard entry or kShooterMaxRPM * kShooterSpeed.
+ * Shoot: Initialize = spin shooter (NEO) to target RPM only. Execute = run feeder (intake) only when
+ * NEO is at 95% of target RPM, then after delay (0.65 s) to avoid jamming. Brake mode on both motors.
  */
 public class ShooterCommand extends Command {
-  /** Voltage (V) for inner intake when feeding during shoot. */
-  private static final double kInnerIntakeFeedVoltage = 12.0;
+  /** Voltage (V) for feeder (intake) when feeding during shoot; ~40% to avoid pushing second ball too hard. */
+  private static final double kInnerIntakeFeedVoltage = 5.0;
 
   private static final double kDefaultTargetRpm =
       ShooterConstants.kShooterMaxRPM * Math.abs(ShooterConstants.kShooterSpeed);

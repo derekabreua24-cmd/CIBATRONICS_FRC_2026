@@ -14,10 +14,10 @@ import frc.robot.constants.ShooterConstants;
 
 /**
  * Single-motor shooter (CAN ID 6): brushless NEO with integrated encoder.
- * Uses the NEO's internal encoder via {@link SparkMax#getEncoder()} for all velocity feedback:
- * closed-loop velocity PID, feedforward, and telemetry. No external or alternate encoder.
- * getEncoder().getVelocity() returns motor RPM (native units); we invert so positive = shooting direction.
- * Closed-loop: PID + feedforward from target RPM, output clamped to ±11 V.
+ * - IdleMode kBrake: no coast when command ends; stops quickly so feeder does not push extra balls.
+ * - Velocity control (PID + feedforward): constant RPM compensates for speed drop when ball hits wheels,
+ *   avoids second ball catching the first (jamming). Use setVelocitySetpointRpm(), not open-loop set().
+ * Uses the NEO's internal encoder for closed-loop RPM; output clamped to ±11 V.
  */
 public class ShooterSubsystem extends SubsystemBase {
   private static final double kNominalVoltage = ShooterConstants.kShooterVoltage;
@@ -180,11 +180,11 @@ public class ShooterSubsystem extends SubsystemBase {
     return m_targetRpm;
   }
 
-  /** True when closed-loop target is set and current RPM (control convention) is within tolerance. */
+  /** True when closed-loop target is set and current RPM >= 95% of target (quick recovery after first ball). */
   public boolean isAtSpeed() {
     if (m_targetRpm < 1.0) return false;
-    return Math.abs(getVelocityRpmForControl() - m_targetRpm)
-        <= ShooterConstants.kShooterAtSpeedToleranceRpm;
+    double currentRpm = getVelocityRpmForControl();
+    return currentRpm >= m_targetRpm * ShooterConstants.kShooterAtSpeedFraction;
   }
 
   public double getLastOutputPercent() {

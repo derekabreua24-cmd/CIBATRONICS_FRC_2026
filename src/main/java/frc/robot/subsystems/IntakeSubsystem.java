@@ -6,14 +6,18 @@ import edu.wpi.first.math.MathUtil;
 import edu.wpi.first.wpilibj2.command.SubsystemBase;
 import frc.robot.constants.IntakeConstants;
 
-/** Intake: single SparkMax (brushed). All motor output is voltage (setVoltage); no percent. */
+/**
+ * Intake / feeder: single SparkMax (brushed). When used as feeder during shoot, Brake mode
+ * ensures it stops quickly when the command ends so it does not keep pushing FUEL.
+ * All motor output is voltage (setVoltage); no percent.
+ */
 public class IntakeSubsystem extends SubsystemBase {
   private final SparkMax m_intake = new SparkMax(IntakeConstants.kIntakeMotorPort, MotorType.kBrushed);
   private boolean m_reversed = false;
   /** Last commanded voltage (V) for telemetry. */
   private double m_lastCommandedVoltage = 0.0;
 
-  /** 2026 API: brake, voltage comp, no inversion in config. All output via setVoltage (default 6 V). */
+  /** Brake mode so feeder stops when command ends; voltage comp and setVoltage for output. */
   public IntakeSubsystem() {
     com.revrobotics.spark.config.SparkMaxConfig cfg = new com.revrobotics.spark.config.SparkMaxConfig();
     cfg.inverted(false);
