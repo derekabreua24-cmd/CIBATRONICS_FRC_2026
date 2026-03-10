@@ -26,6 +26,9 @@ public final class ShooterConstants {
   /** Feed voltage (V) when shooter runs as feeder (outer intake) during intake. */
   public static final double kShooterFeedVoltage = 9.0;
 
+  /** Feeder (intake) voltage (V) when feeding during shoot. */
+  public static final double kFeederVoltageDuringShoot = 7.0;
+
   /** Consider "at speed" when current RPM >= this fraction of target (e.g. 0.95 = 95%). */
   public static final double kShooterAtSpeedFraction = 0.95;
   /** RPM tolerance for "at speed" (secondary; primary is kShooterAtSpeedFraction). */

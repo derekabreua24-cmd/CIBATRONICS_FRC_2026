@@ -7,8 +7,9 @@ import edu.wpi.first.wpilibj2.command.SubsystemBase;
 import frc.robot.constants.IntakeConstants;
 
 /**
- * Intake / feeder: single SparkMax (brushed). When used as feeder during shoot, Brake mode
- * ensures it stops quickly when the command ends so it does not keep pushing FUEL.
+ * Intake / feeder: single SparkMax (brushed). <b>Brake mode required</b> when used as feeder
+ * during shoot—stops quickly when the command ends to prevent double shots and extra FUEL push.
+ * Feeder speed during shoot should be 30–40% (see ShooterConstants.kFeederVoltageDuringShoot).
  * All motor output is voltage (setVoltage); no percent.
  */
 public class IntakeSubsystem extends SubsystemBase {
@@ -17,12 +18,12 @@ public class IntakeSubsystem extends SubsystemBase {
   /** Last commanded voltage (V) for telemetry. */
   private double m_lastCommandedVoltage = 0.0;
 
-  /** Brake mode so feeder stops when command ends; voltage comp and setVoltage for output. */
+  /** Brake mode; voltage comp at 12 V so setVoltage(x) actually outputs x volts (was 6 V and capped intake). */
   public IntakeSubsystem() {
     com.revrobotics.spark.config.SparkMaxConfig cfg = new com.revrobotics.spark.config.SparkMaxConfig();
     cfg.inverted(false);
     cfg.idleMode(com.revrobotics.spark.config.SparkBaseConfig.IdleMode.kBrake);
-    cfg.voltageCompensation((float) IntakeConstants.kIntakeVoltage);
+    cfg.voltageCompensation(12.0f); // Nominal bus so setVoltage(8) or setVoltage(12) is not capped
     m_intake.configure(cfg, com.revrobotics.ResetMode.kResetSafeParameters, com.revrobotics.PersistMode.kPersistParameters);
   }
 

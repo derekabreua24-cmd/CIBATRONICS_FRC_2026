@@ -2,7 +2,6 @@ package frc.robot.commands.Sht_Commands;
 
 import edu.wpi.first.wpilibj.Timer;
 import edu.wpi.first.wpilibj2.command.Command;
-import frc.robot.constants.IntakeConstants;
 import frc.robot.constants.ShooterConstants;
 import frc.robot.subsystems.IntakeSubsystem;
 import frc.robot.subsystems.ShooterSubsystem;
@@ -47,7 +46,7 @@ public class ShootWhenTag3Command extends Command {
           m_feedDelayStarted = true;
         }
         if (m_feedDelayTimer.hasElapsed(ShooterConstants.kShooterFeedDelayAfterAtSpeedSec)) {
-          m_intake.runVoltage(IntakeConstants.kIntakeMaxVoltage);
+          m_intake.runAtVoltage(ShooterConstants.kFeederVoltageDuringShoot);
         } else {
           m_intake.stop();
         }

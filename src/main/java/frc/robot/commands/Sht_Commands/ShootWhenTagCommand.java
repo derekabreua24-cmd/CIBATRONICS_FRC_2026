@@ -17,7 +17,6 @@ import java.util.stream.IntStream;
  */
 public class ShootWhenTagCommand extends Command {
 
-  private static final double kIntakeFeedVoltage = 6.0;
 
   private final VisionSubsystem m_vision;
   private final ShooterSubsystem m_shooter;
@@ -66,7 +65,7 @@ public class ShootWhenTagCommand extends Command {
           m_feedDelayStarted = true;
         }
         if (m_feedDelayTimer.hasElapsed(ShooterConstants.kShooterFeedDelayAfterAtSpeedSec)) {
-          m_intake.runAtVoltage(kIntakeFeedVoltage);
+          m_intake.runAtVoltage(ShooterConstants.kFeederVoltageDuringShoot);
         } else {
           m_intake.stop();
         }

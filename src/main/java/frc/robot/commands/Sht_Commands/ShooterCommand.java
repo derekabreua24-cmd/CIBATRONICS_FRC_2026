@@ -9,12 +9,11 @@ import frc.robot.subsystems.IntakeSubsystem;
 import frc.robot.subsystems.VisionSubsystem;
 
 /**
- * Shoot: Initialize = spin shooter (NEO) to target RPM only. Execute = run feeder (intake) only when
- * NEO is at 95% of target RPM, then after delay (0.65 s) to avoid jamming. Brake mode on both motors.
+ * Shoot: (1) Initialize = spin NEO shooter to target RPM only (velocity PID). (2) Execute = run feeder
+ * only after velocity check (shooter >= 95% target RPM) and time delay (0.65 s). (3) Feeder at 30–40%
+ * to prevent double shots and jams. Feeder motor (intake) must be in Brake mode.
  */
 public class ShooterCommand extends Command {
-  /** Voltage (V) for feeder (intake) when feeding during shoot; ~40% to avoid pushing second ball too hard. */
-  private static final double kInnerIntakeFeedVoltage = 5.0;
 
   private static final double kDefaultTargetRpm =
       ShooterConstants.kShooterMaxRPM * Math.abs(ShooterConstants.kShooterSpeed);
@@ -59,7 +58,7 @@ public class ShooterCommand extends Command {
         m_feedDelayStarted = true;
       }
       if (m_feedDelayTimer.hasElapsed(ShooterConstants.kShooterFeedDelayAfterAtSpeedSec) && m_intake != null) {
-        m_intake.runAtVoltage(kInnerIntakeFeedVoltage);
+        m_intake.runAtVoltage(ShooterConstants.kFeederVoltageDuringShoot);
       } else if (m_intake != null) {
         m_intake.stop();
       }

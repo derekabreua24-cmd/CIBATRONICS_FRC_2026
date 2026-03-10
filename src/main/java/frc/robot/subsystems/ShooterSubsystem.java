@@ -13,11 +13,18 @@ import edu.wpi.first.networktables.NetworkTableInstance;
 import frc.robot.constants.ShooterConstants;
 
 /**
- * Single-motor shooter (CAN ID 6): brushless NEO with integrated encoder.
- * - IdleMode kBrake: no coast when command ends; stops quickly so feeder does not push extra balls.
- * - Velocity control (PID + feedforward): constant RPM compensates for speed drop when ball hits wheels,
- *   avoids second ball catching the first (jamming). Use setVelocitySetpointRpm(), not open-loop set().
- * Uses the NEO's internal encoder for closed-loop RPM; output clamped to ±11 V.
+ * Shooter (NEO) and feed-mode configuration.
+ *
+ * <p><b>Brake mode:</b> NEO is configured IdleMode.kBrake so it stops when the command ends;
+ * the feeder motor (intake) must also be in Brake mode (see IntakeSubsystem).
+ *
+ * <p><b>Velocity PID:</b> Shooter uses closed-loop velocity (PID + feedforward) via
+ * setVelocitySetpointRpm(). Constant RPM compensates for speed drop when a ball hits the wheels,
+ * preventing the second ball from catching the first (jams/double shots).
+ *
+ * <p><b>Feeder gating:</b> The shoot command must only run the feeder after (1) shooter reaches
+ * at least 95% of target RPM (velocity check) and (2) a time-based delay (e.g. 0.65 s). Feeder
+ * speed should be 30–40% to keep flow controlled.
  */
 public class ShooterSubsystem extends SubsystemBase {
   private static final double kNominalVoltage = ShooterConstants.kShooterVoltage;

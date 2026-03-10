@@ -14,8 +14,8 @@ public final class IntakeConstants {
   /** CAN ID for the intake motor (match motor type in IntakeSubsystem: kBrushed/kBrushless). */
   public static final int kIntakeMotorPort = 5;
 
-  /** Fixed voltage (V) for intake. When intake is running, it always uses this—no scaling. */
-  public static final double kIntakeVoltage = 6.0;
+  /** Fixed voltage (V) for intake when using run()/runVoltage(). Was 6 V (too slow); 10–12 V for full speed. */
+  public static final double kIntakeVoltage = 10.0;
   /** Alias for backwards compatibility; same as kIntakeVoltage. */
   public static final double kIntakeMaxVoltage = kIntakeVoltage;
   public static final double kDefaultVoltage = kIntakeVoltage;
