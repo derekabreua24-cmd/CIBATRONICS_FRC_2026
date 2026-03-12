@@ -27,8 +27,8 @@ public class DriveCommand extends Command {
   @Override
   public void execute() {
     // Deadbands: stick forward → positive fwd, stick right → negative rot (WPILib positive zRotation = turn left).
-    double fwd = -MathUtil.applyDeadband(m_controller.getLeftY(), 0.05);
-    double rot = -MathUtil.applyDeadband(m_controller.getRightX(), 0.05);
+    double fwd = MathUtil.applyDeadband(m_controller.getLeftY(), 0.05);
+    double rot = MathUtil.applyDeadband(m_controller.getRightX(), 0.05);
 
     // === ADDED ===
     // Squared inputs for finer control sensitivity

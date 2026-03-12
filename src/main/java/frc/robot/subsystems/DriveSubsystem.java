@@ -11,7 +11,6 @@ import edu.wpi.first.math.controller.SimpleMotorFeedforward;
 import edu.wpi.first.math.kinematics.ChassisSpeeds;
 import edu.wpi.first.math.kinematics.DifferentialDriveKinematics;
 import edu.wpi.first.math.kinematics.DifferentialDriveWheelSpeeds;
-import com.pathplanner.lib.util.DriveFeedforwards;
 import edu.wpi.first.networktables.NetworkTableInstance;
 import edu.wpi.first.math.geometry.Pose2d;
 import edu.wpi.first.math.geometry.Rotation2d;
@@ -36,9 +35,7 @@ import frc.robot.constants.DriveConstants;
 
 public class DriveSubsystem extends SubsystemBase {
 
-  // Banderas para no saturar logs cuando driveWithSpeeds falla por NetworkTables o feedforward.
   private boolean m_loggedNetworkTableError = false;
-  private boolean m_loggedFFError = false;
   
   /** MapleSim-consistent sim state: wheel positions (m) and heading (rad). Driven by maple-sim physics pose via setSimStateFromMapleSim. */
   private double m_mapleSimLeftPosM = 0.0;
@@ -412,7 +409,7 @@ public class DriveSubsystem extends SubsystemBase {
     m_poseEstimator.addVisionMeasurement(visionPose, timestampSeconds, visionMeasurementStdDevs);
   }
 
-  /** On real robot returns (0,0,0) since there are no encoders. In sim returns desired chassis speeds from motor outputs so PathPlanner and projectile sim get a sensible value. */
+  /** On real robot returns (0,0,0) since there are no encoders. In sim returns desired chassis speeds from motor outputs for projectile sim. */
   public ChassisSpeeds getChassisSpeeds() {
     if (RobotBase.isSimulation()) {
       return getDesiredChassisSpeedsForSim();
@@ -474,11 +471,9 @@ public class DriveSubsystem extends SubsystemBase {
   }
 
   /**
-   * Destino BiConsumer del AutoBuilder de PathPlanner: acepta velocidades deseadas del chasis
-   * y opcionalmente DriveFeedforwards (ignorado aquí) y aplica tensiones a los motores.
+   * Applies chassis speeds using kinematics and feedforward. Used by autonomous or other path-following.
    */
-  public void driveWithSpeeds(ChassisSpeeds speeds, DriveFeedforwards ff) {
-    // Leer valores de afinado en vivo desde NetworkTables si existen (pestaña Tuning de Shuffleboard).
+  public void driveWithSpeeds(ChassisSpeeds speeds) {
     double ks = DriveConstants.kDriveKS;
     double kv = DriveConstants.kDriveKV;
     double ka = DriveConstants.kDriveKA;
@@ -490,46 +485,17 @@ public class DriveSubsystem extends SubsystemBase {
       estMax = NetworkTableInstance.getDefault().getEntry("/Shuffleboard/Tuning/Drive Est Max Speed").getDouble(estMax);
     } catch (RuntimeException e) {
       if (!m_loggedNetworkTableError) {
-  Logger.recordOutput("Telemetry/Errors", "DriveSubsystem: failed to read NetworkTables tuning entries -> " + e.toString());
+        Logger.recordOutput("Telemetry/Errors", "DriveSubsystem: failed to read NetworkTables tuning entries -> " + e.toString());
         m_loggedNetworkTableError = true;
       }
     }
 
-    // Official WPILib: kinematics to wheel speeds, then SimpleMotorFeedforward (docs.wpilib.org).
     DifferentialDriveWheelSpeeds wheelSpeeds = m_kinematics.toWheelSpeeds(speeds);
     double leftMps = MathUtil.clamp(wheelSpeeds.leftMetersPerSecond, -estMax, estMax);
     double rightMps = MathUtil.clamp(wheelSpeeds.rightMetersPerSecond, -estMax, estMax);
     SimpleMotorFeedforward driveFf = new SimpleMotorFeedforward(ks, kv, ka);
     double leftVolts = driveFf.calculate(leftMps);
     double rightVolts = driveFf.calculate(rightMps);
-
-    // Opcionalmente incorporar DriveFeedforwards de PathPlanner si está presente y habilitado.
-    try {
-      boolean usePPFF = NetworkTableInstance.getDefault()
-          .getEntry("/Shuffleboard/Tuning/Use PathPlanner FF").getBoolean(false);
-      double ppScale = NetworkTableInstance.getDefault()
-          .getEntry("/Shuffleboard/Tuning/PP FF Scale").getDouble(1.0);
-
-      if (usePPFF && ff != null) {
-        // PathPlanner proporciona arrays de aceleraciones (m/s²); usamos la primera como estimación conservadora.
-        double acc = 0.0;
-        double[] accs = ff.accelerationsMPSSq();
-        if (accs != null && accs.length > 0) {
-          acc = accs[0] * ppScale;
-        }
-
-        // Añadir el componente de feedforward por aceleración (ka * acc) a ambos lados.
-        leftVolts += DriveConstants.kDriveKA * acc;
-        rightVolts += DriveConstants.kDriveKA * acc;
-      }
-    } catch (RuntimeException e) {
-      if (!m_loggedFFError) {
-  Logger.recordOutput("Telemetry/Errors", "DriveSubsystem: failed to apply PathPlanner feedforward -> " + e.toString());
-        m_loggedFFError = true;
-      }
-      // No es fatal en otro caso.
-    }
-
     tankDriveVolts(leftVolts, rightVolts);
   }
 

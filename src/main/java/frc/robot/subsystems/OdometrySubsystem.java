@@ -47,7 +47,7 @@ public class OdometrySubsystem extends SubsystemBase {
 
   /**
    * Reinicia la odometría a la pose indicada.
-   * Usa la rotación de la pose (p. ej. la que envía PathPlanner al iniciar una ruta).
+   * Usa la rotación de la pose (p. ej. al iniciar una ruta o reset manual).
    */
   public void resetOdometry(Pose2d pose) {
     Rotation2d heading = pose.getRotation();

@@ -15,7 +15,7 @@ public final class IntakeConstants {
   public static final int kIntakeMotorPort = 5;
 
   /** Fixed voltage (V) for intake when using run()/runVoltage(). Was 6 V (too slow); 10–12 V for full speed. */
-  public static final double kIntakeVoltage = 10.0;
+  public static final double kIntakeVoltage = 5.0;
   /** Alias for backwards compatibility; same as kIntakeVoltage. */
   public static final double kIntakeMaxVoltage = kIntakeVoltage;
   public static final double kDefaultVoltage = kIntakeVoltage;

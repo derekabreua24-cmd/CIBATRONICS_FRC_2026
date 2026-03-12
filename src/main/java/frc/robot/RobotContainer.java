@@ -11,7 +11,9 @@ import frc.robot.subsystems.DriveSubsystem;
 import frc.robot.commands.Drv_Commands.DriveCommand;
 import frc.robot.commands.Drv_Commands.TurnToAngleCommand;
 import frc.robot.commands.Intk_Commands.IntakeCommand;
+import frc.robot.commands.Intk_Commands.SpitCommand;
 import frc.robot.commands.Intk_Commands.ToggleIntakeDirectionCommand;
+import frc.robot.commands.Intk_Commands.UnjamCommand;
 import frc.robot.simulation.SimLaunchFuelCommand;
 import frc.robot.simulation.MapleSimHandler;
 // IndexerSubsystem eliminado; toda la funcionalidad del indexer fue recortada del proyecto.
@@ -21,21 +23,12 @@ import frc.robot.subsystems.VisionSubsystem;
 import frc.robot.subsystems.OdometrySubsystem;
 import edu.wpi.first.apriltag.AprilTagFieldLayout;
 import edu.wpi.first.math.geometry.Pose2d;
-import java.io.IOException;
-import edu.wpi.first.math.geometry.Rotation2d;
-import java.nio.file.Path;
-import java.nio.file.Files;
-import java.nio.charset.StandardCharsets;
-import java.util.regex.Matcher;
-import java.util.regex.Pattern;
-import edu.wpi.first.networktables.NetworkTableInstance;
 import org.littletonrobotics.junction.Logger;
 
 import frc.robot.subsystems.UsbAprilTagProcessor;
 import frc.robot.commands.Rst_Commands.ResetGyroCommand;
 import frc.robot.commands.Rst_Commands.ResetOdometryToVisionCommand;
 import frc.robot.commands.Sht_Commands.ShooterCommand;
-import frc.robot.commands.Sht_Commands.ShootWhenTagCommand;
 import edu.wpi.first.networktables.GenericEntry;
 
 import frc.robot.subsystems.ShooterSubsystem;
@@ -51,15 +44,10 @@ import edu.wpi.first.wpilibj.DriverStation;
 import edu.wpi.first.wpilibj.DriverStation.Alliance;
 
 
-// PathPlanner 2026.1.2
-import com.pathplanner.lib.auto.AutoBuilder;
-import com.pathplanner.lib.config.RobotConfig;
-import com.pathplanner.lib.controllers.PPLTVController;
-import com.pathplanner.lib.util.PathPlannerLogging;
 import edu.wpi.first.wpilibj2.command.sysid.SysIdRoutine;
 
 /**
- * Wires subsystems, vision, PathPlanner, and all driver/operator bindings.
+ * Wires subsystems, vision, and all driver/operator bindings.
  * Single place to see which button runs which command. See JUDGES_README.md for a map.
  */
 public class RobotContainer {
@@ -84,16 +72,14 @@ public class RobotContainer {
   private final CommandXboxController m_operatorController =
       new CommandXboxController(OperatorConstants.kOperatorControllerPort);
 
-  // ----- Shuffleboard / PathPlanner -----
-  private edu.wpi.first.wpilibj.smartdashboard.SendableChooser<Command> m_ppAutoChooser = null;
-  private GenericEntry m_ppltvGainEntry;
+  // ----- Shuffleboard -----
   private GenericEntry m_resetOdomEntry;
   private GenericEntry m_shooterRpmEntry;
 
   public RobotContainer() {
     // Tuning tab and Shooter RPM entry (used by ShooterCommand) must exist before configureBindings().
     var tuningTab = Shuffleboard.getTab("Tuning");
-    m_shooterRpmEntry = tuningTab.add("Shooter RPM", ShooterConstants.kShooterMaxRPM * Math.abs(ShooterConstants.kShooterSpeed)).withPosition(8, 0).withSize(2, 1).getEntry();
+    m_shooterRpmEntry = tuningTab.add("Shooter RPM", ShooterConstants.kShooterDefaultRpm).withPosition(8, 0).withSize(2, 1).getEntry();
 
     // ----- Vision: load AprilTag layout from JSON (no reflection), then start camera processor -----
     try {
@@ -169,62 +155,14 @@ public class RobotContainer {
     var resetOdomWidget = autoTab.add("Reiniciar odom al inicio de ruta", true).withPosition(0, 4).withSize(2, 1);
     m_resetOdomEntry = resetOdomWidget.getEntry();
 
-    m_ppltvGainEntry = tuningTab.add("PPLTV dt (s)", 0.02).withPosition(0, 0).withSize(2, 1).getEntry();
-    tuningTab.add("Drive KS", DriveConstants.kDriveKS).withPosition(0, 1).withSize(2, 1).getEntry();
-    tuningTab.add("Drive KV", DriveConstants.kDriveKV).withPosition(2, 1).withSize(2, 1).getEntry();
-    tuningTab.add("Drive KA", DriveConstants.kDriveKA).withPosition(4, 1).withSize(2, 1).getEntry();
-    tuningTab.add("Drive Est Max Speed", DriveConstants.kDriveEstMaxSpeed).withPosition(6, 1).withSize(2, 1).getEntry();
-
-    // Mantener estas entradas en la tabla de red; DriveSubsystem las lee directamente.
-    tuningTab.add("Use PathPlanner FF", false).withPosition(2, 0).withSize(2, 1).getEntry();
-    tuningTab.add("PP FF Scale", 1.0).withPosition(4, 0).withSize(2, 1).getEntry();
+    tuningTab.add("Drive KS", DriveConstants.kDriveKS).withPosition(0, 0).withSize(2, 1).getEntry();
+    tuningTab.add("Drive KV", DriveConstants.kDriveKV).withPosition(2, 0).withSize(2, 1).getEntry();
+    tuningTab.add("Drive KA", DriveConstants.kDriveKA).withPosition(4, 0).withSize(2, 1).getEntry();
+    tuningTab.add("Drive Est Max Speed", DriveConstants.kDriveEstMaxSpeed).withPosition(6, 0).withSize(2, 1).getEntry();
 
     autoTab.addBoolean("Alliance Is Red",
         () -> DriverStation.getAlliance()
             .orElse(Alliance.Blue) == Alliance.Red);
-
-    // ----- PathPlanner: AutoBuilder, logging callbacks, auto chooser on Shuffleboard -----
-    try {
-      RobotConfig config = RobotConfig.fromGUISettings();
-
-      // PPLTVController(dt): dt = paso de discretización en segundos (0.02 = bucle FRC 20 ms). Ver API PathPlanner.
-      double ppltvDt = m_ppltvGainEntry.getDouble(0.02);
-      if (ppltvDt <= 0 || ppltvDt > 0.1) ppltvDt = 0.02;
-
-      AutoBuilder.configure(
-          m_odometrySubsystem::getPose,
-          m_odometrySubsystem::resetOdometry,
-          m_driveSubsystem::getChassisSpeeds,
-          m_driveSubsystem::driveWithSpeeds,
-          new PPLTVController(ppltvDt),
-          config,
-          () -> DriverStation.getAlliance().orElse(Alliance.Blue) == Alliance.Red,
-          m_driveSubsystem);
-      Logger.recordOutput("Telemetry/Log", "PathPlanner 2026 fully configured.");
-
-      // Registrar ruta/objetivo en AdvantageKit para que AdvantageScope los muestre en la sección Poses del campo 2D/3D.
-      PathPlannerLogging.setLogCurrentPoseCallback(
-          pose -> Logger.recordOutput("PathPlanner/CurrentPose", pose));
-      PathPlannerLogging.setLogTargetPoseCallback(
-          pose -> Logger.recordOutput("PathPlanner/TargetPose", pose));
-      PathPlannerLogging.setLogActivePathCallback(
-          poses -> Logger.recordOutput("PathPlanner/ActivePath",
-              poses.toArray(new edu.wpi.first.math.geometry.Pose2d[0])));
-
-      try {
-        m_ppAutoChooser = AutoBuilder.buildAutoChooser();
-        autoTab.add("PathPlanner Autos", m_ppAutoChooser).withPosition(4, 3).withSize(3, 2);
-        Command exampleCmd = Commands.run(() -> m_driveSubsystem.arcadeDrive(0.4, 0.0), m_driveSubsystem)
-            .withTimeout(1.5)
-            .finallyDo(() -> m_driveSubsystem.arcadeDrive(0, 0));
-        m_ppAutoChooser.setDefaultOption("Ejemplo: recto (programático)", exampleCmd);
-      } catch (RuntimeException e) {
-        Logger.recordOutput("Telemetry/Errors", "PathPlanner chooser failed: " + e.getMessage());
-      }
-
-    } catch (Exception e) {
-      Logger.recordOutput("Telemetry/Errors", "PathPlanner config failed: " + e.getMessage());
-    }
 
     // ----- Default command and button bindings -----
     configureBindings();
@@ -263,9 +201,11 @@ public class RobotContainer {
     m_operatorController.a()
         .onTrue(new ToggleIntakeDirectionCommand(m_intakeSubsystem));
     m_operatorController.leftBumper()
-        .onTrue(new frc.robot.commands.Intk_Commands.UnjamCommand(m_intakeSubsystem));
+        .onTrue(new frc.robot.commands.Intk_Commands.UnjamCommand(m_intakeSubsystem, m_driveSubsystem));
     m_operatorController.rightTrigger()
         .whileTrue(new ShooterCommand(m_shooterSubsystem, m_shooterRpmEntry, m_intakeSubsystem, m_visionSubsystem));
+    m_operatorController.y()
+        .whileTrue(new SpitCommand(m_intakeSubsystem, m_shooterSubsystem));
 
     // Sim only: Driver A (without LB) = launch one FUEL projectile in maple-sim. A+LB = SysId only, no launch.
     m_driverController.a()
@@ -284,72 +224,27 @@ public class RobotContainer {
   }
 
   public Command getAutonomousCommand() {
-    if (m_ppAutoChooser == null) {
-      return Commands.none();
-    }
-    Command ppCmd = m_ppAutoChooser.getSelected();
-    if (ppCmd == null) {
-      return Commands.none();
-    }
-
     m_navxSubsystem.reset();
-    try {
-      var table = NetworkTableInstance.getDefault()
-          .getTable("Shuffleboard").getSubTable("Autonomous").getSubTable("PathPlanner Autos");
-      String selected = table.getEntry("selected").getString("");
-      if (selected == null || selected.isEmpty()) {
-        selected = table.getEntry("default").getString("");
-      }
-      if (selected != null && !selected.isEmpty()) {
-        Path deployAutos = edu.wpi.first.wpilibj.Filesystem.getDeployDirectory().toPath()
-            .resolve("pathplanner").resolve("autos");
-        Path autoFile = null;
-        for (String c : new String[] { selected, selected + ".auto", selected + ".auto.json" }) {
-          Path p = deployAutos.resolve(c);
-          if (Files.exists(p)) {
-            autoFile = p;
-            break;
-          }
-          
-        }
-        if (autoFile != null && m_resetOdomEntry.getBoolean(true)) {
-          String autoJson = Files.readString(autoFile, StandardCharsets.UTF_8);
-          if (autoJson.contains("\"resetOdom\": true") || autoJson.contains("\"resetOdom\":true")) {
-            Pattern pathNamePattern = Pattern.compile("\"pathName\"\\s*:\\s*\"([^\"]+)\"");
-            Matcher pathMatcher = pathNamePattern.matcher(autoJson);
-            if (pathMatcher.find()) {
-              String pathName = pathMatcher.group(1);
-              Path pathFile = edu.wpi.first.wpilibj.Filesystem.getDeployDirectory().toPath()
-                  .resolve("pathplanner").resolve("paths").resolve(pathName + ".path");
-              if (Files.exists(pathFile)) {
-                String pathJson = Files.readString(pathFile, StandardCharsets.UTF_8);
-                Pattern wpPattern = Pattern.compile("\"waypoints\"\\s*:\\s*\\[([\\s\\S]*?)\\]", Pattern.MULTILINE);
-                Matcher wpMatcher = wpPattern.matcher(pathJson);
-                if (wpMatcher.find()) {
-                  Pattern anchorPattern = Pattern.compile("\"anchor\"\\s*:\\s*\\{[^}]*?\"x\"\\s*:\\s*([0-9.+\\-Eed]+)\\s*,[^}]*?\"y\"\\s*:\\s*([0-9.+\\-Eed]+)");
-                  Matcher anchorMatcher = anchorPattern.matcher(wpMatcher.group(1));
-                  if (anchorMatcher.find()) {
-                    double x = Double.parseDouble(anchorMatcher.group(1));
-                    double y = Double.parseDouble(anchorMatcher.group(2));
-                    m_odometrySubsystem.resetOdometry(new Pose2d(x, y, new Rotation2d(0.0)));
-                    Logger.recordOutput("Telemetry/Log", "[AutoChooser] Reset odometry to path start: " + x + ", " + y);
-                  }
-                }
-              }
-            }
-          }
-        }
-      }
-    } catch (IOException | RuntimeException e) {
-      Logger.recordOutput("Telemetry/Errors", "[AutoChooser] Reset-odom parse error: " + e.getMessage());
+    if (m_resetOdomEntry != null && m_resetOdomEntry.getBoolean(true)) {
       m_odometrySubsystem.resetOdometry(new Pose2d());
     }
-    // During autonomous: distance-based shooting when camera sees AprilTag ID 3 or 4 (runs in parallel with selected auto).
-    if (m_visionSubsystem != null) {
-      return ppCmd.alongWith(
-          new ShootWhenTagCommand(m_visionSubsystem, m_shooterSubsystem, m_intakeSubsystem, 3, 4));
-    }
-    return ppCmd;
+
+    // Autonomous: drive back 2 s, unjam (~1.5 s), then shoot for 8 s.
+    Command driveBack =
+        Commands.run(() -> m_driveSubsystem.arcadeDrive(-0.4, 0.0), m_driveSubsystem)
+            .withTimeout(2.0)
+            .finallyDo(interrupted -> m_driveSubsystem.stop());
+    Command unjam = new UnjamCommand(m_intakeSubsystem, m_driveSubsystem);
+    Command shootFor8s =
+        Commands.race(
+            new ShooterCommand(
+                m_shooterSubsystem,
+                m_shooterRpmEntry,
+                m_intakeSubsystem,
+                m_visionSubsystem),
+            Commands.waitSeconds(8.0));
+
+    return Commands.sequence(driveBack, unjam, shootFor8s);
   }
 
   public void shutdownVision() {

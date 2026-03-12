@@ -6,12 +6,14 @@ import edu.wpi.first.wpilibj2.command.Command;
 import org.littletonrobotics.junction.Logger;
 
 /**
- * Runs inner intake (CAN 5) and outer intake (feeder) at 8 V while active.
- * Releasing stops both.
+ * Runs inner intake (CAN 5) and shooter as feeder (outer intake) while active.
+ * Shooter/feeder runs slower than inner intake. Releasing stops both.
  */
 public class IntakeCommand extends Command {
-  /** Inner intake (CAN 5) and feeder voltage (V) in this command only. */
+  /** Inner intake (CAN 5) voltage (V). */
   private static final double kIntakeVoltage = 8.0;
+  /** Shooter motor as feeder (V) during intake — lower than inner for gentler feed. */
+  private static final double kShooterFeedVoltageDuringIntake = 4.0;
 
   private final IntakeSubsystem m_intake;
   private final ShooterSubsystem m_shooter;
@@ -28,8 +30,8 @@ public class IntakeCommand extends Command {
   @Override
   public void execute() {
     m_intake.runAtVoltage(-kIntakeVoltage);
-    m_shooter.setFeedVoltage(kIntakeVoltage);
-    Logger.recordOutput("Intake/Events", "[IntakeCommand] Inner + feeder at " + kIntakeVoltage + " V");
+    m_shooter.setFeedVoltage(kShooterFeedVoltageDuringIntake);
+    Logger.recordOutput("Intake/Events", "[IntakeCommand] Inner " + kIntakeVoltage + " V, feeder " + kShooterFeedVoltageDuringIntake + " V");
   }
 
   @Override

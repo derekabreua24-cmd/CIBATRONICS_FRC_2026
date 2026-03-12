@@ -19,12 +19,10 @@ import frc.robot.constants.ShooterConstants;
  * the feeder motor (intake) must also be in Brake mode (see IntakeSubsystem).
  *
  * <p><b>Velocity PID:</b> Shooter uses closed-loop velocity (PID + feedforward) via
- * setVelocitySetpointRpm(). Constant RPM compensates for speed drop when a ball hits the wheels,
- * preventing the second ball from catching the first (jams/double shots).
+ * setVelocitySetpointRpm(). Constant RPM compensates for speed drop when a ball hits the wheels.
  *
- * <p><b>Feeder gating:</b> The shoot command must only run the feeder after (1) shooter reaches
- * at least 95% of target RPM (velocity check) and (2) a time-based delay (e.g. 0.65 s). Feeder
- * speed should be 30–40% to keep flow controlled.
+ * <p><b>Shoot commands</b> run the feeder immediately (no at-speed wait). isAtSpeed() remains
+ * available for telemetry or custom logic.
  */
 public class ShooterSubsystem extends SubsystemBase {
   private static final double kNominalVoltage = ShooterConstants.kShooterVoltage;
@@ -45,6 +43,8 @@ public class ShooterSubsystem extends SubsystemBase {
   /** When > 0, motor runs at this voltage (V) in shooting direction (open-loop). Used by ShooterCommand for fixed 11 V shoot. */
   private double m_shootVoltage = 0.0;
   private double m_lastOutputPercent = 0.0;
+  /** When true, shooter output is flipped (reverse direction). Set by shoot commands. */
+  private boolean m_shootReversed = false;
 
   public ShooterSubsystem() {
     m_shooter = new SparkMax(ShooterConstants.kShooterMotorPort, MotorType.kBrushless); // NEO: brushless, internal encoder
@@ -103,11 +103,17 @@ public class ShooterSubsystem extends SubsystemBase {
     m_shootVoltage = MathUtil.clamp(volts, 0.0, ShooterConstants.kShooterVoltage);
   }
 
+  /** When true, shooter motor runs in reverse during velocity/shoot voltage. Cleared in stop(). */
+  public void setShootReversed(boolean reversed) {
+    m_shootReversed = reversed;
+  }
+
   /** Stop shooter and clear setpoints. */
   public void stop() {
     m_targetRpm = 0.0;
     m_feedVoltage = 0.0;
     m_shootVoltage = 0.0;
+    m_shootReversed = false;
     m_shooter.stopMotor();
   }
 
@@ -147,8 +153,9 @@ public class ShooterSubsystem extends SubsystemBase {
       m_shooter.setVoltage(volts);
       m_lastOutputPercent = volts / kNominalVoltage;
     } else if (m_shootVoltage > 0.0) {
-      // Fixed voltage shoot: same direction as closed-loop (negative voltage = shooting direction).
-      double volts = -m_shootVoltage;
+      // Fixed voltage shoot: sign depends on m_shootReversed (normal = negative = shooting direction).
+      double sign = m_shootReversed ? 1.0 : -1.0;
+      double volts = sign * m_shootVoltage;
       m_shooter.setVoltage(volts);
       m_lastOutputPercent = volts / kNominalVoltage;
     } else if (m_targetRpm > 1.0) {
@@ -159,11 +166,12 @@ public class ShooterSubsystem extends SubsystemBase {
       }
       // Integrated encoder RPM; invert so positive = shooting direction for PID setpoint comparison.
       double currentRpm = getVelocityRpmForControl();
-      // PID output is dimensionless (P has units 1/RPM); treat as fraction and multiply by nominal voltage.
+      // PID output: normal = negative voltage = shoot; reversed = positive voltage.
+      double sign = m_shootReversed ? 1.0 : -1.0;
       double pidFraction = m_pid.calculate(currentRpm, m_targetRpm);
       double omegaRadPerSec = m_targetRpm * 2.0 * Math.PI / 60.0;
       double ffVolts = m_ff.calculate(omegaRadPerSec);
-      double outVolts = -(pidFraction * kNominalVoltage + ffVolts);
+      double outVolts = sign * (pidFraction * kNominalVoltage + ffVolts);
       outVolts = MathUtil.clamp(outVolts, -kNominalVoltage, kNominalVoltage);
       m_shooter.setVoltage(outVolts);
       m_lastOutputPercent = outVolts / kNominalVoltage; // for telemetry / getCommandedVoltage()
@@ -186,11 +194,15 @@ public class ShooterSubsystem extends SubsystemBase {
     return m_targetRpm;
   }
 
-  /** True when closed-loop target is set and current RPM >= 95% of target (quick recovery after first ball). */
+  /** True when closed-loop target is set and current RPM is at least 85% of target (reversed: check negative RPM). */
   public boolean isAtSpeed() {
     if (m_targetRpm < 1.0) return false;
     double currentRpm = getVelocityRpmForControl();
-    return currentRpm >= m_targetRpm * ShooterConstants.kShooterAtSpeedFraction;
+    double threshold = m_targetRpm * ShooterConstants.kShooterAtSpeedFraction;
+    if (m_shootReversed) {
+      return currentRpm <= -threshold; // reversed spin gives opposite sign in control convention
+    }
+    return currentRpm >= threshold;
   }
 
   public double getLastOutputPercent() {

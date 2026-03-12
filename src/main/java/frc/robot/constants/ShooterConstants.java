@@ -16,25 +16,27 @@ public final class ShooterConstants {
 
   // ----- Voltage and RPM -----
   /** Fixed voltage (V) for shooter (velocity control and output clamp). */
-  public static final double kShooterVoltage = 11.0;
+  public static final double kShooterVoltage = 10.0;
   /** Alias; same as kShooterVoltage. */
   public static final double kShooterNominalVoltage = kShooterVoltage;
   /** Default as fraction of max RPM for dashboard/tuning. 1.0 = absolute max. */
   public static final double kShooterSpeed = 0.7;
   public static final double kShooterMaxRPM = 5700.0;
+  /** Default target RPM for shooter when no distance/vision override (e.g. manual shoot, fallback). */
+  public static final double kShooterDefaultRpm = 1500.0;
 
   /** Feed voltage (V) when shooter runs as feeder (outer intake) during intake. */
-  public static final double kShooterFeedVoltage = 9.0;
+  public static final double kShooterFeedVoltage = 10.5;
 
   /** Feeder (intake) voltage (V) when feeding during shoot. */
-  public static final double kFeederVoltageDuringShoot = 7.0;
+  public static final double kFeederVoltageDuringShoot = 8.0;
 
-  /** Consider "at speed" when current RPM >= this fraction of target (e.g. 0.95 = 95%). */
-  public static final double kShooterAtSpeedFraction = 0.95;
+  /** Consider "at speed" when current RPM >= this fraction of target (e.g. 0.85 = 85%). */
+  public static final double kShooterAtSpeedFraction = 0.85;
   /** RPM tolerance for "at speed" (secondary; primary is kShooterAtSpeedFraction). */
   public static final double kShooterAtSpeedToleranceRpm = 150.0;
-  /** Delay (s) after shooter is at speed before running the feeder (0.5–0.8 s typical). */
-  public static final double kShooterFeedDelayAfterAtSpeedSec = 0.65;
+  /** Delay (s) after shooter is at speed before running the feeder. */
+  public static final double kShooterFeedDelayAfterAtSpeedSec = 0.35;
 
   // ----- Feedforward (SimpleMotorFeedforward: kS in V, kV in V/(rad/s), kA in V/(rad/s²)) -----
   public static final double kShooterKS = 0.2;

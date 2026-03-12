@@ -6,7 +6,7 @@ package frc.robot.constants;
 
 /**
  * Drivetrain motor ports, geometry, feedforward gains, and simulation parameters.
- * Used by DriveSubsystem and PathPlanner. Set motor type (kBrushed/kBrushless) in DriveSubsystem to match hardware.
+ * Used by DriveSubsystem. Set motor type (kBrushed/kBrushless) in DriveSubsystem to match hardware.
  */
 public final class DriveConstants {
   private DriveConstants() {}

@@ -1,6 +1,5 @@
 package frc.robot.commands.Sht_Commands;
 
-import edu.wpi.first.wpilibj.Timer;
 import edu.wpi.first.wpilibj2.command.Command;
 import edu.wpi.first.networktables.GenericEntry;
 import frc.robot.constants.ShooterConstants;
@@ -9,21 +8,15 @@ import frc.robot.subsystems.IntakeSubsystem;
 import frc.robot.subsystems.VisionSubsystem;
 
 /**
- * Shoot: (1) Initialize = spin NEO shooter to target RPM only (velocity PID). (2) Execute = run feeder
- * only after velocity check (shooter >= 95% target RPM) and time delay (0.65 s). (3) Feeder at 30–40%
- * to prevent double shots and jams. Feeder motor (intake) must be in Brake mode.
+ * Shoot: spin NEO shooter to target RPM (velocity PID) and run feeder immediately. No at-speed wait.
  */
 public class ShooterCommand extends Command {
 
-  private static final double kDefaultTargetRpm =
-      ShooterConstants.kShooterMaxRPM * Math.abs(ShooterConstants.kShooterSpeed);
+  private static final double kDefaultTargetRpm = ShooterConstants.kShooterDefaultRpm;
 
   private final ShooterSubsystem m_shooter;
   private final IntakeSubsystem m_intake;
   private final GenericEntry m_shooterRpmEntry;
-  /** WPILib Timer: delay feeder start until this period has elapsed after at-speed. */
-  private final Timer m_feedDelayTimer = new Timer();
-  private boolean m_feedDelayStarted = false;
 
   public ShooterCommand(ShooterSubsystem shooter, GenericEntry shooterRpmEntry, IntakeSubsystem intake) {
     this(shooter, shooterRpmEntry, intake, null);
@@ -42,8 +35,8 @@ public class ShooterCommand extends Command {
 
   @Override
   public void initialize() {
+    m_shooter.setShootReversed(true);
     m_shooter.setVelocitySetpointRpm(getTargetRpm());
-    m_feedDelayStarted = false;
     if (m_intake != null) {
       m_intake.stop();
     }
@@ -52,26 +45,14 @@ public class ShooterCommand extends Command {
   @Override
   public void execute() {
     m_shooter.setVelocitySetpointRpm(getTargetRpm());
-    if (m_shooter.isAtSpeed()) {
-      if (!m_feedDelayStarted) {
-        m_feedDelayTimer.restart();
-        m_feedDelayStarted = true;
-      }
-      if (m_feedDelayTimer.hasElapsed(ShooterConstants.kShooterFeedDelayAfterAtSpeedSec) && m_intake != null) {
-        m_intake.setFeederVoltageSetpoint(ShooterConstants.kFeederVoltageDuringShoot);
-      } else if (m_intake != null) {
-        m_intake.setFeederVoltageSetpoint(0.0);
-      }
-    } else {
-      m_feedDelayStarted = false;
-      if (m_intake != null) {
-        m_intake.setFeederVoltageSetpoint(0.0);
-      }
+    if (m_intake != null) {
+      m_intake.runAtVoltage(ShooterConstants.kFeederVoltageDuringShoot);
     }
   }
 
   @Override
   public void end(boolean interrupted) {
+    m_shooter.setShootReversed(false);
     m_shooter.stop();
     if (m_intake != null) {
       m_intake.stop();
