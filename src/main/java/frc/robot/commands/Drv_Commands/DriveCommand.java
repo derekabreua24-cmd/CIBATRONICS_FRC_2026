@@ -26,7 +26,7 @@ public class DriveCommand extends Command {
 
   @Override
   public void execute() {
-    // Zonas muertas del joystick; negar rot para que palanca a la derecha = robot gira a la derecha (arcadeDrive de WPILib positivo = izquierda).
+    // Deadbands: stick forward → positive fwd, stick right → negative rot (WPILib positive zRotation = turn left).
     double fwd = -MathUtil.applyDeadband(m_controller.getLeftY(), 0.05);
     double rot = -MathUtil.applyDeadband(m_controller.getRightX(), 0.05);
 

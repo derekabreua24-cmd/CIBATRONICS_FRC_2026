@@ -25,7 +25,7 @@ public final class DriveConstants {
 
   // ----- Teleop scaling -----
   /** Forward/back speed scale (1.0 = full). Scaled stick output is applied as voltage via setVoltage. */
-  public static final double kDriveSpeedScale = -0.8;
+  public static final double kDriveSpeedScale = 0.8;
   /** Turn speed scale (1.0 = full). */
   public static final double kTurnSpeedScale = 0.5;
 

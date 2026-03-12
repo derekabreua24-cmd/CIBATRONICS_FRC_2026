@@ -3,16 +3,18 @@ package frc.robot.subsystems;
 import com.revrobotics.spark.SparkMax;
 import com.revrobotics.spark.SparkLowLevel.MotorType;
 
+import edu.wpi.first.math.MathUtil;
 import edu.wpi.first.wpilibj2.command.Command;
 import edu.wpi.first.wpilibj2.command.SubsystemBase;
 import edu.wpi.first.wpilibj.drive.DifferentialDrive;
+import edu.wpi.first.math.controller.SimpleMotorFeedforward;
 import edu.wpi.first.math.kinematics.ChassisSpeeds;
+import edu.wpi.first.math.kinematics.DifferentialDriveKinematics;
+import edu.wpi.first.math.kinematics.DifferentialDriveWheelSpeeds;
 import com.pathplanner.lib.util.DriveFeedforwards;
 import edu.wpi.first.networktables.NetworkTableInstance;
-import frc.robot.util.DrivePhysics;
 import edu.wpi.first.math.geometry.Pose2d;
 import edu.wpi.first.math.geometry.Rotation2d;
-import edu.wpi.first.math.kinematics.DifferentialDriveKinematics;
 import edu.wpi.first.math.estimator.DifferentialDrivePoseEstimator;
 import edu.wpi.first.math.Matrix;
 import edu.wpi.first.math.VecBuilder;
@@ -72,7 +74,7 @@ public class DriveSubsystem extends SubsystemBase {
   // No wheel encoders (brushed drivetrain, no budget). In sim, wheel state comes from MapleSim via m_mapleSimLeftPosM/m_mapleSimRightPosM.
 
   // ===============================
-  // Drive (all four motors set explicitly; no leader/follower)
+  // Drive (all four motors set explicitly via setVoltage; no percent output)
   // ===============================
 
   private final DifferentialDrive m_drive =
@@ -154,26 +156,27 @@ public class DriveSubsystem extends SubsystemBase {
 
   /** Sets both left motors from percent (-1..1) as voltage. Used by DifferentialDrive. */
   private void setLeftOutput(double output) {
-    double volts = Math.max(-DriveConstants.kNominalVoltage, Math.min(DriveConstants.kNominalVoltage, output * DriveConstants.kNominalVoltage));
+    double volts = MathUtil.clamp(output * DriveConstants.kNominalVoltage, -DriveConstants.kNominalVoltage, DriveConstants.kNominalVoltage);
     m_leftFront.setVoltage(volts);
     m_leftRear.setVoltage(volts);
   }
 
   /** Sets both right motors from percent (-1..1) as voltage. Used by DifferentialDrive. */
   private void setRightOutput(double output) {
-    double volts = Math.max(-DriveConstants.kNominalVoltage, Math.min(DriveConstants.kNominalVoltage, output * DriveConstants.kNominalVoltage));
+    double volts = MathUtil.clamp(output * DriveConstants.kNominalVoltage, -DriveConstants.kNominalVoltage, DriveConstants.kNominalVoltage);
     m_rightFront.setVoltage(volts);
     m_rightRear.setVoltage(volts);
   }
 
-  /** Arcade drive. Fwd and turn are reversed: stick forward → backward, stick right → turn left. */
+  /**
+   * Arcade drive. Left stick Y = forward/back, right stick X = turn.
+   * Scaled so: stick forward → robot forward, stick right → robot turns right.
+   */
   public void arcadeDrive(double fwd, double rot) {
     m_drive.arcadeDrive(
-        -fwd * DriveConstants.kDriveSpeedScale,
-        -rot * DriveConstants.kTurnSpeedScale);
-
-  // Mantener alimentador del watchdog
-  m_drive.feed();
+        fwd * DriveConstants.kDriveSpeedScale,
+        rot * DriveConstants.kTurnSpeedScale);
+    m_drive.feed();
   }
 
   public void stop() {
@@ -222,6 +225,16 @@ public class DriveSubsystem extends SubsystemBase {
 
   public double getRightAverage() {
     return (m_rightFront.get() + m_rightRear.get()) / 2.0;
+  }
+
+  /** Left side commanded voltage (V). All drive output is voltage. */
+  public double getLeftCommandedVoltage() {
+    return getLeftAverage() * DriveConstants.kNominalVoltage;
+  }
+
+  /** Right side commanded voltage (V). All drive output is voltage. */
+  public double getRightCommandedVoltage() {
+    return getRightAverage() * DriveConstants.kNominalVoltage;
   }
 
   // ===============================
@@ -426,8 +439,8 @@ public class DriveSubsystem extends SubsystemBase {
     double maxSpeed = DriveConstants.kDriveEstMaxSpeed;
     double leftVel = (Math.abs(leftVolts) > 0.01) ? (leftVolts - Math.signum(leftVolts) * ks) / kv : 0.0;
     double rightVel = (Math.abs(rightVolts) > 0.01) ? (rightVolts - Math.signum(rightVolts) * ks) / kv : 0.0;
-    leftVel = Math.max(-maxSpeed, Math.min(maxSpeed, leftVel));
-    rightVel = Math.max(-maxSpeed, Math.min(maxSpeed, rightVel));
+    leftVel = MathUtil.clamp(leftVel, -maxSpeed, maxSpeed);
+    rightVel = MathUtil.clamp(rightVel, -maxSpeed, maxSpeed);
     double vx = (leftVel + rightVel) / 2.0;
     double omega = (rightVel - leftVel) / DriveConstants.kTrackwidthMeters;
     return new ChassisSpeeds(vx, 0.0, omega);
@@ -482,18 +495,13 @@ public class DriveSubsystem extends SubsystemBase {
       }
     }
 
-    // Calcular tensiones base con el modelo de feedforward de DrivePhysics.
-    double[] volts = DrivePhysics.computeTankVoltages(
-        speeds.vxMetersPerSecond,
-        speeds.omegaRadiansPerSecond,
-        ks,
-        kv,
-        ka,
-        DriveConstants.kTrackwidthMeters,
-        estMax);
-
-    double leftVolts = volts[0];
-    double rightVolts = volts[1];
+    // Official WPILib: kinematics to wheel speeds, then SimpleMotorFeedforward (docs.wpilib.org).
+    DifferentialDriveWheelSpeeds wheelSpeeds = m_kinematics.toWheelSpeeds(speeds);
+    double leftMps = MathUtil.clamp(wheelSpeeds.leftMetersPerSecond, -estMax, estMax);
+    double rightMps = MathUtil.clamp(wheelSpeeds.rightMetersPerSecond, -estMax, estMax);
+    SimpleMotorFeedforward driveFf = new SimpleMotorFeedforward(ks, kv, ka);
+    double leftVolts = driveFf.calculate(leftMps);
+    double rightVolts = driveFf.calculate(rightMps);
 
     // Opcionalmente incorporar DriveFeedforwards de PathPlanner si está presente y habilitado.
     try {
@@ -525,7 +533,10 @@ public class DriveSubsystem extends SubsystemBase {
     tankDriveVolts(leftVolts, rightVolts);
   }
 
+  /** Set left/right voltages (V). Clamped to ±kNominalVoltage for safety. */
   public void tankDriveVolts(double leftVolts, double rightVolts) {
+    leftVolts = MathUtil.clamp(leftVolts, -DriveConstants.kNominalVoltage, DriveConstants.kNominalVoltage);
+    rightVolts = MathUtil.clamp(rightVolts, -DriveConstants.kNominalVoltage, DriveConstants.kNominalVoltage);
     m_leftFront.setVoltage(leftVolts);
     m_leftRear.setVoltage(leftVolts);
     m_rightFront.setVoltage(rightVolts);

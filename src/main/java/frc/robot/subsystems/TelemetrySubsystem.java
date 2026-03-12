@@ -17,7 +17,6 @@ import edu.wpi.first.math.geometry.Translation2d;
 import edu.wpi.first.math.geometry.Rotation2d;
 import frc.robot.constants.AutoConstants;
 import frc.robot.constants.ShooterConstants;
-import frc.robot.util.GeometryUtils;
 import org.littletonrobotics.junction.Logger;
 import edu.wpi.first.networktables.NetworkTable;
 import edu.wpi.first.networktables.NetworkTableInstance;
@@ -104,6 +103,9 @@ public class TelemetrySubsystem extends SubsystemBase {
   // Registro de instantáneas (limitado); configurable en tiempo de ejecución
   private double m_snapshotPeriodSec = 0.2; // 5 Hz default
   private double m_lastSnapshotTime = 0.0;
+  /** Throttle display/logging to avoid loop overrun (run heavy telemetry every this many cycles). */
+  private static final int kTelemetryThrottleDivisor = 2;
+  private int m_telemetryCycleCount = 0;
   // Runtime display / logging controls
   private final GenericEntry m_extendedLoggingEntry;
   private final GenericEntry m_snapshotRateEntry;
@@ -140,7 +142,7 @@ public class TelemetrySubsystem extends SubsystemBase {
     driverTab.add("Field", m_field2dDriver).withSize(6, 4).withPosition(6, 0);
 
     // Inicializar entradas compactas para la pestaña Driver
-    m_driverLeftAvgEntry = driverTab.add("Drive Left Avg", 0.0).getEntry();
+    m_driverLeftAvgEntry = driverTab.add("Drive Left (V)", 0.0).getEntry();
     m_driverShooterVelEntry = driverTab.add("Shooter Vel", 0.0).getEntry();
     m_driverNavXYawEntry = driverTab.add("NavX Yaw", 0.0).getEntry();
     m_driverMatchTimeEntry = driverTab.add("Match Time", 0.0).getEntry();
@@ -184,7 +186,7 @@ public class TelemetrySubsystem extends SubsystemBase {
 
   // Diseño de Drive - separar Left/Right para mejor lectura
   var leftDriveLayout = tab.getLayout("Drive Left", BuiltInLayouts.kList).withSize(3, 4).withPosition(0, 0);
-  m_leftAvgEntry = leftDriveLayout.add("Drive Left Avg", 0.0).getEntry();
+  m_leftAvgEntry = leftDriveLayout.add("Drive Left (V)", 0.0).getEntry();
   m_leftPosEntry = leftDriveLayout.add("Left Pos", 0.0).getEntry();
   m_leftVelEntry = leftDriveLayout.add("Left Vel", 0.0).getEntry();
   m_leftCurrentEntry = leftDriveLayout.add("Left Current", 0.0).getEntry();
@@ -194,7 +196,7 @@ public class TelemetrySubsystem extends SubsystemBase {
   m_leftRearTempEntry = leftDriveLayout.add("Left Rear Temp", 0.0).getEntry();
 
   var rightDriveLayout = tab.getLayout("Drive Right", BuiltInLayouts.kList).withSize(3, 4).withPosition(3, 0);
-  m_rightAvgEntry = rightDriveLayout.add("Drive Right Avg", 0.0).getEntry();
+  m_rightAvgEntry = rightDriveLayout.add("Drive Right (V)", 0.0).getEntry();
   m_rightPosEntry = rightDriveLayout.add("Right Pos", 0.0).getEntry();
   m_rightVelEntry = rightDriveLayout.add("Right Vel", 0.0).getEntry();
   m_rightCurrentEntry = rightDriveLayout.add("Right Current", 0.0).getEntry();
@@ -205,7 +207,7 @@ public class TelemetrySubsystem extends SubsystemBase {
 
   // Diseño de Intake (brushed motor, no encoder)
   var intakeLayout = tab.getLayout("Intake", BuiltInLayouts.kList).withSize(2, 3);
-  m_intakeSetEntry = intakeLayout.add("Intake Setpoint", 0.0).getEntry();
+  m_intakeSetEntry = intakeLayout.add("Intake Voltage (V)", 0.0).getEntry();
   m_intakeCurrentEntry = intakeLayout.add("Intake Current", 0.0).getEntry();
   m_intakeReversedEntry = intakeLayout.add("Intake Reversed", false).getEntry();
 
@@ -374,6 +376,11 @@ public class TelemetrySubsystem extends SubsystemBase {
       }
     }
 
+  // Throttle heavy Shuffleboard/Logger/Field2d updates to avoid loop overrun (control path above runs every cycle)
+  if (m_telemetryCycleCount++ % kTelemetryThrottleDivisor != 0) {
+    return;
+  }
+
   // Modo Driver vs Dev: cuando Driver Mode está activado, actualizamos solo los widgets compactos
   boolean driverMode = m_driverModeEntry.getBoolean(false);
 
@@ -382,14 +389,14 @@ public class TelemetrySubsystem extends SubsystemBase {
   // (mantiene compatibilidad con rutas de codigo de layout anteriores).
   if (driverMode) {
     // Actualizar solo widgets compactos en la pestaña Driver
-    m_driverLeftAvgEntry.setDouble(m_drive.getLeftAverage());
+    m_driverLeftAvgEntry.setDouble(m_drive.getLeftCommandedVoltage());
     m_driverShooterVelEntry.setDouble(m_shooter.getAverageVelocity());
     m_driverNavXYawEntry.setDouble(m_navx.getYaw());
     m_driverMatchTimeEntry.setDouble(DriverStation.getMatchTime());
   } else {
-    m_leftAvgEntry.setDouble(m_drive.getLeftAverage());
-    m_rightAvgEntry.setDouble(m_drive.getRightAverage());
-    m_intakeSetEntry.setDouble(m_intake.getSetpoint());
+    m_leftAvgEntry.setDouble(m_drive.getLeftCommandedVoltage());
+    m_rightAvgEntry.setDouble(m_drive.getRightCommandedVoltage());
+    m_intakeSetEntry.setDouble(m_intake.getCommandedVoltage());
   }
 
   // Ejes del controlador
@@ -418,9 +425,9 @@ public class TelemetrySubsystem extends SubsystemBase {
     m_fpgaTimeEntry.setDouble(Timer.getFPGATimestamp());
 
   // Registrar promedios del drive y setpoints del intake periodicamente
-  Logger.recordOutput("Telemetry/DriveLeftAvg", m_drive.getLeftAverage());
-  Logger.recordOutput("Telemetry/DriveRightAvg", m_drive.getRightAverage());
-  Logger.recordOutput("Telemetry/IntakeSet", m_intake.getSetpoint());
+  Logger.recordOutput("Telemetry/DriveLeftVoltage", m_drive.getLeftCommandedVoltage());
+  Logger.recordOutput("Telemetry/DriveRightVoltage", m_drive.getRightCommandedVoltage());
+  Logger.recordOutput("Telemetry/IntakeVoltage", m_intake.getCommandedVoltage());
 
   // Telemetría de encoders y corriente del drive/intake (solo en modo dev)
   boolean extended = m_extendedLoggingEntry.getBoolean(true);
@@ -513,15 +520,17 @@ public class TelemetrySubsystem extends SubsystemBase {
           visionY = String.format("%.3f", vp.getY());
           visionDeg = String.format("%.2f", vp.getRotation().getDegrees());
 
-          // ---- New: publish a small Pose2d[] of vision candidates using Transform2d ----
+          // Publish vision candidate poses to Field2d (WPILib Field2d.getObject().setPose).
           try {
             Pose2d base = vp;
             Pose2d[] candidates = new Pose2d[] {
               base,
-              base.transformBy(new Transform2d(new Translation2d(0.2, 0.0), new Rotation2d(0.0))),
-              base.transformBy(new Transform2d(new Translation2d(-0.2, 0.0), new Rotation2d(0.0)))
+              base.transformBy(new Transform2d(new Translation2d(0.2, 0.0), Rotation2d.kZero)),
+              base.transformBy(new Transform2d(new Translation2d(-0.2, 0.0), Rotation2d.kZero))
             };
-            GeometryUtils.publishPose2dArrayToField2d(m_field2d, "VisionCandidates", candidates);
+            for (int i = 0; i < candidates.length; i++) {
+              m_field2d.getObject("VisionCandidates_" + i).setPose(candidates[i]);
+            }
           } catch (RuntimeException e) {
             Logger.recordOutput("Telemetry/Errors", "TelemetrySubsystem: failed to publish Pose2d[] candidates -> " + e.toString());
           }
@@ -561,7 +570,7 @@ public class TelemetrySubsystem extends SubsystemBase {
         parts.add(String.format("%.3f", m_drive.getLeftRearTemperature()));
       }
 
-      parts.add(String.format("%.3f", m_drive.getLeftAverage()));
+      parts.add(String.format("%.3f", m_drive.getLeftCommandedVoltage()));
       parts.add(String.format("%.3f", m_drive.getRightAveragePosition()));
       parts.add(String.format("%.3f", m_drive.getRightAverageVelocity()));
       parts.add(String.format("%.3f", m_drive.getRightTotalCurrent()));
@@ -577,17 +586,17 @@ public class TelemetrySubsystem extends SubsystemBase {
         parts.add(String.format("%.3f", m_drive.getRightRearTemperature()));
       }
 
-      parts.add(String.format("%.3f", m_drive.getRightAverage()));
+      parts.add(String.format("%.3f", m_drive.getRightCommandedVoltage()));
 
-  // Intake/shooter (intake has no encoder)
-      parts.add(String.format("%.3f", m_intake.getSetpoint()));
+  // Intake/shooter (all voltage)
+      parts.add(String.format("%.3f", m_intake.getCommandedVoltage()));
       parts.add(String.format("%.3f", m_intake.getOutputCurrent()));
 
 
       parts.add(String.format("%.3f", m_shooter.getTargetRpm()));
       parts.add(String.format("%.3f", m_shooter.getAverageVelocity()));
       parts.add(String.format("%.3f", m_shooter.getOutputCurrent()));
-      parts.add(String.format("%.3f", m_shooter.getLastOutputPercent()));
+      parts.add(String.format("%.3f", m_shooter.getCommandedVoltage()));
 
       // NavX y controles
       parts.add(String.format("%.3f", m_navx.getYaw()));

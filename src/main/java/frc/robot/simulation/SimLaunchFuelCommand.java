@@ -1,5 +1,6 @@
 package frc.robot.simulation;
 
+import edu.wpi.first.math.MathUtil;
 import edu.wpi.first.math.geometry.Pose3d;
 import edu.wpi.first.math.geometry.Translation2d;
 import edu.wpi.first.math.kinematics.ChassisSpeeds;
@@ -52,7 +53,7 @@ public class SimLaunchFuelCommand extends InstantCommand {
       targetRpm = 3000.0;
     }
     double launchSpeedMps = (targetRpm / 6000.0) * LAUNCH_SPEED_AT_6000_RPM;
-    launchSpeedMps = Math.max(5.0, Math.min(25.0, launchSpeedMps));
+    launchSpeedMps = MathUtil.clamp(launchSpeedMps, 5.0, 25.0);
 
     // RebuiltFuelOnFly constructor already calls withTouchGroundHeight and enableBecomesGamePieceOnFieldAfterTouchGround (official API).
     RebuiltFuelOnFly fuel = new RebuiltFuelOnFly(

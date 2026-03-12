@@ -1,24 +1,29 @@
 package frc.robot.commands.Sht_Commands;
 
+import edu.wpi.first.wpilibj.Timer;
 import edu.wpi.first.wpilibj2.command.Command;
 import edu.wpi.first.networktables.GenericEntry;
+import frc.robot.constants.ShooterConstants;
 import frc.robot.subsystems.ShooterSubsystem;
 import frc.robot.subsystems.IntakeSubsystem;
 import frc.robot.subsystems.VisionSubsystem;
-import frc.robot.constants.ShooterConstants;
-import frc.robot.constants.IntakeConstants;
 
 /**
- * Comando para girar el shooter mientras se mantiene el botón.
- * También corre el intake para alimentar la nota al shooter.
- * Si visión está disponible y hay una distancia al tag, usa RPM por distancia (setVelocitySetpointFromDistanceMeters).
- * Si no, usa la RPM de la entrada de Shuffleboard (Tuning) o el valor por defecto.
+ * Shoot: (1) Initialize = spin NEO shooter to target RPM only (velocity PID). (2) Execute = run feeder
+ * only after velocity check (shooter >= 95% target RPM) and time delay (0.65 s). (3) Feeder at 30–40%
+ * to prevent double shots and jams. Feeder motor (intake) must be in Brake mode.
  */
 public class ShooterCommand extends Command {
+
+  private static final double kDefaultTargetRpm =
+      ShooterConstants.kShooterMaxRPM * Math.abs(ShooterConstants.kShooterSpeed);
+
   private final ShooterSubsystem m_shooter;
   private final IntakeSubsystem m_intake;
   private final GenericEntry m_shooterRpmEntry;
-  private final VisionSubsystem m_vision;
+  /** WPILib Timer: delay feeder start until this period has elapsed after at-speed. */
+  private final Timer m_feedDelayTimer = new Timer();
+  private boolean m_feedDelayStarted = false;
 
   public ShooterCommand(ShooterSubsystem shooter, GenericEntry shooterRpmEntry, IntakeSubsystem intake) {
     this(shooter, shooterRpmEntry, intake, null);
@@ -28,33 +33,40 @@ public class ShooterCommand extends Command {
     m_shooter = shooter;
     m_intake = intake;
     m_shooterRpmEntry = shooterRpmEntry;
-    m_vision = vision;
     addRequirements(shooter, intake);
+  }
+
+  private double getTargetRpm() {
+    return m_shooterRpmEntry != null ? m_shooterRpmEntry.getDouble(kDefaultTargetRpm) : kDefaultTargetRpm;
   }
 
   @Override
   public void initialize() {
-    updateSetpoint();
+    m_shooter.setVelocitySetpointRpm(getTargetRpm());
+    m_feedDelayStarted = false;
     if (m_intake != null) {
-      m_intake.runVoltage(IntakeConstants.kIntakeMaxVoltage);
+      m_intake.stop();
     }
   }
 
   @Override
   public void execute() {
-    updateSetpoint();
-    if (m_intake != null) {
-      m_intake.runVoltage(IntakeConstants.kIntakeMaxVoltage);
-    }
-  }
-
-  private void updateSetpoint() {
-    if (m_vision != null && m_vision.getLastTargetDistanceMeters().isPresent()) {
-      m_shooter.setVelocitySetpointFromDistanceMeters(m_vision.getLastTargetDistanceMeters().getAsDouble());
+    m_shooter.setVelocitySetpointRpm(getTargetRpm());
+    if (m_shooter.isAtSpeed()) {
+      if (!m_feedDelayStarted) {
+        m_feedDelayTimer.restart();
+        m_feedDelayStarted = true;
+      }
+      if (m_feedDelayTimer.hasElapsed(ShooterConstants.kShooterFeedDelayAfterAtSpeedSec) && m_intake != null) {
+        m_intake.setFeederVoltageSetpoint(ShooterConstants.kFeederVoltageDuringShoot);
+      } else if (m_intake != null) {
+        m_intake.setFeederVoltageSetpoint(0.0);
+      }
     } else {
-      double defaultRpm = ShooterConstants.kShooterMaxRPM * Math.abs(ShooterConstants.kShooterSpeed);
-      double targetRpm = m_shooterRpmEntry == null ? defaultRpm : m_shooterRpmEntry.getDouble(defaultRpm);
-      m_shooter.setVelocitySetpointRpm(targetRpm);
+      m_feedDelayStarted = false;
+      if (m_intake != null) {
+        m_intake.setFeederVoltageSetpoint(0.0);
+      }
     }
   }
 

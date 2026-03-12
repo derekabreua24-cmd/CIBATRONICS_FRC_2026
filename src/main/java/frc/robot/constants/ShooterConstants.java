@@ -15,28 +15,38 @@ public final class ShooterConstants {
   public static final int kShooterMotorPort = 6;
 
   // ----- Voltage and RPM -----
-  /** Fixed voltage (V) for shooter. When shooter feed is active, it always uses this—no scaling. */
-  public static final double kShooterVoltage = 12.0;
+  /** Fixed voltage (V) for shooter (velocity control and output clamp). */
+  public static final double kShooterVoltage = 11.0;
   /** Alias; same as kShooterVoltage. */
   public static final double kShooterNominalVoltage = kShooterVoltage;
   /** Default as fraction of max RPM for dashboard/tuning. 1.0 = absolute max. */
-  public static final double kShooterSpeed = 1.0;
+  public static final double kShooterSpeed = 0.7;
   public static final double kShooterMaxRPM = 5700.0;
 
-  /** Feed voltage when shooter runs as feeder during intake. Always 12 V. */
-  public static final double kShooterFeedVoltage = kShooterVoltage;
+  /** Feed voltage (V) when shooter runs as feeder (outer intake) during intake. */
+  public static final double kShooterFeedVoltage = 9.0;
 
-  // ----- Feedforward (V, V/(rad/s), V/(rad/s²)) -----
+  /** Feeder (intake) voltage (V) when feeding during shoot. */
+  public static final double kFeederVoltageDuringShoot = 7.0;
+
+  /** Consider "at speed" when current RPM >= this fraction of target (e.g. 0.95 = 95%). */
+  public static final double kShooterAtSpeedFraction = 0.95;
+  /** RPM tolerance for "at speed" (secondary; primary is kShooterAtSpeedFraction). */
+  public static final double kShooterAtSpeedToleranceRpm = 150.0;
+  /** Delay (s) after shooter is at speed before running the feeder (0.5–0.8 s typical). */
+  public static final double kShooterFeedDelayAfterAtSpeedSec = 0.65;
+
+  // ----- Feedforward (SimpleMotorFeedforward: kS in V, kV in V/(rad/s), kA in V/(rad/s²)) -----
   public static final double kShooterKS = 0.2;
   public static final double kShooterKV = 0.02;
   public static final double kShooterKA = 0.001;
 
-  // ----- Velocity PID (error in RPM, output added to FF percent) -----
-  /** Shooter velocity PID: proportional (tuned for ~4000–5000 RPM range). */
+  // ----- Velocity PID (error in RPM; output is dimensionless fraction, multiplied by kShooterVoltage to get volts) -----
+  /** P: 1/RPM so (RPM error)*P = fraction. Tuned for ~4000–5000 RPM. */
   public static final double kShooterP = 0.00035;
-  /** Shooter velocity PID: integral (removes steady-state RPM error). */
+  /** I: removes steady-state RPM error. */
   public static final double kShooterI = 0.00002;
-  /** Shooter velocity PID: derivative (usually 0 for velocity loop). */
+  /** D: usually 0 for velocity loop (noise). */
   public static final double kShooterD = 0.0;
 
   /** Distance-based RPM: base + slope×distance (m), clamped to min/max. */

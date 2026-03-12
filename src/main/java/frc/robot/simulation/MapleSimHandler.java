@@ -32,7 +32,8 @@ import frc.robot.subsystems.VisionSubsystem;
  */
 public final class MapleSimHandler {
 
-  private static final double INTAKE_RUNNING_THRESHOLD = 0.02;
+  /** Intake considered "on" when commanded voltage magnitude exceeds this (V). */
+  private static final double INTAKE_RUNNING_THRESHOLD_V = 0.5;
 
   private boolean m_fieldInitialized = false;
   private KinematicChassisSim m_chassisSim = null;
@@ -84,7 +85,7 @@ public final class MapleSimHandler {
     }
     if (m_intakeSim != null && intake != null) {
       // Intake "on" when motor has significant output (either direction). Our code uses negative voltage to pull fuel in.
-      if (Math.abs(intake.getSetpoint()) > INTAKE_RUNNING_THRESHOLD) {
+      if (Math.abs(intake.getCommandedVoltage()) > INTAKE_RUNNING_THRESHOLD_V) {
         m_intakeSim.startIntake();
       } else {
         m_intakeSim.stopIntake();
@@ -118,7 +119,7 @@ public final class MapleSimHandler {
     Logger.recordOutput("FieldSimulation/Goals/RedHub", MapleSimConstants.kRedHubPose);
 
     // Intake active (true when running in either direction) for visibility in AdvantageScope line graphs.
-    boolean intakeActive = intake != null && Math.abs(intake.getSetpoint()) > INTAKE_RUNNING_THRESHOLD;
+    boolean intakeActive = intake != null && Math.abs(intake.getCommandedVoltage()) > INTAKE_RUNNING_THRESHOLD_V;
     Logger.recordOutput("FieldSimulation/IntakeActive", intakeActive);
 
     // Shooter active and target RPM for visibility in AdvantageScope (shooting context).

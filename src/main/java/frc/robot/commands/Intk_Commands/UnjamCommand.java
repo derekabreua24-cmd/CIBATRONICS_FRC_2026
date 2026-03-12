@@ -2,14 +2,17 @@ package frc.robot.commands.Intk_Commands;
 
 import edu.wpi.first.wpilibj.Timer;
 import edu.wpi.first.wpilibj2.command.Command;
-import frc.robot.constants.IntakeConstants;
 import frc.robot.subsystems.IntakeSubsystem;
 
 /**
- * Pulso corto de intake en reversa para desatascar bolas (un tap, sin mantener el botón).
- * Duración configurable en IntakeConstants.Unjam.kReverseDurationSec.
+ * Unjam: intake alternates forwards and backwards at 13 V, about 7 times over 2 seconds.
+ * Single tap, no hold.
  */
 public class UnjamCommand extends Command {
+  private static final double kUnjamVoltage = 13.0;
+  private static final double kTotalDurationSec = 2.0;
+  private static final int kNumPhases = 7;
+
   private final IntakeSubsystem m_intake;
   private final Timer m_timer = new Timer();
 
@@ -21,12 +24,19 @@ public class UnjamCommand extends Command {
   @Override
   public void initialize() {
     m_timer.restart();
-    m_intake.runVoltage(-IntakeConstants.kIntakeMaxVoltage);
   }
 
   @Override
   public void execute() {
-    // Mantener reversa durante la duración
+    double t = m_timer.get();
+    double phaseDuration = kTotalDurationSec / kNumPhases;
+    int phase = (int) (t / phaseDuration);
+    if (phase >= kNumPhases) {
+      m_intake.runAtVoltage(0.0);
+      return;
+    }
+    boolean reverse = (phase % 2 == 0);
+    m_intake.runAtVoltage(reverse ? -kUnjamVoltage : kUnjamVoltage);
   }
 
   @Override
@@ -36,6 +46,6 @@ public class UnjamCommand extends Command {
 
   @Override
   public boolean isFinished() {
-    return m_timer.hasElapsed(IntakeConstants.Unjam.kReverseDurationSec);
+    return m_timer.hasElapsed(kTotalDurationSec);
   }
 }
