@@ -27,7 +27,7 @@ public final class DriveConstants {
   /** Forward/back speed scale (1.0 = full). Scaled stick output is applied as voltage via setVoltage. */
   public static final double kDriveSpeedScale = -0.8;
   /** Turn speed scale (1.0 = full). */
-  public static final double kTurnSpeedScale = 0.7;
+  public static final double kTurnSpeedScale = 0.5;
 
   // ----- Geometry (KitBot 2026: 6" wheels, ToughBox Mini 10.71:1, ~22 in track) -----
   public static final double kWheelDiameterMeters = 0.1524;
